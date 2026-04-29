@@ -18,6 +18,9 @@ def build_parser() -> argparse.ArgumentParser:
     espanso.add_argument("--prompts", default="prompts")
     espanso.add_argument("--output", default="build/espanso/taurcode")
 
+    validate_parser = subparsers.add_parser("validate")
+    validate_parser.add_argument("--prompts", default="prompts")
+
     return parser
 
 
@@ -30,6 +33,11 @@ def main(argv: Optional[List[str]] = None) -> int:
             prompts = load_prompts(args.prompts)
             validate_prompts(prompts)
             export_espanso(prompts, args.output)
+            return 0
+        if args.command == "validate":
+            prompts = load_prompts(args.prompts)
+            validate_prompts(prompts)
+            print(f"Validation passed: {len(prompts)} prompt(s) in {args.prompts}")
             return 0
     except (OSError, ValueError) as error:
         print(f"Error: {error}", file=sys.stderr)
