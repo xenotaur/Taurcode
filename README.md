@@ -17,6 +17,27 @@ keyword: ":tc-test"
 This is a test prompt body.
 ```
 
+## Import from Espanso
+Use the CLI to import an Espanso package into canonical prompts:
+
+```bash
+PYTHONPATH=src python -m taurcode.cli import espanso --input espanso/package/package.yml --output prompts
+```
+
+Import behavior:
+
+- Simple matches with only `trigger` and `replace` are converted into `prompts/*.md`.
+- Unsupported or complex matches are preserved under `prompts/imported_raw/*.yml`.
+- The importer prints a summary with total, converted, and raw fallback match counts.
+
+Suggested migration workflow:
+
+```bash
+PYTHONPATH=src python -m taurcode.cli import espanso --input <path-to-package.yml-or-directory> --output prompts
+PYTHONPATH=src python -m taurcode.cli validate --prompts prompts
+PYTHONPATH=src python -m taurcode.cli export espanso --prompts prompts --output build/espanso/taurcode
+```
+
 ## Export to Espanso
 Use the CLI to export canonical prompts to an Espanso package:
 
