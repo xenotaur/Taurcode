@@ -42,8 +42,7 @@ targets:
 
 Review the following change.
 
-Follow AGENTS.md.
-Follow STYLE.md.
+Follow any repository-specific instructions and applicable style guidance.
 
 Return a concise implementation plan first.
 ```

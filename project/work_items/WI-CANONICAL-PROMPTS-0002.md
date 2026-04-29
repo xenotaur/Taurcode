@@ -4,7 +4,7 @@ title: Implement canonical prompt pipeline and Espanso export flow
 status: todo
 priority: high
 owner: TBD
-related_focus: FOCUS-CANONICAL-PROMPTS
+related_focus: FOCUS-BOOTSTRAP
 ---
 
 # Work Item: Implement canonical prompt pipeline and Espanso export flow

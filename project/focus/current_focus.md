@@ -1,6 +1,6 @@
 ---
-id: FOCUS-CANONICAL-PROMPTS
-title: Canonical prompt design alignment
+id: FOCUS-BOOTSTRAP
+title: Bootstrap focus (canonical prompt alignment phase)
 status: active
 priority: high
 owner: TBD
