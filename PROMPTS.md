@@ -157,3 +157,12 @@ scripts/prompts/record-execution \
 ```
 
 Use `--dry-run` to preview output without writing files.
+
+## Repository-specific prompt execution notes
+
+For prompt-driven repository operability work:
+
+- Preserve prompt body text exactly unless a documented normalization rule applies.
+- Apply soft idempotence checks by searching `project/executions/` for the prompt ID.
+- Record meaningful executions using `scripts/prompts/record-execution`.
+- Include validation command outcomes in the execution record.

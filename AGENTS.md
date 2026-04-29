@@ -60,3 +60,12 @@ When asked to make progress in this repository, prefer work that advances the fi
 ## Prompt-driven work
 
 When a task is driven by a generated prompt, follow `PROMPTS.md` for prompt IDs, execution records, rerun handling, and optional work-item traceability. Do not create prompt records for trivial or purely exploratory work unless asked.
+
+## Operability guardrails
+
+- Run `scripts/develop` before claiming installability or CLI operability.
+- Run `scripts/test` before claiming tests pass.
+- Never claim test success when zero tests are discovered.
+- Use `unittest` with `*_test.py` naming under `tests/`.
+- Keep package code under `src/` layout.
+- Keep generated `build/` artifacts out of source control unless explicitly requested.

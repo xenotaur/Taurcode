@@ -1,0 +1,68 @@
+#!/bin/bash
+set -euo pipefail
+
+PROMPT_ID=""
+SUMMARY=""
+VALIDATION=""
+STATUS="landed"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --prompt-id)
+      PROMPT_ID="$2"
+      shift 2
+      ;;
+    --summary)
+      SUMMARY="$2"
+      shift 2
+      ;;
+    --validation)
+      VALIDATION="$2"
+      shift 2
+      ;;
+    --status)
+      STATUS="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [[ -z "$PROMPT_ID" ]]; then
+  echo "--prompt-id is required" >&2
+  exit 1
+fi
+
+DATE_UTC="$(date -u +%Y-%m-%d)"
+FILE="project/executions/${DATE_UTC}-${PROMPT_ID}.md"
+
+if [[ -f "$FILE" ]]; then
+  echo "Execution record already exists: $FILE"
+  exit 0
+fi
+
+cat > "$FILE" <<REC
+---
+prompt_id: ${PROMPT_ID}
+date: ${DATE_UTC}
+scope: AD_HOC
+status: ${STATUS}
+---
+
+## Summary
+${SUMMARY:-repository operability hardening}
+
+## Result
+Implemented repository operability hardening changes.
+
+## Validation
+${VALIDATION:-See PR validation command output.}
+
+## Follow-up
+None.
+REC
+
+echo "Wrote $FILE"

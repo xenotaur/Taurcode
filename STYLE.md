@@ -607,3 +607,16 @@ When in doubt, prefer the change that is clearer, narrower, and easier to review
 ## Final Principle
 
 If a change makes the codebase harder to understand, test, or review, it is not acceptable—even if technically correct.
+
+## Repository operability conventions
+
+- Use `src/` layout for importable Taurcode modules.
+- Use `unittest` for test execution and discovery.
+- Test modules must match the `*_test.py` convention.
+- Development setup and checks should be run from repository root:
+  - `scripts/develop`
+  - `scripts/lint`
+  - `scripts/format`
+  - `scripts/test`
+  - `scripts/coverage`
+- Do not report passing tests when zero tests are discovered.
