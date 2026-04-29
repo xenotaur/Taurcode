@@ -1,9 +1,9 @@
 import re
+import sys
 from pathlib import Path
 
-
 _SIMPLE_KEYS = {"trigger", "replace"}
-_UNSUPPORTED_KEYS = {"vars", "form", "regex", "script", "shell", "imports", "global_vars"}
+_BLOCK_SCALAR_RE = re.compile(r"^[|>][-+]?$")
 
 
 def is_simple_match(match: dict) -> bool:
@@ -37,6 +37,39 @@ def _unquote(value: str) -> str:
     return value
 
 
+def _folded(lines: list[str]) -> str:
+    out: list[str] = []
+    pending = False
+    for line in lines:
+        if line == "":
+            out.append("\n")
+            pending = False
+        else:
+            if out and pending:
+                out.append(" ")
+            out.append(line)
+            pending = True
+    return "".join(out)
+
+
+def _seed_used_ids(output: Path) -> set[str]:
+    used: set[str] = set()
+    if output.exists():
+        for md in output.glob("*.md"):
+            used.add(md.stem)
+    return used
+
+
+def _next_raw_index(raw_dir: Path) -> int:
+    max_idx = 0
+    if raw_dir.exists():
+        for p in raw_dir.glob("match-*.yml"):
+            m = re.match(r"match-(\d+)\.yml$", p.name)
+            if m:
+                max_idx = max(max_idx, int(m.group(1)))
+    return max_idx + 1
+
+
 def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
     text = package_path.read_text(encoding="utf-8")
     if "matches:" not in text:
@@ -51,11 +84,18 @@ def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
     while i < len(lines):
         line = lines[i]
         stripped = line.strip()
+
         if not in_matches:
             if stripped == "matches:":
                 in_matches = True
             i += 1
             continue
+
+        if not line.startswith("  ") and stripped:
+            if current_block:
+                entries.append((current_dict, "".join(current_block)))
+                current_block = []
+            break
 
         if line.startswith("  - "):
             if current_block:
@@ -71,28 +111,23 @@ def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
             i += 1
             continue
 
-        if current_block:
-            if line.startswith("    "):
-                current_block.append(line)
-                if ":" in stripped and not stripped.startswith("- "):
-                    k, v = stripped.split(":", 1)
-                    key = k.strip()
-                    if v.strip() == "|":
-                        block_lines: list[str] = []
-                        j = i + 1
-                        while j < len(lines) and lines[j].startswith("      "):
-                            current_block.append(lines[j])
-                            block_lines.append(lines[j][6:].rstrip("\n"))
-                            j += 1
-                        current_dict[key] = "\n".join(block_lines)
-                        i = j
-                        continue
-                    current_dict[key] = _unquote(v)
-            elif stripped:
-                if current_block:
-                    entries.append((current_dict, "".join(current_block)))
-                    current_block = []
-                    current_dict = {}
+        if current_block and line.startswith("    "):
+            current_block.append(line)
+            if ":" in stripped and not stripped.startswith("- "):
+                k, v = stripped.split(":", 1)
+                key = k.strip()
+                marker = v.strip()
+                if _BLOCK_SCALAR_RE.match(marker):
+                    block_lines: list[str] = []
+                    j = i + 1
+                    while j < len(lines) and lines[j].startswith("      "):
+                        current_block.append(lines[j])
+                        block_lines.append(lines[j][6:].rstrip("\n"))
+                        j += 1
+                    current_dict[key] = _folded(block_lines) if marker.startswith(">") else "\n".join(block_lines)
+                    i = j
+                    continue
+                current_dict[key] = _unquote(v)
             i += 1
             continue
 
@@ -116,7 +151,8 @@ def import_espanso(input_path: str, output_dir: str) -> None:
     raw_dir = output / "imported_raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
 
-    used_ids: set[str] = set()
+    used_ids = _seed_used_ids(output)
+    next_raw_index = _next_raw_index(raw_dir)
     converted = 0
     raw_fallback = 0
 
@@ -138,11 +174,15 @@ def import_espanso(input_path: str, output_dir: str) -> None:
             (output / f"{prompt_id}.md").write_text(content, encoding="utf-8")
             converted += 1
         else:
-            raw_name = f"match-{index}.yml"
+            raw_name = f"match-{next_raw_index}.yml"
+            next_raw_index += 1
             (raw_dir / raw_name).write_text(raw_block, encoding="utf-8")
             raw_fallback += 1
             keys = sorted(match.keys())
-            unsupported = sorted((_UNSUPPORTED_KEYS | (set(keys) - _SIMPLE_KEYS)) - _SIMPLE_KEYS)
-            print(f"Warning: Unsupported match in {package_path} at index {index}; fields={unsupported}. Saved raw YAML to {raw_dir / raw_name}")
+            unsupported = sorted(set(keys) - _SIMPLE_KEYS)
+            print(
+                f"Warning: Unsupported match in {package_path} at index {index}; fields={unsupported}. Saved raw YAML to {raw_dir / raw_name}",
+                file=sys.stderr,
+            )
 
     print(f"Import summary: total={len(entries)} converted={converted} raw_fallback={raw_fallback}")
