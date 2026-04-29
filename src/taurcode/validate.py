@@ -10,6 +10,8 @@ def validate_prompt(prompt: Prompt) -> None:
         value = getattr(prompt, field_name, "")
         if not isinstance(value, str) or not value:
             raise ValueError(f"Missing required field '{field_name}' in {prompt_ref}")
+    if not prompt.body.strip():
+        raise ValueError(f"Prompt body must not be blank in {prompt_ref}")
 
     if not isinstance(prompt.keyword, str):
         raise ValueError(f"Invalid keyword in {prompt_ref}: must be a string")

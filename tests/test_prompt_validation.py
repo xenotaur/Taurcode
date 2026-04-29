@@ -122,6 +122,20 @@ class TestPromptValidation(unittest.TestCase):
             self.assertEqual(rc, 1)
             self.assertIn("Missing required field 'body'", stderr.getvalue())
 
+    def test_whitespace_only_body_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompts_dir = Path(tmpdir) / "prompts"
+            _write_prompt(
+                prompts_dir / "a.md",
+                """---\nid: a\nname: A\ndescription: Desc\nkeyword: ":tc-a"\n---\n\n   \n\t\n""",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(["validate", "--prompts", str(prompts_dir)])
+            self.assertEqual(rc, 1)
+            self.assertIn("Prompt body must not be blank", stderr.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
