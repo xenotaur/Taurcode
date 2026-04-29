@@ -1,10 +1,11 @@
+import json
 from pathlib import Path
 
 from .prompt_model import Prompt
 
 
 def _yaml_quote(value: str) -> str:
-    return '"' + value.replace('"', '\\"') + '"'
+    return json.dumps(value)
 
 
 def _as_block(value: str, indent: str = "      ") -> str:

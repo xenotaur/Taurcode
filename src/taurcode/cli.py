@@ -1,4 +1,6 @@
 import argparse
+import sys
+from typing import List, Optional
 
 from .espanso_export import export_espanso
 from .prompt_loader import load_prompts
@@ -19,15 +21,19 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: Optional[List[str]] = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    if args.command == "export" and args.target == "espanso":
-        prompts = load_prompts(args.prompts)
-        validate_prompts(prompts)
-        export_espanso(prompts, args.output)
-        return 0
+    try:
+        if args.command == "export" and args.target == "espanso":
+            prompts = load_prompts(args.prompts)
+            validate_prompts(prompts)
+            export_espanso(prompts, args.output)
+            return 0
+    except (OSError, ValueError) as error:
+        print(f"Error: {error}", file=sys.stderr)
+        return 1
 
     parser.error("Unsupported command")
     return 2

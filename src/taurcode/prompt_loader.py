@@ -13,6 +13,8 @@ def load_prompts(prompts_dir: str) -> List[Prompt]:
     for prompt_file in sorted(directory.glob("*.md")):
         post = frontmatter.load(prompt_file)
         body = post.content.replace("\r\n", "\n")
+        if body.startswith("\n"):
+            body = body[1:]
         prompts.append(
             Prompt(
                 id=post.metadata.get("id", ""),
