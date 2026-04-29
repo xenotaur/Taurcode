@@ -42,7 +42,8 @@ targets:
 
 Review the following change.
 
-Follow any repository-specific instructions and applicable style guidance.
+Follow repository-specific instruction files (for example `AGENTS.md`, `CONTRIBUTING.md`, or `project/context/agents.md`).
+Follow repository conventions and the surrounding file's style.
 
 Return a concise implementation plan first.
 ```
@@ -112,3 +113,8 @@ existing espanso package files
 ## Current Implementation Boundary
 - Observed repository content is lightweight: top-level `README.md` plus Espanso package artifacts under `espanso/package/`.
 - The canonical Markdown/frontmatter system is currently a design target, not an implemented runtime.
+
+## Canonical vs legacy asset boundary
+- Canonical authoring should occur in `prompts/*.md`.
+- Existing Espanso package files are legacy inputs and/or generated outputs for migration and interoperability.
+- Contributors should avoid treating Espanso YAML as the long-term authoring source once canonical prompts are introduced.

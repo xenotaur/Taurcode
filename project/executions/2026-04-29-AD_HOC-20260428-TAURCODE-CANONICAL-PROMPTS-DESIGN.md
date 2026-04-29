@@ -19,3 +19,8 @@ Updated project control-plane artifacts to record canonical Markdown/frontmatter
 
 ## Notes
 - Attempted to use `scripts/prompts/record-execution`, but the script is not present in this repository snapshot.
+
+
+## Rerun handling
+- Re-ran this prompt in soft-idempotent mode.
+- Confirmed prior design alignment existed; applied only minor clarifications to avoid duplicate records.
