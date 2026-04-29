@@ -42,8 +42,8 @@ targets:
 
 Review the following change.
 
-Follow AGENTS.md.
-Follow STYLE.md.
+Follow repository-specific instruction files (for example `AGENTS.md`, `CONTRIBUTING.md`, or `project/context/agents.md`).
+Follow repository conventions and the surrounding file's style.
 
 Return a concise implementation plan first.
 ```
