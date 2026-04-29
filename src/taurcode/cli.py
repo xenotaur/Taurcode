@@ -3,6 +3,7 @@ import sys
 from typing import List, Optional
 
 from .espanso_export import export_espanso
+from .espanso_import import import_espanso
 from .prompt_loader import load_prompts
 from .validate import validate_prompts
 
@@ -17,6 +18,13 @@ def build_parser() -> argparse.ArgumentParser:
     espanso = export_subparsers.add_parser("espanso")
     espanso.add_argument("--prompts", default="prompts")
     espanso.add_argument("--output", default="build/espanso/taurcode")
+
+    import_parser = subparsers.add_parser("import")
+    import_subparsers = import_parser.add_subparsers(dest="target", required=True)
+
+    import_espanso_parser = import_subparsers.add_parser("espanso")
+    import_espanso_parser.add_argument("--input", required=True)
+    import_espanso_parser.add_argument("--output", default="prompts")
 
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("--prompts", default="prompts")
@@ -33,6 +41,9 @@ def main(argv: Optional[List[str]] = None) -> int:
             prompts = load_prompts(args.prompts)
             validate_prompts(prompts)
             export_espanso(prompts, args.output)
+            return 0
+        if args.command == "import" and args.target == "espanso":
+            import_espanso(args.input, args.output)
             return 0
         if args.command == "validate":
             prompts = load_prompts(args.prompts)
