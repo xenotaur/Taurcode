@@ -9,25 +9,28 @@ health: yellow
 # Current Status
 
 ## Summary
-- The repository has clear initial intent (AI coding prompt toolkit with Espanso-oriented packaging) but appears early-stage and sparsely documented.
+- The repository intent is now explicitly documented as canonical Markdown/frontmatter prompts feeding deterministic target exporters (including Espanso).
+- Runtime implementation for this design is not yet present.
 
 ## Evidence Basis
 - `README.md`
 - `espanso/package/package.yml`
 - `espanso/package/_manifest.yml`
-- Bootstrap evidence record `evidence/EV-0001.md`
+- `project/design/design.md`
+- `project/work_items/WI-CANONICAL-PROMPTS-0002.md`
 
 ## Current Health
-- **Yellow**: Core concept is clear, but roadmap/ownership/process details are not yet explicit.
+- **Yellow**: Direction is clearer, but implementation and validation tooling are pending.
 
 ## Active Priorities
-- Establish and maintain LRH control-plane artifacts.
-- Validate and expand prompt toolkit documentation and structure.
+- Preserve canonical prompt design and source-of-truth boundary in future PRs.
+- Implement loader/validator/exporter/importer slices incrementally.
 
 ## Risks
-- Ambiguity in ownership and approvals may slow or fragment contributions.
-- Multi-utility ambitions may outpace currently evidenced integrations.
+- Legacy Espanso assumptions may leak back into canonical authoring decisions.
+- Install behavior could be introduced too early before export validation is trustworthy.
 
 ## Recommended Next Actions
-1. Confirm maintainer ownership and update contributor/approval artifacts.
-2. Add usage and validation guidance for existing prompts and Espanso package content.
+1. Start implementation scaffold and CLI entrypoint under `src/taurcode`.
+2. Implement canonical prompt parser/validator plus uniqueness checks.
+3. Implement deterministic exporter to `build/espanso/<package>/` and document review workflow.
