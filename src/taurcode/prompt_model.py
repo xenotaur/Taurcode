@@ -9,4 +9,5 @@ class Prompt:
     description: str
     keyword: str
     body: str
+    source: str = ""
     targets: Dict[str, Any] = field(default_factory=dict)
