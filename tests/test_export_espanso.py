@@ -19,7 +19,16 @@ class TestEspansoExport(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            rc = main(["export", "espanso", "--prompts", str(prompts_dir), "--output", str(output_dir)])
+            rc = main(
+                [
+                    "export",
+                    "espanso",
+                    "--prompts",
+                    str(prompts_dir),
+                    "--output",
+                    str(output_dir),
+                ]
+            )
             self.assertEqual(rc, 0)
 
             package_file = output_dir / "package.yml"
@@ -39,10 +48,19 @@ class TestEspansoExport(unittest.TestCase):
 
             prompt_file = prompts_dir / "prompt.md"
             prompt_file.write_bytes(
-                b"---\r\nid: crlf-prompt\r\nname: CRLF Prompt\r\ndescription: CRLF test\r\nkeyword: \":tc-crlf\"\r\n---\r\n\r\nBody from CRLF.\r\n"
+                b'---\r\nid: crlf-prompt\r\nname: CRLF Prompt\r\ndescription: CRLF test\r\nkeyword: ":tc-crlf"\r\n---\r\n\r\nBody from CRLF.\r\n'
             )
 
-            rc = main(["export", "espanso", "--prompts", str(prompts_dir), "--output", str(output_dir)])
+            rc = main(
+                [
+                    "export",
+                    "espanso",
+                    "--prompts",
+                    str(prompts_dir),
+                    "--output",
+                    str(output_dir),
+                ]
+            )
             self.assertEqual(rc, 0)
 
             package_text = (output_dir / "package.yml").read_text(encoding="utf-8")

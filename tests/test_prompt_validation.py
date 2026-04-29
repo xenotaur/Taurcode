@@ -31,18 +31,37 @@ class TestPromptValidation(unittest.TestCase):
             rc_validate = main(["validate", "--prompts", str(prompts_dir)])
             self.assertEqual(rc_validate, 0)
 
-            rc_export = main(["export", "espanso", "--prompts", str(prompts_dir), "--output", str(output_dir)])
+            rc_export = main(
+                [
+                    "export",
+                    "espanso",
+                    "--prompts",
+                    str(prompts_dir),
+                    "--output",
+                    str(output_dir),
+                ]
+            )
             self.assertEqual(rc_export, 0)
             first_output = (output_dir / "package.yml").read_text(encoding="utf-8")
 
             rc_export_again = main(
-                ["export", "espanso", "--prompts", str(prompts_dir), "--output", str(output_dir)]
+                [
+                    "export",
+                    "espanso",
+                    "--prompts",
+                    str(prompts_dir),
+                    "--output",
+                    str(output_dir),
+                ]
             )
             self.assertEqual(rc_export_again, 0)
             second_output = (output_dir / "package.yml").read_text(encoding="utf-8")
 
             self.assertEqual(first_output, second_output)
-            self.assertLess(first_output.find('trigger: ":tc-a"'), first_output.find('trigger: ":tc-b"'))
+            self.assertLess(
+                first_output.find('trigger: ":tc-a"'),
+                first_output.find('trigger: ":tc-b"'),
+            )
 
     def test_duplicate_id_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

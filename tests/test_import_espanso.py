@@ -16,7 +16,9 @@ class TestEspansoImport(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            rc = main(["import", "espanso", "--input", str(source), "--output", str(output)])
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
             self.assertEqual(rc, 0)
 
             imported = output / "tc-example.md"
@@ -36,7 +38,9 @@ class TestEspansoImport(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            rc = main(["import", "espanso", "--input", str(source), "--output", str(output)])
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
             self.assertEqual(rc, 0)
 
             raw_file = output / "imported_raw" / "match-1.yml"
@@ -60,12 +64,17 @@ class TestEspansoImport(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            rc = main(["import", "espanso", "--input", str(source), "--output", str(output)])
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
             self.assertEqual(rc, 0)
 
             self.assertTrue((output / "tc-dupe.md").exists())
             self.assertTrue((output / "tc-dupe-2.md").exists())
-            self.assertEqual((output / "tc-dupe-2.md").read_text(encoding="utf-8").split("\n")[-1], "")
+            self.assertEqual(
+                (output / "tc-dupe-2.md").read_text(encoding="utf-8").split("\n")[-1],
+                "",
+            )
             self.assertTrue((output / "imported_raw" / "match-1.yml").exists())
 
     def test_import_invalid_yaml_fails(self) -> None:
@@ -74,7 +83,16 @@ class TestEspansoImport(unittest.TestCase):
             source = base / "package.yml"
             source.write_text("matches:\n  - invalid", encoding="utf-8")
 
-            rc = main(["import", "espanso", "--input", str(source), "--output", str(base / "prompts")])
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(base / "prompts"),
+                ]
+            )
             self.assertEqual(rc, 1)
 
     def test_import_folded_block_scalar(self) -> None:
@@ -92,7 +110,9 @@ class TestEspansoImport(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            rc = main(["import", "espanso", "--input", str(source), "--output", str(output)])
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
             self.assertEqual(rc, 0)
             imported = (output / "tc-folded.md").read_text(encoding="utf-8")
             self.assertTrue(imported.endswith("line one line two\n"))
@@ -114,7 +134,9 @@ global_vars:
 """,
                 encoding="utf-8",
             )
-            rc = main(["import", "espanso", "--input", str(source), "--output", str(output)])
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
             self.assertEqual(rc, 0)
             self.assertTrue((output / "tc-one.md").exists())
             self.assertFalse((output / "tc-one-2.md").exists())
@@ -139,7 +161,9 @@ global_vars:
 """,
                 encoding="utf-8",
             )
-            rc = main(["import", "espanso", "--input", str(source), "--output", str(output)])
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
             self.assertEqual(rc, 0)
             self.assertTrue((output / "tc-example-2.md").exists())
             self.assertTrue((raw_dir / "match-2.yml").exists())

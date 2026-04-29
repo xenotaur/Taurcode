@@ -32,7 +32,9 @@ def _derive_name(prompt_id: str) -> str:
 
 def _unquote(value: str) -> str:
     value = value.strip()
-    if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
+    if (value.startswith('"') and value.endswith('"')) or (
+        value.startswith("'") and value.endswith("'")
+    ):
         return value[1:-1]
     return value
 
@@ -73,7 +75,9 @@ def _next_raw_index(raw_dir: Path) -> int:
 def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
     text = package_path.read_text(encoding="utf-8")
     if "matches:" not in text:
-        raise ValueError("Invalid Espanso package.yml: expected top-level 'matches' list")
+        raise ValueError(
+            "Invalid Espanso package.yml: expected top-level 'matches' list"
+        )
 
     lines = text.splitlines(keepends=True)
     entries: list[tuple[dict, str]] = []
@@ -105,7 +109,9 @@ def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
             remainder = line[4:].strip()
             if remainder:
                 if ":" not in remainder:
-                    raise ValueError("Invalid Espanso package.yml: malformed match entry")
+                    raise ValueError(
+                        "Invalid Espanso package.yml: malformed match entry"
+                    )
                 k, v = remainder.split(":", 1)
                 current_dict[k.strip()] = _unquote(v)
             i += 1
@@ -124,7 +130,11 @@ def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
                         current_block.append(lines[j])
                         block_lines.append(lines[j][6:].rstrip("\n"))
                         j += 1
-                    current_dict[key] = _folded(block_lines) if marker.startswith(">") else "\n".join(block_lines)
+                    current_dict[key] = (
+                        _folded(block_lines)
+                        if marker.startswith(">")
+                        else "\n".join(block_lines)
+                    )
                     i = j
                     continue
                 current_dict[key] = _unquote(v)
@@ -143,7 +153,9 @@ def import_espanso(input_path: str, output_dir: str) -> None:
     input_obj = Path(input_path)
     package_path = input_obj / "package.yml" if input_obj.is_dir() else input_obj
     if not package_path.exists() or package_path.name != "package.yml":
-        raise ValueError("Input must be an Espanso package.yml file or a directory containing package.yml")
+        raise ValueError(
+            "Input must be an Espanso package.yml file or a directory containing package.yml"
+        )
 
     entries = _parse_espanso_package(package_path)
     output = Path(output_dir)
@@ -168,8 +180,7 @@ def import_espanso(input_path: str, output_dir: str) -> None:
                 "description: Imported from Espanso\n"
                 f'keyword: "{trigger}"\n'
                 "---\n\n"
-                f"{replace}"
-                + ("" if replace.endswith("\n") else "\n")
+                f"{replace}" + ("" if replace.endswith("\n") else "\n")
             )
             (output / f"{prompt_id}.md").write_text(content, encoding="utf-8")
             converted += 1
@@ -185,4 +196,6 @@ def import_espanso(input_path: str, output_dir: str) -> None:
                 file=sys.stderr,
             )
 
-    print(f"Import summary: total={len(entries)} converted={converted} raw_fallback={raw_fallback}")
+    print(
+        f"Import summary: total={len(entries)} converted={converted} raw_fallback={raw_fallback}"
+    )
