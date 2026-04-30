@@ -27,7 +27,9 @@ PYTHONPATH=src python -m taurcode.cli import espanso --input espanso/package/pac
 Import behavior:
 
 - Simple matches with only `trigger` and `replace` are converted into `prompts/*.md`.
+- `replace` block scalars (`|` literal and `>` folded) are preserved according to YAML parsing semantics.
 - Unsupported or complex matches are preserved under `prompts/imported_raw/*.yml`.
+- Raw fallback keeps unsupported match YAML content so prompt text is not lost.
 - The importer prints a summary with total, converted, and raw fallback match counts.
 
 Suggested migration workflow:

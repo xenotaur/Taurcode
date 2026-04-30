@@ -102,10 +102,12 @@ class TestEspansoImport(unittest.TestCase):
             output = base / "prompts"
             source.write_text(
                 """matches:
-  - trigger: ":tc-folded"
-    replace: >-
-      line one
-      line two
+  - trigger: ":folded"
+    replace: >
+      This is folded
+      onto one paragraph.
+
+      This is a second paragraph.
 """,
                 encoding="utf-8",
             )
@@ -114,8 +116,132 @@ class TestEspansoImport(unittest.TestCase):
                 ["import", "espanso", "--input", str(source), "--output", str(output)]
             )
             self.assertEqual(rc, 0)
-            imported = (output / "tc-folded.md").read_text(encoding="utf-8")
-            self.assertTrue(imported.endswith("line one line two\n"))
+            imported = (output / "folded.md").read_text(encoding="utf-8")
+            self.assertTrue(
+                imported.endswith(
+                    "This is folded onto one paragraph.\nThis is a second paragraph.\n"
+                )
+            )
+
+    def test_import_literal_block_scalar_with_blank_lines(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            source.write_text(
+                """matches:
+  - trigger: ":address"
+    replace: |
+      Addressing Code Review Feedback
+      I got some comments on the associated PR. For each comment, ask:
+
+      - Does this comment refer to issues which are still present?
+      - Does this comment raise valid issues?
+
+      PR:
+      ----Comments Follow—————————————————————
+""",
+                encoding="utf-8",
+            )
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
+            self.assertEqual(rc, 0)
+            imported = (output / "address.md").read_text(encoding="utf-8")
+            self.assertIn(
+                "Addressing Code Review Feedback\n"
+                "I got some comments on the associated PR. For each comment, ask:\n\n"
+                "- Does this comment refer to issues which are still present?\n"
+                "- Does this comment raise valid issues?\n\n"
+                "PR:\n"
+                "----Comments Follow—————————————————————\n",
+                imported,
+            )
+
+    def test_import_unsupported_block_scalar_preserves_full_raw_yaml(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            source.write_text(
+                """matches:
+  - trigger: ":complex"
+    replace: |
+      paragraph one
+
+      paragraph two
+    vars:
+      - name: name
+""",
+                encoding="utf-8",
+            )
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
+            self.assertEqual(rc, 0)
+            self.assertFalse((output / "complex.md").exists())
+            raw_file = output / "imported_raw" / "match-1.yml"
+            self.assertTrue(raw_file.exists())
+            self.assertIn(
+                "    replace: |\n      paragraph one\n\n      paragraph two\n",
+                raw_file.read_text(encoding="utf-8"),
+            )
+
+    def test_import_raw_fallback_with_matches_header_comment(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            source.write_text(
+                """matches:  # inline comment
+  - trigger: ":complex"
+    replace: |
+      keep me
+
+      too
+    vars:
+      - name: name
+""",
+                encoding="utf-8",
+            )
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
+            self.assertEqual(rc, 0)
+            raw_file = output / "imported_raw" / "match-1.yml"
+            self.assertTrue(raw_file.exists())
+            self.assertIn("      keep me\n\n      too\n", raw_file.read_text("utf-8"))
+
+    def test_import_raw_fallback_ignores_top_level_comments_between_matches(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            source.write_text(
+                """matches:
+  - trigger: ":one"
+    replace: ok
+# top-level comment between matches and global vars
+  - trigger: ":complex"
+    replace: |
+      first
+
+      second
+    vars:
+      - name: name
+""",
+                encoding="utf-8",
+            )
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
+            self.assertEqual(rc, 0)
+            self.assertTrue((output / "one.md").exists())
+            raw_file = output / "imported_raw" / "match-1.yml"
+            self.assertTrue(raw_file.exists())
+            self.assertIn("      first\n\n      second\n", raw_file.read_text("utf-8"))
 
     def test_import_ignores_non_match_lists_after_matches(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
