@@ -61,12 +61,12 @@ def _split_raw_match_blocks(text: str) -> list[str]:
         indent = len(line) - len(line.lstrip(" "))
 
         if not in_matches:
-            if stripped == "matches:":
+            if re.fullmatch(r"matches:\s*(?:#.*)?", stripped):
                 in_matches = True
                 base_indent = indent
             continue
 
-        if stripped and indent <= (base_indent or 0):
+        if stripped and not stripped.startswith("#") and indent <= (base_indent or 0):
             break
 
         if stripped.startswith("- ") and indent == (base_indent or 0) + 2:
@@ -89,7 +89,10 @@ def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
         raise ValueError(
             "Invalid Espanso package.yml: expected top-level 'matches' list"
         )
-    data = yaml.safe_load(text)
+    try:
+        data = yaml.safe_load(text)
+    except yaml.YAMLError as exc:
+        raise ValueError("Invalid Espanso package.yml: malformed YAML") from exc
     if not isinstance(data, dict) or not isinstance(data.get("matches"), list):
         raise ValueError(
             "Invalid Espanso package.yml: expected top-level 'matches' list"
@@ -97,13 +100,17 @@ def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
 
     matches: list = data["matches"]
     raw_blocks = _split_raw_match_blocks(text)
+    if len(raw_blocks) < len(matches):
+        raise ValueError(
+            "Invalid Espanso package.yml: could not reliably extract all raw match blocks"
+        )
     entries: list[tuple[dict, str]] = []
     for index, match in enumerate(matches):
         if not isinstance(match, dict):
             raise ValueError(
                 "Invalid Espanso package.yml: each match entry must be a mapping"
             )
-        raw_block = raw_blocks[index] if index < len(raw_blocks) else ""
+        raw_block = raw_blocks[index]
         entries.append((match, raw_block))
     return entries
 

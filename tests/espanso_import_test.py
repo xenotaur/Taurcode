@@ -187,6 +187,62 @@ class TestEspansoImport(unittest.TestCase):
                 raw_file.read_text(encoding="utf-8"),
             )
 
+    def test_import_raw_fallback_with_matches_header_comment(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            source.write_text(
+                """matches:  # inline comment
+  - trigger: ":complex"
+    replace: |
+      keep me
+
+      too
+    vars:
+      - name: name
+""",
+                encoding="utf-8",
+            )
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
+            self.assertEqual(rc, 0)
+            raw_file = output / "imported_raw" / "match-1.yml"
+            self.assertTrue(raw_file.exists())
+            self.assertIn("      keep me\n\n      too\n", raw_file.read_text("utf-8"))
+
+    def test_import_raw_fallback_ignores_top_level_comments_between_matches(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            source.write_text(
+                """matches:
+  - trigger: ":one"
+    replace: ok
+# top-level comment between matches and global vars
+  - trigger: ":complex"
+    replace: |
+      first
+
+      second
+    vars:
+      - name: name
+""",
+                encoding="utf-8",
+            )
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
+            self.assertEqual(rc, 0)
+            self.assertTrue((output / "one.md").exists())
+            raw_file = output / "imported_raw" / "match-1.yml"
+            self.assertTrue(raw_file.exists())
+            self.assertIn("      first\n\n      second\n", raw_file.read_text("utf-8"))
+
     def test_import_ignores_non_match_lists_after_matches(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
