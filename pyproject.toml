@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "taurcode"
+version = "0.1.0"
+description = "Prompt source-of-truth tooling for Taurcode"
+requires-python = ">=3.11"
+dependencies = [
+  "python-frontmatter",
+  "PyYAML",
+]
+
+[project.optional-dependencies]
+test = [
+  "coverage",
+  "ruff",
+]
+
+[project.scripts]
+taurcode = "taurcode.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

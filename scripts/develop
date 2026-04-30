@@ -1,13 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 echo "Installing taurcode in develop mode..."
 set -x
-
-python -m pip install --no-build-isolation -e .
-EXIT_CODE=$?
-
-# Turn off logging and print a blank line
-{ set +x; } 2>/dev/null
-echo
-
-# If the command failed, exit with the exit code
-exit $EXIT_CODE
+python -m pip install -e ".[test]"

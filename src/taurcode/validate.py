@@ -1,6 +1,5 @@
 from .prompt_model import Prompt
 
-
 REQUIRED_FIELDS = ["id", "name", "description", "keyword", "body"]
 
 

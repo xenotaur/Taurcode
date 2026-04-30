@@ -1,0 +1,105 @@
+#!/bin/bash
+set -euo pipefail
+
+PROMPT_ID=""
+SUMMARY=""
+VALIDATION=""
+STATUS="landed"
+WORK_ITEM="AD_HOC"
+SLUG=""
+DRY_RUN=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --prompt-id)
+      PROMPT_ID="$2"
+      shift 2
+      ;;
+    --summary)
+      SUMMARY="$2"
+      shift 2
+      ;;
+    --validation)
+      VALIDATION="$2"
+      shift 2
+      ;;
+    --status)
+      STATUS="$2"
+      shift 2
+      ;;
+    --work-item)
+      WORK_ITEM="$2"
+      shift 2
+      ;;
+    --slug)
+      SLUG="$2"
+      shift 2
+      ;;
+    --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [[ -z "$PROMPT_ID" ]]; then
+  echo "--prompt-id is required" >&2
+  exit 1
+fi
+
+DATE_UTC="$(date -u +%Y-%m-%d)"
+BASE_DIR="project/executions"
+if [[ "$WORK_ITEM" != "AD_HOC" ]]; then
+  BASE_DIR="${BASE_DIR}/${WORK_ITEM}"
+fi
+
+SAFE_SLUG="${SLUG//[^A-Za-z0-9_-]/-}"
+if [[ -n "$SAFE_SLUG" ]]; then
+  FILE_NAME="${DATE_UTC}-${SAFE_SLUG}.md"
+else
+  FILE_NAME="${DATE_UTC}-${PROMPT_ID}.md"
+fi
+FILE="${BASE_DIR}/${FILE_NAME}"
+
+CONTENT=$(cat <<REC
+---
+prompt_id: ${PROMPT_ID}
+date: ${DATE_UTC}
+scope: ${WORK_ITEM}
+status: ${STATUS}
+---
+
+## Summary
+${SUMMARY:-execution record for prompt-driven change}
+
+## Result
+Execution completed.
+
+## Validation
+${VALIDATION:-See PR validation command output.}
+
+## Follow-up
+None.
+REC
+)
+
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  echo "[dry-run] would write: ${FILE}"
+  printf '%s\n' "$CONTENT"
+  exit 0
+fi
+
+mkdir -p "$BASE_DIR"
+
+if [[ -f "$FILE" ]]; then
+  echo "Execution record already exists: $FILE"
+  exit 0
+fi
+
+printf '%s\n' "$CONTENT" > "$FILE"
+
+echo "Wrote $FILE"

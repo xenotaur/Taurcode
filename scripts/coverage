@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "Running tests..."
+echo "Running coverage..."
 set -x
 PYTHONPATH=src python - <<'PY'
 import sys
@@ -12,8 +12,7 @@ count = suite.countTestCases()
 if count == 0:
     print("ERROR: discovered 0 tests with pattern *_test.py under tests/", file=sys.stderr)
     raise SystemExit(2)
-
-runner = unittest.TextTestRunner(verbosity=2)
-result = runner.run(suite)
-raise SystemExit(0 if result.wasSuccessful() else 1)
+print(f"Discovered {count} tests.")
 PY
+PYTHONPATH=src python -m coverage run -m unittest discover -s tests -p "*_test.py"
+python -m coverage report -m

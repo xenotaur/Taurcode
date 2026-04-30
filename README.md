@@ -75,3 +75,22 @@ Common errors:
 - `Missing required field 'id' in prompts/example.md`
 
 Export commands run the same validation step and fail if prompt data is invalid.
+
+## Development workflow
+
+Run operability checks from repository root:
+
+```bash
+scripts/develop
+scripts/lint
+scripts/format
+scripts/test
+scripts/coverage
+taurcode --help
+```
+
+Testing conventions:
+
+- Test framework: `unittest`
+- Discovery pattern: `*_test.py`
+- `scripts/test` fails if zero tests are discovered.
