@@ -2,8 +2,9 @@ import re
 import sys
 from pathlib import Path
 
+import yaml
+
 _SIMPLE_KEYS = {"trigger", "replace"}
-_BLOCK_SCALAR_RE = re.compile(r"^[|>][-+]?$")
 
 
 def is_simple_match(match: dict) -> bool:
@@ -30,30 +31,6 @@ def _derive_name(prompt_id: str) -> str:
     return " ".join(part.capitalize() for part in prompt_id.split("-"))
 
 
-def _unquote(value: str) -> str:
-    value = value.strip()
-    if (value.startswith('"') and value.endswith('"')) or (
-        value.startswith("'") and value.endswith("'")
-    ):
-        return value[1:-1]
-    return value
-
-
-def _folded(lines: list[str]) -> str:
-    out: list[str] = []
-    pending = False
-    for line in lines:
-        if line == "":
-            out.append("\n")
-            pending = False
-        else:
-            if out and pending:
-                out.append(" ")
-            out.append(line)
-            pending = True
-    return "".join(out)
-
-
 def _seed_used_ids(output: Path) -> set[str]:
     used: set[str] = set()
     if output.exists():
@@ -72,80 +49,62 @@ def _next_raw_index(raw_dir: Path) -> int:
     return max_idx + 1
 
 
+def _split_raw_match_blocks(text: str) -> list[str]:
+    lines = text.splitlines(keepends=True)
+    in_matches = False
+    base_indent: int | None = None
+    current_block: list[str] = []
+    blocks: list[str] = []
+
+    for line in lines:
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip(" "))
+
+        if not in_matches:
+            if stripped == "matches:":
+                in_matches = True
+                base_indent = indent
+            continue
+
+        if stripped and indent <= (base_indent or 0):
+            break
+
+        if stripped.startswith("- ") and indent == (base_indent or 0) + 2:
+            if current_block:
+                blocks.append("".join(current_block))
+            current_block = [line]
+            continue
+
+        if current_block:
+            current_block.append(line)
+
+    if current_block:
+        blocks.append("".join(current_block))
+    return blocks
+
+
 def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
     text = package_path.read_text(encoding="utf-8")
     if "matches:" not in text:
         raise ValueError(
             "Invalid Espanso package.yml: expected top-level 'matches' list"
         )
+    data = yaml.safe_load(text)
+    if not isinstance(data, dict) or not isinstance(data.get("matches"), list):
+        raise ValueError(
+            "Invalid Espanso package.yml: expected top-level 'matches' list"
+        )
 
-    lines = text.splitlines(keepends=True)
+    matches: list = data["matches"]
+    raw_blocks = _split_raw_match_blocks(text)
     entries: list[tuple[dict, str]] = []
-    in_matches = False
-    current_block: list[str] = []
-    current_dict: dict = {}
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        stripped = line.strip()
-
-        if not in_matches:
-            if stripped == "matches:":
-                in_matches = True
-            i += 1
-            continue
-
-        if not line.startswith("  ") and stripped:
-            if current_block:
-                entries.append((current_dict, "".join(current_block)))
-                current_block = []
-            break
-
-        if line.startswith("  - "):
-            if current_block:
-                entries.append((current_dict, "".join(current_block)))
-            current_block = [line]
-            current_dict = {}
-            remainder = line[4:].strip()
-            if remainder:
-                if ":" not in remainder:
-                    raise ValueError(
-                        "Invalid Espanso package.yml: malformed match entry"
-                    )
-                k, v = remainder.split(":", 1)
-                current_dict[k.strip()] = _unquote(v)
-            i += 1
-            continue
-
-        if current_block and line.startswith("    "):
-            current_block.append(line)
-            if ":" in stripped and not stripped.startswith("- "):
-                k, v = stripped.split(":", 1)
-                key = k.strip()
-                marker = v.strip()
-                if _BLOCK_SCALAR_RE.match(marker):
-                    block_lines: list[str] = []
-                    j = i + 1
-                    while j < len(lines) and lines[j].startswith("      "):
-                        current_block.append(lines[j])
-                        block_lines.append(lines[j][6:].rstrip("\n"))
-                        j += 1
-                    current_dict[key] = (
-                        _folded(block_lines)
-                        if marker.startswith(">")
-                        else "\n".join(block_lines)
-                    )
-                    i = j
-                    continue
-                current_dict[key] = _unquote(v)
-            i += 1
-            continue
-
-        i += 1
-
-    if current_block:
-        entries.append((current_dict, "".join(current_block)))
-
+    for index, match in enumerate(matches):
+        if not isinstance(match, dict):
+            raise ValueError(
+                "Invalid Espanso package.yml: each match entry must be a mapping"
+            )
+        raw_block = raw_blocks[index] if index < len(raw_blocks) else ""
+        entries.append((match, raw_block))
     return entries
 
 
