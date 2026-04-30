@@ -5,6 +5,9 @@ PROMPT_ID=""
 SUMMARY=""
 VALIDATION=""
 STATUS="landed"
+WORK_ITEM="AD_HOC"
+SLUG=""
+DRY_RUN=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -24,6 +27,18 @@ while [[ $# -gt 0 ]]; do
       STATUS="$2"
       shift 2
       ;;
+    --work-item)
+      WORK_ITEM="$2"
+      shift 2
+      ;;
+    --slug)
+      SLUG="$2"
+      shift 2
+      ;;
+    --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
     *)
       echo "Unknown argument: $1" >&2
       exit 1
@@ -37,26 +52,32 @@ if [[ -z "$PROMPT_ID" ]]; then
 fi
 
 DATE_UTC="$(date -u +%Y-%m-%d)"
-FILE="project/executions/${DATE_UTC}-${PROMPT_ID}.md"
-
-if [[ -f "$FILE" ]]; then
-  echo "Execution record already exists: $FILE"
-  exit 0
+BASE_DIR="project/executions"
+if [[ "$WORK_ITEM" != "AD_HOC" ]]; then
+  BASE_DIR="${BASE_DIR}/${WORK_ITEM}"
 fi
 
-cat > "$FILE" <<REC
+SAFE_SLUG="${SLUG//[^A-Za-z0-9_-]/-}"
+if [[ -n "$SAFE_SLUG" ]]; then
+  FILE_NAME="${DATE_UTC}-${SAFE_SLUG}.md"
+else
+  FILE_NAME="${DATE_UTC}-${PROMPT_ID}.md"
+fi
+FILE="${BASE_DIR}/${FILE_NAME}"
+
+CONTENT=$(cat <<REC
 ---
 prompt_id: ${PROMPT_ID}
 date: ${DATE_UTC}
-scope: AD_HOC
+scope: ${WORK_ITEM}
 status: ${STATUS}
 ---
 
 ## Summary
-${SUMMARY:-repository operability hardening}
+${SUMMARY:-execution record for prompt-driven change}
 
 ## Result
-Implemented repository operability hardening changes.
+Execution completed.
 
 ## Validation
 ${VALIDATION:-See PR validation command output.}
@@ -64,5 +85,21 @@ ${VALIDATION:-See PR validation command output.}
 ## Follow-up
 None.
 REC
+)
+
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  echo "[dry-run] would write: ${FILE}"
+  printf '%s\n' "$CONTENT"
+  exit 0
+fi
+
+mkdir -p "$BASE_DIR"
+
+if [[ -f "$FILE" ]]; then
+  echo "Execution record already exists: $FILE"
+  exit 0
+fi
+
+printf '%s\n' "$CONTENT" > "$FILE"
 
 echo "Wrote $FILE"
