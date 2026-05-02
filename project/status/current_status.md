@@ -17,7 +17,7 @@ health: yellow
 - `espanso/package/package.yml`
 - `espanso/package/_manifest.yml`
 - `project/design/design.md`
-- `project/work_items/WI-CANONICAL-PROMPTS-0002.md`
+- `project/work_items/active/WI-CANONICAL-PROMPTS-0002.md`
 
 ## Current Health
 - **Yellow**: Direction is clearer, but implementation and validation tooling are pending.
