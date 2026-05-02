@@ -1,7 +1,7 @@
 ---
 id: WI-CANONICAL-PROMPTS-0002
 title: Implement canonical prompt pipeline and Espanso export flow
-status: todo
+status: active
 priority: high
 owner: TBD
 related_focus: FOCUS-BOOTSTRAP

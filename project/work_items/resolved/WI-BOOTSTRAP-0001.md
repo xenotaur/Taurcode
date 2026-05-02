@@ -1,7 +1,7 @@
 ---
 id: WI-BOOTSTRAP-0001
 title: Bootstrap LRH project control plane
-status: done
+status: resolved
 priority: high
 owner: TBD
 related_focus: FOCUS-BOOTSTRAP
