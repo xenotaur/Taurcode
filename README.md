@@ -26,6 +26,13 @@ Use the CLI to import an Espanso package into a staging directory:
 taurcode import espanso --input espanso/package/package.yml --output prompts/imported
 ```
 
+For local Espanso package debugging, run the preflight linter first and then import:
+
+```bash
+taurcode lint espanso --input ~/Library/Application\ Support/espanso/match/packages/taurcode/
+taurcode import espanso --input ~/Library/Application\ Support/espanso/match/packages/taurcode/ --output prompts/imported
+```
+
 Import behavior:
 
 - Simple matches with only `trigger` and `replace` are converted into Markdown prompt files in the chosen output directory.
@@ -44,6 +51,21 @@ taurcode export espanso --prompts prompts/taurcode --output build/espanso/taurco
 ```
 
 In this workflow, `prompts/imported/` is only a temporary staging area that records import provenance. Curated prompts belong in `prompts/taurcode/`.
+
+### Espanso preflight diagnostics
+
+`taurcode lint espanso --input <path>` accepts either a `package.yml` file or a package directory containing `package.yml`. The same preflight diagnostics run automatically before `taurcode import espanso` parses package contents.
+
+The linter checks for:
+
+- missing `package.yml` when the input is a directory
+- invalid UTF-8 bytes
+- parser-sensitive invisible Unicode line break characters: `U+2028 LINE SEPARATOR`, `U+2029 PARAGRAPH SEPARATOR`, and `U+0085 NEXT LINE`
+- malformed YAML, including parser line and column information when PyYAML provides it
+
+Invisible Unicode line separators can be troublesome because some tools may treat them like line breaks while YAML parsers reject them or report confusing locations. Taurcode reports the file, line, column, character name, and a manual fix suggestion. For example, replace an invisible separator inside a block scalar with a normal newline and keep the following content indented under the scalar.
+
+Taurcode does not silently rewrite, normalize, or repair source Espanso files. Fix the source package manually, rerun `taurcode lint espanso`, and then rerun the import.
 
 ## Export to Espanso
 Use the CLI to export canonical prompts to an Espanso package:

@@ -4,6 +4,8 @@ from pathlib import Path
 
 import yaml
 
+from . import espanso_lint
+
 _SIMPLE_KEYS = {"trigger", "replace"}
 
 
@@ -92,7 +94,8 @@ def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
     try:
         data = yaml.safe_load(text)
     except yaml.YAMLError as exc:
-        raise ValueError("Invalid Espanso package.yml: malformed YAML") from exc
+        diagnostic = espanso_lint.diagnostic_from_yaml_error(package_path, exc)
+        raise ValueError(espanso_lint.format_diagnostic(diagnostic)) from exc
     if not isinstance(data, dict) or not isinstance(data.get("matches"), list):
         raise ValueError(
             "Invalid Espanso package.yml: expected top-level 'matches' list"
@@ -116,12 +119,10 @@ def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
 
 
 def import_espanso(input_path: str, output_dir: str) -> None:
-    input_obj = Path(input_path)
-    package_path = input_obj / "package.yml" if input_obj.is_dir() else input_obj
-    if not package_path.exists() or package_path.name != "package.yml":
-        raise ValueError(
-            "Input must be an Espanso package.yml file or a directory containing package.yml"
-        )
+    package_path = espanso_lint.resolve_package_yml(input_path)
+    diagnostics = espanso_lint.lint_espanso_package(package_path)
+    if diagnostics:
+        raise ValueError(espanso_lint.format_diagnostics(diagnostics))
 
     entries = _parse_espanso_package(package_path)
     output = Path(output_dir)
