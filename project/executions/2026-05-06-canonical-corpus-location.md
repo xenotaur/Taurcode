@@ -12,7 +12,7 @@ finalized canonical Taurcode prompt corpus location under prompts/taurcode/
 Execution completed.
 
 ## Validation
-scripts/develop: failed due network/build dependency restriction (pip tunnel 403 while fetching setuptools>=64).
+scripts/develop: failed due to network/build dependency restrictions (pip tunnel 403 while fetching setuptools>=64).
 scripts/lint: passed.
 scripts/format: passed.
 scripts/test: passed (23 tests).
