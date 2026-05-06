@@ -19,7 +19,7 @@
 ## Canonical Prompt Design Direction (v1)
 
 ### Source of truth
-- `prompts/*.md` is the intended canonical source of truth.
+- `prompts/taurcode/*.md` is the intended canonical source of truth for the Taurcode prompt package.
 - Canonical prompt files should be one Markdown file per prompt.
 - Each file should use YAML frontmatter for machine-readable metadata and an unindented Markdown body for prompt text.
 - Existing Espanso files should be treated as legacy input and/or generated target artifacts, not canonical authoring format.
@@ -70,7 +70,7 @@ Return a concise implementation plan first.
 ### Intended pipeline
 
 ```text
-prompts/*.md
+prompts/taurcode/*.md
   -> canonical Prompt objects
   -> validation
   -> target exporters
@@ -82,7 +82,8 @@ prompts/*.md
 ```text
 existing espanso package files
   -> importer
-  -> canonical prompts/*.md
+  -> prompts/imported/ staging
+  -> curated canonical prompts/taurcode/*.md
   -> validator
   -> exporter
   -> build/espanso/<package>/
@@ -111,10 +112,10 @@ existing espanso package files
   - global variables
 
 ## Current Implementation Boundary
-- Observed repository content is lightweight: top-level `README.md` plus Espanso package artifacts under `espanso/package/`.
-- The canonical Markdown/frontmatter system is currently a design target, not an implemented runtime.
+- Repository content includes the canonical `prompts/taurcode/` corpus plus legacy Espanso package artifacts under `espanso/package/`.
+- The canonical Markdown/frontmatter system has an implemented loader, validator, importer, and Espanso exporter.
 
 ## Canonical vs legacy asset boundary
-- Canonical authoring should occur in `prompts/*.md`.
+- Canonical authoring should occur in `prompts/taurcode/*.md`.
 - Existing Espanso package files are legacy inputs and/or generated outputs for migration and interoperability.
 - Contributors should avoid treating Espanso YAML as the long-term authoring source once canonical prompts are introduced.

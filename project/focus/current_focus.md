@@ -16,7 +16,7 @@ owner: TBD
 - A design decision is needed so future implementation PRs converge on one canonical format.
 
 ## Priorities
-1. Treat `prompts/*.md` as the intended source of truth.
+1. Treat `prompts/taurcode/*.md` as the intended source of truth for the Taurcode prompt package.
 2. Define v1 required/optional canonical fields and validation checks.
 3. Define deterministic export path `build/espanso/<package>/` with no automatic local install.
 4. Capture migration expectations from existing Espanso package assets.

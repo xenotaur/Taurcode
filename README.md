@@ -2,7 +2,9 @@
 Taurcode is a set of prompts for AI-generated coding with tools to format them for various injection systems like Espanso.
 
 ## Canonical prompts
-Canonical prompts are authored in Markdown files under `prompts/*.md` with YAML frontmatter metadata.
+The checked-in Taurcode prompt corpus lives under `prompts/taurcode/`. This directory is the authoritative source of truth for the Taurcode prompt package.
+
+Espanso package files are generated from that corpus into `build/espanso/taurcode/`; Espanso is an export target, not the canonical storage location.
 
 Example prompt:
 
@@ -18,33 +20,36 @@ This is a test prompt body.
 ```
 
 ## Import from Espanso
-Use the CLI to import an Espanso package into canonical prompts:
+Use the CLI to import an Espanso package into a staging directory:
 
 ```bash
-PYTHONPATH=src python -m taurcode.cli import espanso --input espanso/package/package.yml --output prompts
+taurcode import espanso --input espanso/package/package.yml --output prompts/imported
 ```
 
 Import behavior:
 
-- Simple matches with only `trigger` and `replace` are converted into `prompts/*.md`.
+- Simple matches with only `trigger` and `replace` are converted into Markdown prompt files in the chosen output directory.
 - `replace` block scalars (`|` literal and `>` folded) are preserved according to YAML parsing semantics.
-- Unsupported or complex matches are preserved under `prompts/imported_raw/*.yml`.
+- Unsupported or complex matches are preserved under `<output>/imported_raw/*.yml`.
 - Raw fallback keeps unsupported match YAML content so prompt text is not lost.
 - The importer prints a summary with total, converted, and raw fallback match counts.
 
 Suggested migration workflow:
 
 ```bash
-PYTHONPATH=src python -m taurcode.cli import espanso --input <path-to-package.yml-or-directory> --output prompts
-PYTHONPATH=src python -m taurcode.cli validate --prompts prompts
-PYTHONPATH=src python -m taurcode.cli export espanso --prompts prompts --output build/espanso/taurcode
+taurcode import espanso --input <path-to-package.yml-or-directory> --output prompts/imported
+# Review and curate staged imports into prompts/taurcode/ before treating them as canonical.
+taurcode validate --prompts prompts/taurcode
+taurcode export espanso --prompts prompts/taurcode --output build/espanso/taurcode
 ```
+
+In this workflow, `prompts/imported/` is only a temporary staging area that records import provenance. Curated prompts belong in `prompts/taurcode/`.
 
 ## Export to Espanso
 Use the CLI to export canonical prompts to an Espanso package:
 
 ```bash
-PYTHONPATH=src python -m taurcode.cli export espanso --prompts prompts --output build/espanso/taurcode
+taurcode export espanso --prompts prompts/taurcode --output build/espanso/taurcode
 ```
 
 Generated output:
@@ -55,10 +60,10 @@ Generated output:
 Note: installation into a local Espanso configuration is currently manual.
 
 ## Validate prompts
-Validate all prompt files before export:
+Validate all canonical prompt files before export:
 
 ```bash
-PYTHONPATH=src python -m taurcode.cli validate --prompts prompts
+taurcode validate --prompts prompts/taurcode
 ```
 
 Validation rules:
@@ -73,8 +78,8 @@ Validation rules:
 
 Common errors:
 
-- `Duplicate keyword ':tc-test' found in prompts/a.md and prompts/b.md`
-- `Missing required field 'id' in prompts/example.md`
+- `Duplicate keyword ':tc-test' found in prompts/taurcode/a.md and prompts/taurcode/b.md`
+- `Missing required field 'id' in prompts/taurcode/example.md`
 
 Export commands run the same validation step and fail if prompt data is invalid.
 
