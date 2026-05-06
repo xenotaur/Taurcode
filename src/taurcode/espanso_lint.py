@@ -86,7 +86,9 @@ def _line_break_diagnostics(path: Path, content: str) -> list[Diagnostic]:
     diagnostics: list[Diagnostic] = []
     line = 1
     column = 1
-    for char in content:
+    index = 0
+    while index < len(content):
+        char = content[index]
         if char in _PARSER_SENSITIVE_LINE_BREAKS:
             name = _PARSER_SENSITIVE_LINE_BREAKS[char]
             diagnostics.append(
@@ -106,41 +108,52 @@ def _line_break_diagnostics(path: Path, content: str) -> list[Diagnostic]:
                     ),
                 )
             )
-        if char == "\n":
+            line += 1
+            column = 1
+        elif char == "\r":
+            line += 1
+            column = 1
+            if index + 1 < len(content) and content[index + 1] == "\n":
+                index += 1
+        elif char == "\n":
             line += 1
             column = 1
         else:
             column += 1
+        index += 1
     return diagnostics
+
+
+def diagnostic_from_yaml_error(path: Path, exc: yaml.YAMLError) -> Diagnostic:
+    line: int | None = None
+    column: int | None = None
+    mark = getattr(exc, "problem_mark", None) or getattr(exc, "context_mark", None)
+    if mark is not None:
+        line = mark.line + 1
+        column = mark.column + 1
+    detail_parts = []
+    context = getattr(exc, "context", None)
+    problem = getattr(exc, "problem", None)
+    if context:
+        detail_parts.append(str(context))
+    if problem:
+        detail_parts.append(str(problem))
+    if not detail_parts:
+        detail_parts.append(str(exc))
+    return Diagnostic(
+        path=path,
+        line=line,
+        column=column,
+        code="malformed-yaml",
+        message="Invalid Espanso package.yml: malformed YAML",
+        detail="\n".join(detail_parts),
+        suggestion="Fix the YAML syntax and rerun the Espanso lint command.",
+    )
 
 
 def yaml_parse_diagnostic(path: Path, content: str) -> Diagnostic | None:
     try:
         yaml.safe_load(content)
     except yaml.YAMLError as exc:
-        line: int | None = None
-        column: int | None = None
-        mark = getattr(exc, "problem_mark", None) or getattr(exc, "context_mark", None)
-        if mark is not None:
-            line = mark.line + 1
-            column = mark.column + 1
-        detail_parts = []
-        context = getattr(exc, "context", None)
-        problem = getattr(exc, "problem", None)
-        if context:
-            detail_parts.append(str(context))
-        if problem:
-            detail_parts.append(str(problem))
-        if not detail_parts:
-            detail_parts.append(str(exc))
-        location = f" at {path}:{line}:{column}" if line and column else ""
-        return Diagnostic(
-            path=path,
-            line=line,
-            column=column,
-            code="malformed-yaml",
-            message=f"Invalid Espanso package.yml: malformed YAML{location}",
-            detail="\n".join(detail_parts),
-            suggestion="Fix the YAML syntax and rerun the Espanso lint command.",
-        )
+        return diagnostic_from_yaml_error(path, exc)
     return None

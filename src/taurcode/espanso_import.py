@@ -94,10 +94,8 @@ def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
     try:
         data = yaml.safe_load(text)
     except yaml.YAMLError as exc:
-        diagnostic = espanso_lint.yaml_parse_diagnostic(package_path, text)
-        if diagnostic is not None:
-            raise ValueError(espanso_lint.format_diagnostic(diagnostic)) from exc
-        raise ValueError("Invalid Espanso package.yml: malformed YAML") from exc
+        diagnostic = espanso_lint.diagnostic_from_yaml_error(package_path, exc)
+        raise ValueError(espanso_lint.format_diagnostic(diagnostic)) from exc
     if not isinstance(data, dict) or not isinstance(data.get("matches"), list):
         raise ValueError(
             "Invalid Espanso package.yml: expected top-level 'matches' list"

@@ -2,6 +2,7 @@
 prompt_id: AD_HOC-20260506-TAURCODE-ESPANSO-PREFLIGHT-LINTER
 date: 2026-05-06
 scope: AD_HOC
+related_work_item: AD_HOC
 status: landed
 ---
 

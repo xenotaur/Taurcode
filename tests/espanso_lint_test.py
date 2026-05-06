@@ -67,6 +67,41 @@ class TestEspansoLint(unittest.TestCase):
             self.assertIn("U+2029 PARAGRAPH SEPARATOR", rendered)
             self.assertIn("U+0085 NEXT LINE", rendered)
 
+    def test_multiple_line_separators_advance_diagnostic_locations(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package = Path(tmpdir) / "package.yml"
+            package.write_text(
+                "matches:\n"
+                '  - trigger: ":line"\n'
+                "    replace: |\n"
+                "      before\u2028after\u2029again\n",
+                encoding="utf-8",
+            )
+
+            diagnostics = espanso_lint.lint_espanso_package(package)
+
+            self.assertEqual(len(diagnostics), 2)
+            self.assertEqual((diagnostics[0].line, diagnostics[0].column), (4, 13))
+            self.assertEqual((diagnostics[1].line, diagnostics[1].column), (5, 6))
+
+    def test_crlf_counts_as_single_newline_for_locations(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package = Path(tmpdir) / "package.yml"
+            package.write_text(
+                "matches:\r\n"
+                '  - trigger: ":line"\r\n'
+                "    replace: |\r\n"
+                "      before\r\n"
+                "      abc\u2028after\r\n",
+                encoding="utf-8",
+                newline="",
+            )
+
+            diagnostics = espanso_lint.lint_espanso_package(package)
+
+            self.assertEqual(len(diagnostics), 1)
+            self.assertEqual((diagnostics[0].line, diagnostics[0].column), (5, 10))
+
     def test_missing_package_yml_in_directory_is_clear(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             with self.assertRaisesRegex(ValueError, "Missing Espanso package.yml"):
@@ -95,6 +130,7 @@ class TestEspansoLint(unittest.TestCase):
             rendered = espanso_lint.format_diagnostic(diagnostics[0])
             self.assertIn("Invalid Espanso package.yml: malformed YAML", rendered)
             self.assertRegex(rendered, rf"{package}:\d+:\d+")
+            self.assertNotRegex(rendered, rf"malformed YAML at {package}:\d+:\d+")
 
     def test_utf8_decode_error_is_reported(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
