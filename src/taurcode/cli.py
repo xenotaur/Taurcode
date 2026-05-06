@@ -7,6 +7,10 @@ from .espanso_import import import_espanso
 from .prompt_loader import load_prompts
 from .validate import validate_prompts
 
+CANONICAL_PROMPTS_DIR = "prompts/taurcode"
+IMPORT_STAGING_DIR = "prompts/imported"
+ESPANSO_OUTPUT_DIR = "build/espanso/taurcode"
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="taurcode")
@@ -16,18 +20,18 @@ def build_parser() -> argparse.ArgumentParser:
     export_subparsers = export_parser.add_subparsers(dest="target", required=True)
 
     espanso = export_subparsers.add_parser("espanso")
-    espanso.add_argument("--prompts", default="prompts")
-    espanso.add_argument("--output", default="build/espanso/taurcode")
+    espanso.add_argument("--prompts", default=CANONICAL_PROMPTS_DIR)
+    espanso.add_argument("--output", default=ESPANSO_OUTPUT_DIR)
 
     import_parser = subparsers.add_parser("import")
     import_subparsers = import_parser.add_subparsers(dest="target", required=True)
 
     import_espanso_parser = import_subparsers.add_parser("espanso")
     import_espanso_parser.add_argument("--input", required=True)
-    import_espanso_parser.add_argument("--output", default="prompts")
+    import_espanso_parser.add_argument("--output", default=IMPORT_STAGING_DIR)
 
     validate_parser = subparsers.add_parser("validate")
-    validate_parser.add_argument("--prompts", default="prompts")
+    validate_parser.add_argument("--prompts", default=CANONICAL_PROMPTS_DIR)
 
     return parser
 

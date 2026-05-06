@@ -32,7 +32,7 @@ Implement the canonical prompt system defined in project design docs without tre
 - Keep exporter deterministic and generated YAML parseable.
 
 ## Definition of Done
-- Canonical prompts in `prompts/*.md` load into validated prompt objects.
+- Canonical prompts in `prompts/taurcode/*.md` load into validated prompt objects.
 - Export command emits reviewable Espanso package output under `build/espanso/<package>/`.
 - Import path handles simple static replacements and flags unsupported feature usage.
 - Contributor docs explain the end-to-end canonical workflow.

@@ -25,7 +25,7 @@
 ## 2026-04-29: Canonical prompt source-of-truth decision
 
 ### Summary
-- Adopted canonical Markdown prompt files with YAML frontmatter (`prompts/*.md`) as the design source of truth.
+- Adopted canonical Markdown prompt files with YAML frontmatter (`prompts/taurcode/*.md`) as the Taurcode package source of truth.
 - Reframed Espanso as a generated export target, not canonical authoring format.
 
 ### Decisions
