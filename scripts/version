@@ -1,0 +1,32 @@
+#!/bin/bash
+set -euo pipefail
+
+show_package_version() {
+  python - <<'PY'
+from importlib import metadata
+
+print(f"taurcode {metadata.version('taurcode')}")
+PY
+}
+
+show_tool_versions() {
+  show_package_version
+  python --version
+  python -m pip --version
+  python -m black --version
+  python -m ruff --version
+  python -m coverage --version
+}
+
+case "${1:-}" in
+  "")
+    show_package_version
+    ;;
+  tools)
+    show_tool_versions
+    ;;
+  *)
+    echo "Usage: scripts/version [tools]" >&2
+    exit 2
+    ;;
+esac

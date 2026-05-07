@@ -2,6 +2,42 @@
 set -euo pipefail
 
 echo "Running lint checks..."
+FIX=0
+PATHS=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --fix)
+      FIX=1
+      shift
+      ;;
+    --)
+      shift
+      while [[ $# -gt 0 ]]; do
+        PATHS+=("$1")
+        shift
+      done
+      ;;
+    -*)
+      echo "Unknown argument: $1" >&2
+      exit 2
+      ;;
+    *)
+      PATHS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ ${#PATHS[@]} -eq 0 ]]; then
+  PATHS=(src tests)
+fi
+
 set -x
-python -m ruff check .
-python -m ruff format --check .
+if [[ "$FIX" -eq 1 ]]; then
+  python -m ruff check --fix "${PATHS[@]}"
+  python -m black "${PATHS[@]}"
+else
+  python -m ruff check "${PATHS[@]}"
+  python -m black --check "${PATHS[@]}"
+fi

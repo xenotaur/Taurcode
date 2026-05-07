@@ -1,0 +1,5 @@
+# Development and CI tool floor versions.
+black>=24.0
+coverage>=7.0
+PyYAML>=6.0
+ruff>=0.15.0
