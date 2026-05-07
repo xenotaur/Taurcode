@@ -2,6 +2,50 @@
 set -euo pipefail
 
 echo "Running formatter..."
+CHECK=0
+DIFF=0
+PATHS=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --check)
+      CHECK=1
+      shift
+      ;;
+    --diff)
+      DIFF=1
+      shift
+      ;;
+    --)
+      shift
+      while [[ $# -gt 0 ]]; do
+        PATHS+=("$1")
+        shift
+      done
+      ;;
+    -*)
+      echo "Unknown argument: $1" >&2
+      exit 2
+      ;;
+    *)
+      PATHS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ ${#PATHS[@]} -eq 0 ]]; then
+  PATHS=(src tests)
+fi
+
+CMD=(python -m black)
+if [[ "$CHECK" -eq 1 ]]; then
+  CMD+=(--check)
+fi
+if [[ "$DIFF" -eq 1 ]]; then
+  CMD+=(--diff)
+fi
+CMD+=("${PATHS[@]}")
+
 set -x
-python -m ruff check --fix .
-python -m ruff format .
+"${CMD[@]}"

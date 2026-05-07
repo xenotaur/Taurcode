@@ -96,6 +96,11 @@ scripts/coverage
 taurcode --help
 ```
 
+Formatting and linting:
+
+- `scripts/format` runs Black over `src/` and `tests/`; use `scripts/format --check --diff` for CI-style checks.
+- `scripts/lint` runs Ruff checks and a Black formatting gate.
+
 Testing conventions:
 
 - Test framework: `unittest`

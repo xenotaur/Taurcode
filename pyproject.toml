@@ -17,6 +17,11 @@ test = [
   "coverage",
   "ruff",
 ]
+dev = [
+  "black",
+  "coverage",
+  "ruff",
+]
 
 [project.scripts]
 taurcode = "taurcode.cli:main"
@@ -38,3 +43,7 @@ ignore = ["E501"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]

@@ -3,4 +3,4 @@ set -euo pipefail
 
 echo "Installing taurcode in develop mode..."
 set -x
-python -m pip install -e ".[test]"
+python -m pip install -e ".[dev]"
