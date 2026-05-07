@@ -37,7 +37,7 @@ The current import/export round trip focuses on prompt content and `package.yml`
   LICENSE
 ```
 
-Without an explicit source location and round-trip policy for those files, Taurcode risks losing source package metadata, replacing it with generated defaults, or omitting files that Espanso expects in a complete basic package. This is especially problematic because Espanso's basic package specification requires `package.yml`, `_manifest.yml`, and `README.md`, while also allowing optional files such as `LICENSE`, additional YAML files, and scripts called by snippets.
+Without an explicit source location and round-trip policy for those files, Taurcode risks losing source package metadata, replacing it with generated defaults, or omitting files that Espanso expects in a complete basic package. This is especially problematic because the [Espanso v2 Package Specification](https://espanso.org/docs/packages/package-specification/) states that the most basic package contains `package.yml`, `_manifest.yml`, and `README.md`, and that optional package files can include `LICENSE`, additional YAML files, and scripts called by snippets.
 
 ## Goals
 
@@ -138,7 +138,7 @@ Errors should include:
 - Manifest `name` does not match the package directory name.
 - Package name contains characters outside lowercase letters, digits, and hyphen.
 - Manifest `version` is missing.
-- Manifest `version` is not `MAJOR.MINOR.PATCH`.
+- Manifest `version` does not contain a SemVer-compatible numeric `MAJOR.MINOR.PATCH` core.
 - Build output lacks `package.yml`, `_manifest.yml`, or `README.md`.
 
 ### Warnings
@@ -153,7 +153,10 @@ Warnings should include:
 - Manifest `author` is empty or still a generated placeholder.
 - Manifest `homepage` exists but is not an `http://` or `https://` URL.
 - Manifest `homepage` appears to point to an obviously different package or repository slug.
+- Manifest `version` uses SemVer pre-release or build metadata, if Taurcode wants to discourage publishing those forms while still treating them as parseable versions.
 - Package content changed but version did not, if Taurcode later has a reliable state mechanism for this check.
+
+Espanso's v2 package specification says package versions should follow the standard `MAJOR.MINOR.PATCH` format. Taurcode should therefore require the numeric major, minor, and patch core, but should avoid rejecting otherwise SemVer-compatible pre-release or build metadata unless Espanso or the Hub validator is proven to reject those forms.
 
 The linting design should remain intentionally modest. Taurcode should catch mistakes that cause round-trip loss, broken local builds, or obviously stale metadata, but it should avoid registry-level judgments that require network access, project-specific release policy, or human semantic review.
 
