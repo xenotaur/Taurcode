@@ -105,6 +105,10 @@ Common errors:
 
 Export commands run the same validation step and fail if prompt data is invalid.
 
+## Design proposals
+
+Architectural proposals for future Taurcode and LRH control-plane work live under `project/design/proposals/`. These documents capture design direction for later implementation prompts and work-item planning without making the proposed behavior immediately normative.
+
 ## Development workflow
 
 Run operability checks from repository root:
