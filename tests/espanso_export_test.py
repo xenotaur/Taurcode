@@ -111,6 +111,59 @@ This is a test prompt body.
             self.assertEqual((output_dir / "README.md").read_bytes(), readme)
             self.assertEqual((output_dir / "LICENSE").read_bytes(), license_text)
 
+    def test_export_removes_stale_metadata_assets(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            prompts_dir = base / "prompts"
+            metadata_dir = prompts_dir / "espanso"
+            output_dir = base / "build" / "espanso" / "sample"
+            metadata_dir.mkdir(parents=True)
+            (prompts_dir / "prompt.md").write_text(
+                """---
+id: test-prompt
+name: Test Prompt
+description: A test prompt
+keyword: ":tc-test"
+---
+
+This is a test prompt body.
+""",
+                encoding="utf-8",
+            )
+            (metadata_dir / "README.md").write_text("old source", encoding="utf-8")
+            (metadata_dir / "LICENSE").write_text("old license", encoding="utf-8")
+
+            rc = main(
+                [
+                    "export",
+                    "espanso",
+                    "--prompts",
+                    str(prompts_dir),
+                    "--output",
+                    str(output_dir),
+                ]
+            )
+            self.assertEqual(rc, 0)
+            self.assertTrue((output_dir / "README.md").exists())
+            self.assertTrue((output_dir / "LICENSE").exists())
+
+            (metadata_dir / "README.md").unlink()
+            (metadata_dir / "LICENSE").unlink()
+
+            rc = main(
+                [
+                    "export",
+                    "espanso",
+                    "--prompts",
+                    str(prompts_dir),
+                    "--output",
+                    str(output_dir),
+                ]
+            )
+            self.assertEqual(rc, 0)
+            self.assertFalse((output_dir / "README.md").exists())
+            self.assertFalse((output_dir / "LICENSE").exists())
+
     def test_export_ignores_espanso_readme_as_prompt_source(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
