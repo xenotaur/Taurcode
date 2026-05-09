@@ -1,4 +1,5 @@
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -7,6 +8,7 @@ import yaml
 from . import espanso_lint
 
 _SIMPLE_KEYS = {"trigger", "replace"}
+_METADATA_ASSETS = ("_manifest.yml", "README.md", "LICENSE")
 
 
 def is_simple_match(match: dict) -> bool:
@@ -118,6 +120,18 @@ def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
     return entries
 
 
+def _copy_metadata_assets(package_dir: Path, output: Path) -> None:
+    sources = [package_dir / asset_name for asset_name in _METADATA_ASSETS]
+    if not any(source.is_file() for source in sources):
+        return
+
+    metadata_dir = output / "espanso"
+    metadata_dir.mkdir(parents=True, exist_ok=True)
+    for source in sources:
+        if source.is_file():
+            shutil.copyfile(source, metadata_dir / source.name)
+
+
 def import_espanso(input_path: str, output_dir: str) -> None:
     package_path = espanso_lint.resolve_package_yml(input_path)
     diagnostics = espanso_lint.lint_espanso_package(package_path)
@@ -127,6 +141,7 @@ def import_espanso(input_path: str, output_dir: str) -> None:
     entries = _parse_espanso_package(package_path)
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
+    _copy_metadata_assets(package_path.parent, output)
     raw_dir = output / "imported_raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
 

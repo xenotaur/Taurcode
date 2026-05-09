@@ -36,6 +36,7 @@ taurcode import espanso --input ~/Library/Application\ Support/espanso/match/pac
 Import behavior:
 
 - Simple matches with only `trigger` and `replace` are converted into Markdown prompt files in the chosen output directory.
+- If present in the source Espanso package, `_manifest.yml`, `README.md`, and `LICENSE` are copied into `<output>/espanso/` for later export.
 - `replace` block scalars (`|` literal and `>` folded) are preserved according to YAML parsing semantics.
 - Unsupported or complex matches are preserved under `<output>/imported_raw/*.yml`.
 - Raw fallback keeps unsupported match YAML content so prompt text is not lost.
@@ -78,6 +79,10 @@ Generated output:
 
 - `build/espanso/taurcode/package.yml`
 - `build/espanso/taurcode/_manifest.yml`
+- `build/espanso/taurcode/README.md` when `prompts/taurcode/espanso/README.md` exists
+- `build/espanso/taurcode/LICENSE` when `prompts/taurcode/espanso/LICENSE` exists
+
+The optional `prompts/<package>/espanso/` directory is reserved for Espanso package metadata. When `_manifest.yml`, `README.md`, or `LICENSE` exists there, export copies it into the generated package instead of treating it as prompt content.
 
 Note: installation into a local Espanso configuration is currently manual.
 
@@ -91,7 +96,7 @@ taurcode validate --prompts prompts/taurcode
 Validation rules:
 
 - Prompt files are loaded from the provided directory recursively.
-- Only `.md` files are considered.
+- Only `.md` files outside reserved metadata directories such as `espanso/` are considered.
 - Required fields: `id`, `name`, `description`, `keyword`, `body`.
 - `id` values must be unique.
 - `keyword` values must be unique.

@@ -51,7 +51,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.command == "export" and args.target == "espanso":
             prompts = load_prompts(args.prompts)
             validate_prompts(prompts)
-            export_espanso(prompts, args.output)
+            export_espanso(prompts, args.output, source_dir=args.prompts)
             return 0
         if args.command == "lint" and args.target == "espanso":
             diagnostics = lint_espanso_package(args.input)
