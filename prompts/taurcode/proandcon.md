@@ -1,7 +1,7 @@
 ---
 id: proandcon
 name: Proandcon
-description: Imported from Espanso
+description: Evaluate the pros and cons of an idea
 keyword: ":proandcon"
 ---
 

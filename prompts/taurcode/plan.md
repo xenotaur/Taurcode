@@ -1,7 +1,7 @@
 ---
 id: plan
 name: Plan
-description: Imported from Espanso
+description: Plan a Task
 keyword: ":plan"
 ---
 

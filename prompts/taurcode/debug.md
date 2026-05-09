@@ -1,7 +1,7 @@
 ---
 id: debug
 name: Debug
-description: Imported from Espanso
+description: Debug an Issue
 keyword: ":debug"
 ---
 

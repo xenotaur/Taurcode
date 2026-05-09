@@ -1,7 +1,7 @@
 ---
 id: design
 name: Design
-description: Imported from Espanso
+description: Design a Feature or Improvement
 keyword: ":design"
 ---
 

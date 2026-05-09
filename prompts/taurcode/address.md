@@ -1,7 +1,7 @@
 ---
 id: address
 name: Address
-description: Imported from Espanso
+description: Address Code Review Feedback
 keyword: ":address"
 ---
 

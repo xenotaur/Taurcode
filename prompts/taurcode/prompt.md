@@ -1,7 +1,7 @@
 ---
 id: prompt
 name: Prompt
-description: Imported from Espanso
+description: Provide a structured prompt to generate a PR to accomplish this task
 keyword: ":prompt"
 ---
 

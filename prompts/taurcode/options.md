@@ -1,7 +1,7 @@
 ---
 id: options
 name: Options
-description: Imported from Espanso
+description: Evaluate options for doing a task
 keyword: ":options"
 ---
 

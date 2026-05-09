@@ -1,11 +1,11 @@
 ---
 id: package
 name: Package
-description: Imported from Espanso
+description: Provide a structured package of prompts to implement a work item
 keyword: ":package"
 ---
 
-Provide a package of prompts
+Provide a package of structured prompts
 
 Please provide a package of structured prompts to generate
 a sequence of PRs to implement your proposed work item.

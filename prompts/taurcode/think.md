@@ -1,7 +1,7 @@
 ---
 id: think
 name: Think
-description: Imported from Espanso
+description: Think step by step about a task
 keyword: ":think"
 ---
 

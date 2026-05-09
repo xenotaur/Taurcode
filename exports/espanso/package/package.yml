@@ -3,79 +3,211 @@ matches:
     replace: |
       Addressing Code Review Feedback
       I got some comments on the associated PR. For each comment, ask:
-
+      
       - Does this comment refer to issues which are still present in the current state of the branch? If not present, say why not and stop processing that comment.
-
+      
       - Does this comment raise valid issues we should address? If it is not valid, say why not and stop processing that comment.
-
+      
       - If this comment raises valid issues, are they it feasible to address? If it is not feasible, say why not and stop.
-
-      If any of the comments raise present, valid and feasible issues to address, please create a PR to address the issues in these comments.   Please respect any AGENTS.md and STYLE.md in the target repository, and if there are README.md in directories with affected code, please make sure they are up-to-date with the changes.
+      
+      If any of the comments raise present, valid and feasible issues to address, please create a PR to address the issues in these comments. Please respect any AGENTS.md and STYLE.md in the target repository, and if there are README.md in directories with affected code, please make sure they are up-to-date with the changes.
       PR:
       ----Comments Follow—————————————————————
-
-  - trigger: ":think"
-    replace: >
-      Let’s think step by step and check our work
-      to make sure we get the right answer,
-      and cite or quote reputable sources
-      in our answer so we know it is grounded.
-
-  - trigger: ":debug"
-    replace: >
-      What’s going wrong here?
-      How can we debug it?
-      And how might we fix it?
-      Let's think step by step and check our work
-      to make sure we get the right answer,
-      and cite or quote reputable documentation or blogposts
-      in our answer so we know it is grounded.
-
-  - trigger: ":prompt"
+  - trigger: ":analyze"
     replace: |
-      Provide a structured prompt to generate a PR to accomplish this task:
-
-      Before writing the prompt, generate a prompt ID using the conventions
-      in `PROMPTS.md`. Include that prompt ID at the top of the generated
-      prompt.
-
-      After the PR is generated, the agent should create an execution record
-      for the prompt using `scripts/prompts/record-execution`, following the
-      conventions in `PROMPTS.md` and `project/executions/README.md`.
-
+      I ran the following code:
+      
+      -----------------------------------------------
+      
+      -----------------------------------------------
+      
+      and got the following output:
+      
+      -----------------------------------------------
+      
+      -----------------------------------------------
+      
+      What's going wrong here, how might we debug it, and how might we fix it?
+      Let's think step by step and check our work to make sure we get the right answer, 
+      and cite or quote reputable documentation or blogposts in our answer so we know it is grounded.
+  - trigger: ":basic"
+    replace: |
+      Provide a prompt to generate a PR
+      to accomplish this task:
+      
+      
       In that prompt, ask the agent to:
-
-      - follow AGENTS.md
-      - follow STYLE.md for consistency
-      - follow PROMPTS.md for prompt IDs, execution records, and rerun handling
-      - update any README.md’s in affected folders
-      - add or update an execution record for the prompt (using AD_HOC if no work item applies)
-      - check for prior execution records for the same prompt ID and apply soft idempotence rules before proceeding
-
-      Keep the workflow lightweight: execution records are expected for
-      meaningful prompt-driven PRs, but should not block small or obvious
-      changes. Do not update execution records unrelated to this task.
-
-      Target the prompt to Codex Cloud and provide it as both a downloadable
-      file AND a copy-and-paste block inline within the chat. Please present
-      the downloadable file first, as prompts in copy-and-paste blocks
-      sometimes interfere with the rendering of the chat. The copy-and-paste
-      block should be a 1-1 copy of the prompt; NEVER present a copy and paste
-      block that does not exactly correspond to the exact contents of the
-      downloadable file.
-
-  - trigger: ":proandcon"
-    replace: >
-      What are the pros and cons of this idea with respect to best practices?
-      Let’s think step by step and check our work
-      to make sure we get the right answer, and
-      cite or quote reputable sources in our answer
-      so we know it is grounded.
-
+      
+      - follow AGENTS.md 
+      - follow STYLE.md for consistency, 
+      - update any README.md’s in affected folders.
+      
+      Target the prompt to Codex Cloud and provide it as both a downloadable file AND a copy-and-paste block inline within the chat. Please present the downloadable file first, as prompts in copy-and-paste blocks sometimes interfere with the rendering of the chat.
+  - trigger: ":contint"
+    replace: |
+      Addressing CI Issues
+      I got errors from Continuous Integration (CI) on the associated PR. For each error, ask:
+      
+      - Does this error refer to issues which are still present in the current state of the branch? If not present, say why not and stop processing that error.
+      
+      - Does this error raise valid issues we should address? If it is not valid, say why not and stop processing that error.
+      
+      - If this error raises valid issues, is it feasible to address them? If it is not feasible, say why not and stop.
+      
+      If any error raises present, valid, and feasible issues to address, please create a PR to address those issues.
+      
+      Please respect any AGENTS.md and STYLE.md in the target repository, and if there are README.md in directories with affected code, please make sure they are up-to-date with the changes.
+      
+      ----CI Report Follows—————————————————————
+  - trigger: ":coverage"
+    replace: |
+      PR Request to Improve Coverage
+      Create a tests-only PR to improve coverage for:
+      
+      TARGET MODULE:
+      <REPLACE_WITH_PACKAGE_PATH>
+      (e.g., lcats/lcats/utils/canonical_author.py)
+      
+      
+      ==================================================
+      ENVIRONMENT BOOTSTRAP (MANDATORY FIRST STEP)
+      ==================================================
+      
+      Before doing anything else, prepare the development environment exactly as follows.
+      
+      From the repository root:
+      
+          cd lcats
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
+      
+      Do NOT run tests or coverage before this succeeds.
+      
+      Do NOT modify project files to fix missing dependencies.
+      If installation fails, stop and report the error.
+      NOTE: If black/ruff are not available after this install, stop and report it.
+      Do NOT modify project code to resolve missing tools.
+      Do NOT pipe commands through head/tail.
+      If you must use pipes, enable: set -o pipefail
+      
+      
+      ==================================================
+      CONSTRAINTS (strict)
+      ==================================================
+      
+      - Edit ONLY files under: lcats/tests/
+      - Do NOT modify any production code under lcats/lcats/
+      - Follow AGENTS.md and lcats/tests/AGENTS.md
+      - Use unittest only
+      - Use module imports only:
+            from lcats.<submodule> import <module>
+      - Avoid mocks unless absolutely necessary
+      - Tests must be deterministic
+      - Prefer parameterized.expand for curated case tables
+      - Prefer subTest only for range/programmatic iteration
+      - Do not reformat unrelated files
+      
+      
+      ==================================================
+      OUTPUT HANDLING (MANDATORY)
+      ==================================================
+      
+      LCATS includes user-facing and debug printing. Unit tests must not generate noisy output.
+      
+      - If code under test prints but the print content is NOT a stable user-facing contract:
+      Wrap the call with suppress_output().
+      
+      - If the printed output IS meaningful user-facing output (a "report" / key warning / status):
+      Use capture_output() and assert only on stable substrings (avoid exact whole-output equality).
+      
+      Use helpers from:
+      lcats/tests/utils/capture.py
+      
+      Do NOT modify production code to remove or change printing.
+      
+      
+      ==================================================
+      PROCESS (required sequence)
+      ==================================================
+      
+      1) After bootstrap, run:
+      
+             scripts/coverage
+      
+      2) Identify uncovered lines/functions/branches in:
+             <REPLACE_WITH_PACKAGE_PATH>
+      
+      3) Summarize:
+         - Which functions/branches are uncovered
+         - Why they are currently untested
+         - Which semi-private helpers (leading underscore) are worth testing directly
+      
+      4) Propose a small, focused set of new test cases to cover the missing logic.
+      
+      5) Implement tests:
+         - Prefer adding to existing *_test.py if appropriate
+         - Otherwise create:
+               lcats/tests/<SUBDIR>_tests/<REPLACE_WITH_MODULE_NAME>_test.py
+         - Use parameterized.expand for curated edge-case tables
+         - Use unittest.TestCase assertion methods only
+      
+      6) Run:
+      
+             scripts/test
+      
+      7) Run:
+      
+             scripts/coverage
+      
+      8) Format and lint (MANDATORY; only changed files):
+          - Compute changed python files:
+            CHANGED=$(git diff --name-only origin/main...HEAD -- "*.py")
+            echo "$CHANGED"
+         - Run Black on changed files only:
+            python -m black $CHANGED
+         - Run Ruff on changed files only:
+            python -m ruff check $CHANGED
+         - If either fails, fix the changed test file(s) and re-run until both pass.
+         - Do NOT reformat unrelated files
+      
+      9) In the PR description include:
+         - Before/after coverage numbers for the target module
+         - List of newly covered lines or branches
+         - Confirmation that scripts/test passed
+         - Confirmation that Black and Ruff passed
+         - The exact commands run for black and ruff
+         - Their successful exit status
+      
+      ==================================================
+      FAILURE POLICY
+      ==================================================
+      
+      - If coverage cannot be improved without modifying production code,
+        stop and explain why instead of editing production code.
+      
+      - If tests fail due to missing dependencies, do NOT modify code.
+        Re-run bootstrap.
+      
+      - If lint fails, fix only the changed test files.
+      
+      
+      ==================================================
+      ACCEPTANCE CRITERIA
+      ==================================================
+      
+      - Coverage improves specifically for <REPLACE_WITH_PACKAGE_PATH>
+      - Only test files were changed
+      - scripts/test passes
+      - Black formatting is clean
+      - Ruff lint is clean
+      - No unrelated changes in the diff
+  - trigger: ":debug"
+    replace: |
+      What’s going wrong here? How can we debug it? And how might we fix it? Let's think step by step and check our work to make sure we get the right answer, and cite or quote reputable documentation or blogposts in our answer so we know it is grounded.
   - trigger: ":design"
     replace: |
       Please flesh out a design to implement this idea. 
-
+      
       Review the idea, review recommended best practices in the area,
       generate a high-level design, identify the low-level choices needed,
       consider the pros and cons, and  evaluate them with respect to the
@@ -83,15 +215,162 @@ matches:
       ideas for the relevant kind of idea being implemented. Use your
       best judgment on neither cutting corners or incurring technical
       debt, nor over-engineering prematurely or unnecessarily.
-
+      
       If key information is missing, stop and ask for clarification.
-
+      
       If there is a serious issue that needs to be addressed, also stop
       and alert the user. 
-
+      
       Otherwise, if there is enough information to proceed, outline a
       design to implement the idea in a best-practices way.
       Let’s think step by step and check our work
       to make sure we get the right answer, and
       cite or quote reputable sources in our answer
       so we know it is grounded.
+  - trigger: ":error"
+    replace: |
+      This code generated an error:
+      
+      -----------------------------------------------
+      
+      -----------------------------------------------
+      
+      The error output is:
+      
+      -----------------------------------------------
+      
+      -----------------------------------------------
+      
+      What's going wrong here, how might we debug it, and how might we fix it? 
+      Let's think step by step and check our work to make sure we get the right answer,
+      and cite or quote reputable documentation or blogposts in our answer so we know it is grounded.
+  - trigger: ":evaluate"
+    replace: |
+      Evaluate this audit report
+      
+      Are the issues raised audit report valid, feasible, and consistent with the project’s goals, and actionable?
+      
+      Does this report raise valid issues we should address? If it is not valid, say why not and stop.
+      
+      If this report raises valid issues, are they feasible to address? If it is not feasible, say why not and stop.
+      
+      If this report raises valid and feasible issues to address, are they consistent with the project goals? If not consistent, say why and stop.
+      
+      If this report raises valid, feasible, and goal-consistent issues, are they actionable? If not actionable right now, say why and stop.
+      
+      If the report raises valid, feasible, and goal-consistent issues that are actionable, please present a plan to address them. Review the work to be done, review recommended best practices in the area, consider the pros and cons, generate a set of potential options, evaluate them with respect to the best practices. 
+      
+      If key information is missing needed for planning, stop and ask for clarification. 
+      
+      If there is a serious issue that needs to be addressed in the audit before planning, also stop and alert the user. 
+      
+      Otherwise, if there is enough information to proceed, outline a set of recommendations to address the issue respecting the user’s intent in a best-practices way. 
+      
+      Let’s think step by step and check our work to make sure we get the right answer, and cite or quote reputable sources in our answer so we know it is grounded.
+  - trigger: ":options"
+    replace: |
+      What are the options for doing this?
+      
+      What are their pros and cons with respect to best practices?
+      Does any one of them have a decisive advantage or a
+      disqualifying limitation?
+      
+      Let’s think step by step and check our work to make sure we get
+      the right answer, and cite or quote reputable sources in our
+      answer so we know it is grounded.
+  - trigger: ":package"
+    replace: |
+      Provide a package of structured prompts
+      
+      Please provide a package of structured prompts to generate
+      a sequence of PRs to implement your proposed work item.
+      
+      For each prompt, generate a prompt ID using the conventions
+      in `PROMPTS.md`. Include that prompt ID at the top of each
+      generated prompt.
+      
+      After each PR is generated, the agent should create an
+      execution record for the prompt using
+      `scripts/prompts/record-execution`, following the
+      conventions in `PROMPTS.md` and `project/executions/README.md`.
+      
+      In each prompt, ask the agent to:
+      
+      - follow AGENTS.md
+      - follow STYLE.md for consistency
+      - follow PROMPTS.md for prompt IDs, execution records, and rerun handling
+      - update any README.md’s in affected folders
+      - add or update an execution record for the prompt (using AD_HOC if no work item applies)
+      - check for prior execution records for the same prompt ID and apply soft idempotence rules before proceeding
+      
+      Target the prompts to Codex Cloud. Please provide a downloadable zip file.
+      Also provide the entire text of each prompt as a separate copy-and-paste
+      blocks inline within the chat. Please present the downloadable zip file
+      first, because prompts in copy-and-paste blocks sometimes interfere with
+      the rendering of the chat. The copy-and-paste block should be a 1-1 copy
+      of each prompt; NEVER present a copy and paste block that does not exactly
+      correspond to the exact contents of a downloadable file.
+  - trigger: ":plan"
+    replace: |
+      Please present a plan to accomplish this task.
+      
+      Review the work to be done, review recommended best practices in
+      the area, consider the pros and cons, generate a set of potential
+      options, evaluate them with respect to the best practices.
+      
+      If key information is missing, stop and ask for clarification.
+      
+      If there is a serious issue that needs to be addressed, also stop
+      and alert the user.
+      
+      Otherwise, if there is enough information to proceed, outline a
+      set of recommendations to accomplish the task respecting the user’s
+      intent in a best-practices way.
+      
+      Let’s think step by step and check our work to make sure we get
+      the right answer, and cite or quote reputable sources in our
+      answer so we know it is grounded.
+  - trigger: ":proandcon"
+    replace: |
+      What are the pros and cons of this idea with respect to best practices? Let’s think step by step and check our work to make sure we get the right answer, and cite or quote reputable sources in our answer so we know it is grounded.
+  - trigger: ":prompt"
+    replace: |
+      Provide a structured prompt to generate a PR to accomplish this task:
+      
+      Before writing the prompt, generate a prompt ID using the conventions
+      in `PROMPTS.md`. Include that prompt ID at the top of the generated
+      prompt.
+      
+      After the PR is generated, the agent should create an execution record
+      for the prompt using `scripts/prompts/record-execution`, following the
+      conventions in `PROMPTS.md` and `project/executions/README.md`.
+      
+      In that prompt, ask the agent to:
+      
+      - follow AGENTS.md
+      - follow STYLE.md for consistency
+      - follow PROMPTS.md for prompt IDs, execution records, and rerun handling
+      - update any README.md’s in affected folders
+      - add or update an execution record for the prompt (using AD_HOC if no work item applies)
+      - check for prior execution records for the same prompt ID and apply soft idempotence rules before proceeding
+      
+      Keep the workflow lightweight: execution records are expected for
+      meaningful prompt-driven PRs, but should not block small or obvious
+      changes. Do not update execution records unrelated to this task.
+      
+      Target the prompt to Codex Cloud and provide it as both a downloadable
+      file AND a copy-and-paste block inline within the chat. Please present
+      the downloadable file first, as prompts in copy-and-paste blocks
+      sometimes interfere with the rendering of the chat. The copy-and-paste
+      block should be a 1-1 copy of the prompt; NEVER present a copy and paste
+      block that does not exactly correspond to the exact contents of the
+      downloadable file.
+  - trigger: ":remains"
+    replace: |
+      What work remains?
+      All these prompts have been submitted, and all the resulting PRs have been checked in after code review. What work remains on the workstream that prompted the creation of those prompts?
+      
+      Let’s think step by step and check our work to make sure we get the right answer, and cite or quote reputable sources in our answer so we know it is grounded.
+  - trigger: ":think"
+    replace: |
+      Let’s think step by step and check our work to make sure we get the right answer, and cite or quote reputable sources in our answer so we know it is grounded.
