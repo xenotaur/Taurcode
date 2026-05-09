@@ -5,6 +5,13 @@ import frontmatter
 
 from .prompt_model import Prompt
 
+_RESERVED_PROMPT_DIRS = {"espanso"}
+
+
+def _is_reserved_prompt_file(prompt_file: Path, directory: Path) -> bool:
+    relative_parts = prompt_file.relative_to(directory).parts
+    return bool(relative_parts and relative_parts[0] in _RESERVED_PROMPT_DIRS)
+
 
 def load_prompts(prompts_dir: str) -> List[Prompt]:
     directory = Path(prompts_dir)
@@ -12,6 +19,8 @@ def load_prompts(prompts_dir: str) -> List[Prompt]:
 
     for prompt_file in sorted(directory.rglob("*.md")):
         if not prompt_file.is_file():
+            continue
+        if _is_reserved_prompt_file(prompt_file, directory):
             continue
         post = frontmatter.load(prompt_file)
         body = post.content.replace("\r\n", "\n")

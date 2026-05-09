@@ -77,6 +77,72 @@ class TestEspansoImport(unittest.TestCase):
             )
             self.assertTrue((output / "imported_raw" / "match-1.yml").exists())
 
+    def test_import_preserves_supported_metadata_assets(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source_dir = base / "espanso-package"
+            source_dir.mkdir()
+            output = base / "prompts"
+            manifest = b'name: sample\n# keep comment\ntitle: "Sample Package"\n'
+            readme = b"# Sample Package\n\nKeep this README exactly.\n"
+            license_text = b"Sample license text.\n\nAll rights reserved.\n"
+            (source_dir / "package.yml").write_text(
+                """matches:
+  - trigger: ":tc-meta"
+    replace: |
+      Metadata body
+""",
+                encoding="utf-8",
+            )
+            (source_dir / "_manifest.yml").write_bytes(manifest)
+            (source_dir / "README.md").write_bytes(readme)
+            (source_dir / "LICENSE").write_bytes(license_text)
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source_dir),
+                    "--output",
+                    str(output),
+                ]
+            )
+            self.assertEqual(rc, 0)
+
+            self.assertTrue((output / "tc-meta.md").exists())
+            metadata_dir = output / "espanso"
+            self.assertEqual((metadata_dir / "_manifest.yml").read_bytes(), manifest)
+            self.assertEqual((metadata_dir / "README.md").read_bytes(), readme)
+            self.assertEqual((metadata_dir / "LICENSE").read_bytes(), license_text)
+
+    def test_import_does_not_create_metadata_dir_without_supported_assets(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source_dir = base / "espanso-package"
+            source_dir.mkdir()
+            output = base / "prompts"
+            (source_dir / "package.yml").write_text(
+                """matches:
+  - trigger: ":tc-plain"
+    replace: plain
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source_dir),
+                    "--output",
+                    str(output),
+                ]
+            )
+            self.assertEqual(rc, 0)
+            self.assertFalse((output / "espanso").exists())
+
     def test_import_invalid_yaml_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)

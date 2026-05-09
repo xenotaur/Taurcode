@@ -1,7 +1,10 @@
 import json
+import shutil
 from pathlib import Path
 
 from .prompt_model import Prompt
+
+_METADATA_ASSETS = ("_manifest.yml", "README.md", "LICENSE")
 
 
 def _yaml_quote(value: str) -> str:
@@ -17,7 +20,28 @@ def _as_block(value: str, indent: str = "      ") -> str:
     return "\n".join(f"{indent}{line}" for line in lines) + "\n"
 
 
-def export_espanso(prompts: list[Prompt], output_dir: str) -> None:
+def _sync_metadata_assets(source_dir: str | None, output: Path) -> set[str]:
+    metadata_dir = None
+    if source_dir is not None:
+        candidate = Path(source_dir) / "espanso"
+        if candidate.is_dir():
+            metadata_dir = candidate
+
+    copied: set[str] = set()
+    for asset_name in _METADATA_ASSETS:
+        destination = output / asset_name
+        source = metadata_dir / asset_name if metadata_dir is not None else None
+        if source is not None and source.is_file():
+            shutil.copyfile(source, destination)
+            copied.add(asset_name)
+        elif destination.is_file() or destination.is_symlink():
+            destination.unlink()
+    return copied
+
+
+def export_espanso(
+    prompts: list[Prompt], output_dir: str, source_dir: str | None = None
+) -> None:
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
 
@@ -39,4 +63,7 @@ homepage: https://github.com/xenotaur/Taurcode
 """
 
     (output / "package.yml").write_text(package_content, encoding="utf-8")
-    (output / "_manifest.yml").write_text(manifest_content, encoding="utf-8")
+
+    copied_metadata = _sync_metadata_assets(source_dir, output)
+    if "_manifest.yml" not in copied_metadata:
+        (output / "_manifest.yml").write_text(manifest_content, encoding="utf-8")
