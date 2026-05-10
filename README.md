@@ -75,14 +75,13 @@ Use the CLI to export canonical prompts to an Espanso package:
 taurcode export espanso --prompts prompts/taurcode --output build/espanso/taurcode
 ```
 
-Generated output:
+Generated output always includes the basic Espanso package files:
 
 - `build/espanso/taurcode/package.yml`
 - `build/espanso/taurcode/_manifest.yml`
-- `build/espanso/taurcode/README.md` when `prompts/taurcode/espanso/README.md` exists
-- `build/espanso/taurcode/LICENSE` when `prompts/taurcode/espanso/LICENSE` exists
+- `build/espanso/taurcode/README.md`
 
-The optional `prompts/<package>/espanso/` directory is reserved for Espanso package metadata. When `_manifest.yml`, `README.md`, or `LICENSE` exists there, export copies it into the generated package instead of treating it as prompt content.
+The optional `prompts/<package>/espanso/` directory is reserved for Espanso package metadata. When `_manifest.yml` or `README.md` exists there, export copies it into the generated package instead of treating it as prompt content; otherwise Taurcode generates conservative defaults for Markdown-only packages. When `LICENSE` exists there, export copies it exactly; otherwise no `LICENSE` is generated.
 
 Note: installation into a local Espanso configuration is currently manual.
 
