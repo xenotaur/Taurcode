@@ -1,3 +1,5 @@
+import contextlib
+import io
 import tempfile
 import unittest
 from pathlib import Path
@@ -359,6 +361,337 @@ global_vars:
             self.assertEqual(rc, 0)
             self.assertTrue((output / "tc-example-2.md").exists())
             self.assertTrue((raw_dir / "match-2.yml").exists())
+
+    def test_merge_preserves_curated_metadata_and_updates_body(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            (output / "debug.md").write_text(
+                """---
+id: debug
+name: Debug Issue Carefully
+description: Debug an Issue
+keyword: ":debug"
+owner: docs-team
+---
+
+Old body
+""",
+                encoding="utf-8",
+            )
+            source.write_text(
+                """matches:
+  - trigger: ":debug"
+    replace: |
+      New Espanso body
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                    "--merge",
+                ]
+            )
+            self.assertEqual(rc, 0)
+
+            merged = (output / "debug.md").read_text(encoding="utf-8")
+            self.assertIn("name: Debug Issue Carefully\n", merged)
+            self.assertIn("description: Debug an Issue\n", merged)
+            self.assertIn("owner: docs-team\n", merged)
+            self.assertIn('keyword: ":debug"\n', merged)
+            self.assertTrue(merged.endswith("New Espanso body\n"))
+            self.assertNotIn("Imported from Espanso", merged)
+
+    def test_merge_updates_keyword_when_matched_by_filename(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            (output / "rename-me.md").write_text(
+                """---
+id: rename-me
+name: Rename Me
+description: Keep me
+keyword: ":old-trigger"
+---
+
+Old body
+""",
+                encoding="utf-8",
+            )
+            source.write_text(
+                """matches:
+  - trigger: ":rename-me"
+    replace: New body
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                    "--merge",
+                ]
+            )
+            self.assertEqual(rc, 0)
+            merged = (output / "rename-me.md").read_text(encoding="utf-8")
+            self.assertIn('keyword: ":rename-me"\n', merged)
+            self.assertTrue(merged.endswith("New body\n"))
+
+    def test_merge_creates_new_prompt_for_new_match(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            source.write_text(
+                """matches:
+  - trigger: ":new-prompt"
+    replace: Created body
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                    "--merge",
+                ]
+            )
+            self.assertEqual(rc, 0)
+            self.assertTrue((output / "new-prompt.md").exists())
+
+    def test_merge_warns_and_keeps_orphan_prompt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            orphan = output / "orphan.md"
+            orphan.write_text(
+                """---
+id: orphan
+name: Orphan
+description: Keep orphan
+keyword: ":orphan"
+---
+
+Do not delete
+""",
+                encoding="utf-8",
+            )
+            source.write_text(
+                """matches:
+  - trigger: ":new-prompt"
+    replace: Created body
+""",
+                encoding="utf-8",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    [
+                        "import",
+                        "espanso",
+                        "--input",
+                        str(source),
+                        "--output",
+                        str(output),
+                        "--merge",
+                    ]
+                )
+            self.assertEqual(rc, 0)
+            self.assertTrue(orphan.exists())
+            self.assertIn("Orphan prompt", stderr.getvalue())
+            self.assertIn(str(orphan), stderr.getvalue())
+
+    def test_merge_fails_on_ambiguous_duplicate_keyword_matches(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            for filename in ("one.md", "two.md"):
+                (output / filename).write_text(
+                    """---
+id: {0}
+name: Duplicate
+description: Duplicate
+keyword: ":dupe"
+---
+
+Body
+""".format(filename.removesuffix(".md")),
+                    encoding="utf-8",
+                )
+            source.write_text(
+                """matches:
+  - trigger: ":dupe"
+    replace: New
+""",
+                encoding="utf-8",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    [
+                        "import",
+                        "espanso",
+                        "--input",
+                        str(source),
+                        "--output",
+                        str(output),
+                        "--merge",
+                    ]
+                )
+            self.assertEqual(rc, 1)
+            self.assertIn("Ambiguous Espanso import match", stderr.getvalue())
+            self.assertIn("one.md", stderr.getvalue())
+            self.assertIn("two.md", stderr.getvalue())
+
+    def test_merge_fails_when_multiple_espanso_matches_target_one_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            (output / "dupe.md").write_text(
+                """---
+id: dupe
+name: Duplicate
+description: Duplicate
+keyword: ":dupe"
+---
+
+Body
+""",
+                encoding="utf-8",
+            )
+            source.write_text(
+                """matches:
+  - trigger: ":dupe"
+    replace: First
+  - trigger: ":dupe"
+    replace: Second
+""",
+                encoding="utf-8",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    [
+                        "import",
+                        "espanso",
+                        "--input",
+                        str(source),
+                        "--output",
+                        str(output),
+                        "--merge",
+                    ]
+                )
+            self.assertEqual(rc, 1)
+            self.assertIn("multiple Espanso matches map", stderr.getvalue())
+            self.assertIn("dupe.md", stderr.getvalue())
+
+    def test_merge_ignores_espanso_metadata_readme(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            metadata_dir = output / "espanso"
+            metadata_dir.mkdir(parents=True)
+            (metadata_dir / "README.md").write_text(
+                "# Package metadata\n", encoding="utf-8"
+            )
+            source.write_text(
+                """matches:
+  - trigger: ":readme"
+    replace: README body
+""",
+                encoding="utf-8",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    [
+                        "import",
+                        "espanso",
+                        "--input",
+                        str(source),
+                        "--output",
+                        str(output),
+                        "--merge",
+                    ]
+                )
+            self.assertEqual(rc, 0)
+            self.assertEqual(stderr.getvalue(), "")
+            self.assertEqual(
+                (metadata_dir / "README.md").read_text(encoding="utf-8"),
+                "# Package metadata\n",
+            )
+            self.assertTrue((output / "readme.md").exists())
+
+    def test_merge_into_empty_output_uses_fresh_import_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            source.write_text(
+                """matches:
+  - trigger: ":fresh"
+    replace: Fresh body
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                    "--merge",
+                ]
+            )
+            self.assertEqual(rc, 0)
+            self.assertEqual(
+                (output / "fresh.md").read_text(encoding="utf-8"),
+                """---
+id: fresh
+name: Fresh
+description: Imported from Espanso
+keyword: ":fresh"
+---
+
+Fresh body
+""",
+            )
 
 
 if __name__ == "__main__":

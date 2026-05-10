@@ -35,8 +35,18 @@ taurcode import espanso --input ~/Library/Application\ Support/espanso/match/pac
 
 Import behavior:
 
-- Simple matches with only `trigger` and `replace` are converted into Markdown prompt files in the chosen output directory.
-- If present in the source Espanso package, `_manifest.yml`, `README.md`, and `LICENSE` are copied into `<output>/espanso/` for later export.
+- By default, import is a fresh staging import: simple matches with only `trigger` and `replace` are converted into new Markdown prompt files in the chosen output directory.
+- Use `--merge` when importing an updated Espanso package into an existing curated prompt directory:
+
+  ```bash
+  taurcode import espanso --input build/espanso/taurcode --output prompts/taurcode --merge
+  ```
+
+- Merge import matches existing prompts first by frontmatter `keyword` matching the Espanso `trigger`, then by filename stem matching Taurcode's generated trigger slug. It does not use the curated prompt `name` as the primary key.
+- For matched Markdown prompts, merge import preserves human-authored frontmatter such as `name`, `description`, `id`, and unknown fields. It updates Espanso-derived `keyword` and the prompt body from the Espanso `trigger` and `replace`.
+- Merge import creates new Markdown files for new Espanso matches. Existing Markdown prompts with no matching Espanso entry are kept and reported as warnings; merge import does not prune or delete prompt files.
+- Merge import fails with a clear error when matching is ambiguous, such as multiple Markdown prompts with the same `keyword` for one Espanso trigger or multiple Espanso matches mapping to one Markdown file.
+- If present in the source Espanso package, `_manifest.yml`, `README.md`, and `LICENSE` are copied into `<output>/espanso/` for later export. The `<output>/espanso/` directory is reserved for package metadata and its Markdown files are not treated as prompt sources during merge matching, validation, or export.
 - `replace` block scalars (`|` literal and `>` folded) are preserved according to YAML parsing semantics.
 - Unsupported or complex matches are preserved under `<output>/imported_raw/*.yml`.
 - Raw fallback keeps unsupported match YAML content so prompt text is not lost.
