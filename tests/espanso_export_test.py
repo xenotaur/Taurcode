@@ -32,12 +32,22 @@ class TestEspansoExport(unittest.TestCase):
             self.assertEqual(rc, 0)
 
             package_file = output_dir / "package.yml"
+            manifest_file = output_dir / "_manifest.yml"
+            readme_file = output_dir / "README.md"
             self.assertTrue(package_file.exists())
+            self.assertTrue(manifest_file.exists())
+            self.assertTrue(readme_file.exists())
 
             package_text = package_file.read_text(encoding="utf-8")
+            manifest_text = manifest_file.read_text(encoding="utf-8")
+            readme_text = readme_file.read_text(encoding="utf-8")
             self.assertIn('trigger: ":tc-test"', package_text)
             self.assertIn("replace: |", package_text)
             self.assertIn("This is a test prompt body.", package_text)
+            self.assertIn("name: taurcode", manifest_text)
+            self.assertIn("title: Taurcode", manifest_text)
+            self.assertTrue(readme_text.strip())
+            self.assertIn("Taurcode", readme_text)
 
     def test_export_supports_crlf_frontmatter(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -161,7 +171,11 @@ This is a test prompt body.
                 ]
             )
             self.assertEqual(rc, 0)
-            self.assertFalse((output_dir / "README.md").exists())
+            self.assertTrue((output_dir / "README.md").exists())
+            self.assertIn(
+                "Generated Espanso package",
+                (output_dir / "README.md").read_text(encoding="utf-8"),
+            )
             self.assertFalse((output_dir / "LICENSE").exists())
 
     def test_export_ignores_espanso_readme_as_prompt_source(self) -> None:
@@ -206,6 +220,46 @@ This is a test prompt body.
                 (output_dir / "README.md").read_text(encoding="utf-8"),
                 "# Metadata README\n\nThis is not a prompt.\n",
             )
+
+    def test_generated_readme_prefers_source_manifest_title(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            prompts_dir = base / "prompts"
+            metadata_dir = prompts_dir / "espanso"
+            output_dir = base / "build" / "espanso" / "sample"
+            metadata_dir.mkdir(parents=True)
+            (prompts_dir / "prompt.md").write_text(
+                """---
+id: test-prompt
+name: Test Prompt
+description: A test prompt
+keyword: ":tc-test"
+---
+
+This is a test prompt body.
+""",
+                encoding="utf-8",
+            )
+            (metadata_dir / "_manifest.yml").write_text(
+                "name: sample\ntitle: Custom Sample Title\n", encoding="utf-8"
+            )
+
+            rc = main(
+                [
+                    "export",
+                    "espanso",
+                    "--prompts",
+                    str(prompts_dir),
+                    "--output",
+                    str(output_dir),
+                ]
+            )
+            self.assertEqual(rc, 0)
+
+            readme_text = (output_dir / "README.md").read_text(encoding="utf-8")
+            self.assertTrue(readme_text.strip())
+            self.assertIn("Custom Sample Title", readme_text)
+            self.assertIn("Generated Espanso package", readme_text)
 
 
 if __name__ == "__main__":

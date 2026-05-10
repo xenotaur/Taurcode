@@ -2,6 +2,7 @@ import json
 import shutil
 from pathlib import Path
 
+from . import espanso_metadata
 from .prompt_model import Prompt
 
 _METADATA_ASSETS = ("_manifest.yml", "README.md", "LICENSE")
@@ -39,11 +40,23 @@ def _sync_metadata_assets(source_dir: str | None, output: Path) -> set[str]:
     return copied
 
 
+def _load_manifest_for_readme(output: Path, package_name: str) -> dict:
+    manifest_path = output / "_manifest.yml"
+    if manifest_path.is_file():
+        try:
+            manifest_text = manifest_path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            return {}
+        return espanso_metadata.parse_manifest_text(manifest_text)
+    return espanso_metadata.generate_default_manifest(package_name)
+
+
 def export_espanso(
     prompts: list[Prompt], output_dir: str, source_dir: str | None = None
 ) -> None:
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
+    package_name = output.name
 
     package_lines = ["matches:"]
     for prompt in prompts:
@@ -53,17 +66,17 @@ def export_espanso(
 
     package_content = "\n".join(package_lines) + "\n"
 
-    manifest_content = """name: taurcode
-title: Taurcode
-description: Generated prompt package
-version: 0.1.0
-author: Taurcode
-tags: []
-homepage: https://github.com/xenotaur/Taurcode
-"""
+    default_manifest = espanso_metadata.generate_default_manifest(package_name)
+    manifest_content = espanso_metadata.manifest_to_yaml(default_manifest)
 
     (output / "package.yml").write_text(package_content, encoding="utf-8")
 
     copied_metadata = _sync_metadata_assets(source_dir, output)
     if "_manifest.yml" not in copied_metadata:
         (output / "_manifest.yml").write_text(manifest_content, encoding="utf-8")
+    if "README.md" not in copied_metadata:
+        readme_manifest = _load_manifest_for_readme(output, package_name)
+        readme_content = espanso_metadata.generate_default_readme(
+            package_name, readme_manifest
+        )
+        (output / "README.md").write_text(readme_content, encoding="utf-8")
