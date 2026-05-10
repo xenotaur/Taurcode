@@ -118,7 +118,7 @@ def lint_espanso_package(input_path: str | Path) -> list[Diagnostic]:
 
 
 def lint_espanso_package_source(package_dir: str | Path) -> LintResult:
-    package_path = Path(package_dir)
+    package_path = _package_dir_path(package_dir)
     metadata_dir = package_path / "espanso"
     manifest_path = metadata_dir / "_manifest.yml"
     readme_path = metadata_dir / "README.md"
@@ -126,9 +126,11 @@ def lint_espanso_package_source(package_dir: str | Path) -> LintResult:
 
     if manifest_path.is_file():
         manifest, manifest_error = _load_manifest(manifest_path)
+        manifest_diagnostic_path = manifest_path
         errors = [manifest_error] if manifest_error is not None else []
     else:
         manifest = espanso_metadata.generate_default_manifest(package_name)
+        manifest_diagnostic_path = package_path
         errors = []
     warnings: list[Diagnostic] = []
 
@@ -136,17 +138,21 @@ def lint_espanso_package_source(package_dir: str | Path) -> LintResult:
         errors.append(_invalid_package_name_diagnostic(package_path, package_name))
     if manifest is not None:
         errors.extend(
-            _manifest_error_diagnostics(manifest_path, package_name, manifest)
+            _manifest_error_diagnostics(
+                manifest_diagnostic_path, package_name, manifest
+            )
         )
         warnings.extend(
-            _manifest_warning_diagnostics(manifest_path, package_name, manifest)
+            _manifest_warning_diagnostics(
+                manifest_diagnostic_path, package_name, manifest
+            )
         )
     warnings.extend(_readme_warning_diagnostics(readme_path, package_name, manifest))
     return LintResult(errors=errors, warnings=warnings)
 
 
 def lint_espanso_package_build(output_dir: str | Path) -> LintResult:
-    output = Path(output_dir)
+    output = _package_dir_path(output_dir)
     package_name = output.name
     errors: list[Diagnostic] = []
     warnings: list[Diagnostic] = []
@@ -186,6 +192,10 @@ def lint_espanso_package_build(output_dir: str | Path) -> LintResult:
         _readme_warning_diagnostics(output / "README.md", package_name, manifest)
     )
     return LintResult(errors=errors, warnings=warnings)
+
+
+def _package_dir_path(package_dir: str | Path) -> Path:
+    return Path(package_dir).resolve()
 
 
 def _line_break_diagnostics(path: Path, content: str) -> list[Diagnostic]:
@@ -420,7 +430,7 @@ def _manifest_warning_diagnostics(
                 )
             )
         else:
-            slug = _homepage_slug(parsed.path)
+            slug = _homepage_repository_slug(parsed)
             if slug and slug != package_name:
                 diagnostics.append(
                     Diagnostic(
@@ -438,9 +448,11 @@ def _manifest_warning_diagnostics(
     return diagnostics
 
 
-def _homepage_slug(path: str) -> str:
-    parts = [part for part in path.strip("/").split("/") if part]
-    if len(parts) < 2:
+def _homepage_repository_slug(parsed_url) -> str:
+    if parsed_url.hostname not in {"github.com", "gitlab.com", "bitbucket.org"}:
+        return ""
+    parts = [part for part in parsed_url.path.strip("/").split("/") if part]
+    if len(parts) != 2:
         return ""
     return parts[1].removesuffix(".git").lower()
 
