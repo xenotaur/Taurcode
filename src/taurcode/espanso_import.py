@@ -1,7 +1,9 @@
 import re
 import shutil
 import sys
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -9,6 +11,22 @@ from . import espanso_lint
 
 _SIMPLE_KEYS = {"trigger", "replace"}
 _METADATA_ASSETS = ("_manifest.yml", "README.md", "LICENSE")
+_RESERVED_PROMPT_DIRS = {"espanso"}
+
+
+@dataclass
+class ExistingPrompt:
+    path: Path
+    metadata: dict[str, Any]
+    body: str
+
+
+@dataclass
+class ImportResult:
+    total: int
+    converted: int
+    raw_fallback: int
+    warnings: list[str]
 
 
 def is_simple_match(match: dict) -> bool:
@@ -35,12 +53,26 @@ def _derive_name(prompt_id: str) -> str:
     return " ".join(part.capitalize() for part in prompt_id.split("-"))
 
 
+def _is_reserved_prompt_file(prompt_file: Path, directory: Path) -> bool:
+    relative_parts = prompt_file.relative_to(directory).parts
+    return bool(relative_parts and relative_parts[0] in _RESERVED_PROMPT_DIRS)
+
+
+def _iter_prompt_files(output: Path) -> list[Path]:
+    if not output.exists():
+        return []
+    prompt_files: list[Path] = []
+    for prompt_file in sorted(output.rglob("*.md")):
+        if not prompt_file.is_file():
+            continue
+        if _is_reserved_prompt_file(prompt_file, output):
+            continue
+        prompt_files.append(prompt_file)
+    return prompt_files
+
+
 def _seed_used_ids(output: Path) -> set[str]:
-    used: set[str] = set()
-    if output.exists():
-        for md in output.glob("*.md"):
-            used.add(md.stem)
-    return used
+    return {prompt_file.stem for prompt_file in _iter_prompt_files(output)}
 
 
 def _next_raw_index(raw_dir: Path) -> int:
@@ -132,7 +164,156 @@ def _copy_metadata_assets(package_dir: Path, output: Path) -> None:
             shutil.copyfile(source, metadata_dir / source.name)
 
 
-def import_espanso(input_path: str, output_dir: str) -> None:
+def _normalize_replace(value: object) -> str:
+    return str(value).replace("\r\n", "\n").replace("\r", "\n")
+
+
+def _fresh_prompt_content(prompt_id: str, trigger: str, replace: str) -> str:
+    return (
+        "---\n"
+        f"id: {prompt_id}\n"
+        f"name: {_derive_name(prompt_id)}\n"
+        "description: Imported from Espanso\n"
+        f'keyword: "{trigger}"\n'
+        "---\n\n"
+        f"{replace}" + ("" if replace.endswith("\n") else "\n")
+    )
+
+
+def _read_prompt_file(prompt_file: Path) -> ExistingPrompt:
+    text = prompt_file.read_text(encoding="utf-8")
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    lines = normalized.split("\n")
+    if not lines or lines[0] != "---":
+        return ExistingPrompt(path=prompt_file, metadata={}, body=normalized)
+
+    closing_index = None
+    for index in range(1, len(lines)):
+        if lines[index] == "---":
+            closing_index = index
+            break
+    if closing_index is None:
+        raise ValueError(f"Invalid frontmatter block in {prompt_file}")
+
+    metadata_text = "\n".join(lines[1:closing_index])
+    metadata = yaml.safe_load(metadata_text) if metadata_text.strip() else {}
+    if metadata is None:
+        metadata = {}
+    if not isinstance(metadata, dict):
+        raise ValueError(f"Invalid frontmatter mapping in {prompt_file}")
+    body = "\n".join(lines[closing_index + 1 :])
+    if body.startswith("\n"):
+        body = body[1:]
+    return ExistingPrompt(path=prompt_file, metadata=dict(metadata), body=body)
+
+
+def _load_existing_prompts(output: Path) -> list[ExistingPrompt]:
+    return [
+        _read_prompt_file(prompt_file) for prompt_file in _iter_prompt_files(output)
+    ]
+
+
+def _dump_prompt(metadata: dict[str, Any], body: str) -> str:
+    metadata_text = yaml.safe_dump(
+        metadata,
+        allow_unicode=True,
+        default_flow_style=False,
+        sort_keys=False,
+    ).rstrip("\n")
+    normalized_body = body.replace("\r\n", "\n").replace("\r", "\n")
+    return (
+        "---\n"
+        + metadata_text
+        + "\n---\n\n"
+        + normalized_body
+        + ("" if normalized_body.endswith("\n") else "\n")
+    )
+
+
+def _match_existing_prompt(
+    match: dict, existing_prompts: list[ExistingPrompt]
+) -> ExistingPrompt | None:
+    trigger = str(match["trigger"])
+    trigger_matches = [
+        prompt
+        for prompt in existing_prompts
+        if str(prompt.metadata.get("keyword", "")) == trigger
+    ]
+    if len(trigger_matches) > 1:
+        paths = ", ".join(str(prompt.path) for prompt in trigger_matches)
+        raise ValueError(
+            f"Ambiguous Espanso import match for trigger {trigger!r}: "
+            f"multiple Markdown prompts have that keyword: {paths}"
+        )
+    if trigger_matches:
+        return trigger_matches[0]
+
+    prompt_id = _normalize_id(trigger)
+    stem_matches = [
+        prompt for prompt in existing_prompts if prompt.path.stem == prompt_id
+    ]
+    if len(stem_matches) > 1:
+        paths = ", ".join(str(prompt.path) for prompt in stem_matches)
+        raise ValueError(
+            f"Ambiguous Espanso import match for trigger {trigger!r}: "
+            f"multiple Markdown prompt filenames match {prompt_id!r}: {paths}"
+        )
+    if stem_matches:
+        return stem_matches[0]
+    return None
+
+
+def _merge_simple_matches(
+    entries: list[tuple[dict, str]], output: Path, used_ids: set[str]
+) -> tuple[int, set[Path], list[str]]:
+    existing_prompts = _load_existing_prompts(output)
+    matched_paths: set[Path] = set()
+    existing_updates: list[tuple[ExistingPrompt, str, str]] = []
+    new_prompts: list[tuple[str, str]] = []
+    warnings: list[str] = []
+
+    for match, _raw_block in entries:
+        if not is_simple_match(match):
+            continue
+        trigger = str(match["trigger"])
+        replace = _normalize_replace(match["replace"])
+        existing = _match_existing_prompt(match, existing_prompts)
+        if existing is None:
+            new_prompts.append((trigger, replace))
+            continue
+        if existing.path in matched_paths:
+            raise ValueError(
+                f"Ambiguous Espanso import match for trigger {trigger!r}: "
+                f"multiple Espanso matches map to {existing.path}"
+            )
+        matched_paths.add(existing.path)
+        existing_updates.append((existing, trigger, replace))
+
+    for existing, trigger, replace in existing_updates:
+        metadata = dict(existing.metadata)
+        metadata["keyword"] = trigger
+        existing.path.write_text(_dump_prompt(metadata, replace), encoding="utf-8")
+
+    for trigger, replace in new_prompts:
+        prompt_id = _unique_id(_normalize_id(trigger), used_ids)
+        (output / f"{prompt_id}.md").write_text(
+            _fresh_prompt_content(prompt_id, trigger, replace), encoding="utf-8"
+        )
+
+    for existing in existing_prompts:
+        if existing.path not in matched_paths:
+            warning = (
+                f"Warning: Orphan prompt has no matching Espanso source entry; "
+                f"kept {existing.path}"
+            )
+            warnings.append(warning)
+            print(warning, file=sys.stderr)
+    return len(existing_updates) + len(new_prompts), matched_paths, warnings
+
+
+def import_espanso(
+    input_path: str, output_dir: str, merge: bool = False
+) -> ImportResult:
     package_path = espanso_lint.resolve_package_yml(input_path)
     diagnostics = espanso_lint.lint_espanso_package(package_path)
     if diagnostics:
@@ -149,35 +330,44 @@ def import_espanso(input_path: str, output_dir: str) -> None:
     next_raw_index = _next_raw_index(raw_dir)
     converted = 0
     raw_fallback = 0
+    warnings: list[str] = []
+
+    if merge:
+        converted, _matched_paths, merge_warnings = _merge_simple_matches(
+            entries, output, used_ids
+        )
+        warnings.extend(merge_warnings)
+    else:
+        for match, _raw_block in entries:
+            if not is_simple_match(match):
+                continue
+            trigger = str(match["trigger"])
+            replace = _normalize_replace(match["replace"])
+            prompt_id = _unique_id(_normalize_id(trigger), used_ids)
+            content = _fresh_prompt_content(prompt_id, trigger, replace)
+            (output / f"{prompt_id}.md").write_text(content, encoding="utf-8")
+            converted += 1
 
     for index, (match, raw_block) in enumerate(entries, start=1):
         if is_simple_match(match):
-            trigger = str(match["trigger"])
-            replace = str(match["replace"]).replace("\r\n", "\n").replace("\r", "\n")
-            prompt_id = _unique_id(_normalize_id(trigger), used_ids)
-            content = (
-                "---\n"
-                f"id: {prompt_id}\n"
-                f"name: {_derive_name(prompt_id)}\n"
-                "description: Imported from Espanso\n"
-                f'keyword: "{trigger}"\n'
-                "---\n\n"
-                f"{replace}" + ("" if replace.endswith("\n") else "\n")
-            )
-            (output / f"{prompt_id}.md").write_text(content, encoding="utf-8")
-            converted += 1
-        else:
-            raw_name = f"match-{next_raw_index}.yml"
-            next_raw_index += 1
-            (raw_dir / raw_name).write_text(raw_block, encoding="utf-8")
-            raw_fallback += 1
-            keys = sorted(match.keys())
-            unsupported = sorted(set(keys) - _SIMPLE_KEYS)
-            print(
-                f"Warning: Unsupported match in {package_path} at index {index}; fields={unsupported}. Saved raw YAML to {raw_dir / raw_name}",
-                file=sys.stderr,
-            )
+            continue
+        raw_name = f"match-{next_raw_index}.yml"
+        next_raw_index += 1
+        (raw_dir / raw_name).write_text(raw_block, encoding="utf-8")
+        raw_fallback += 1
+        keys = sorted(match.keys())
+        unsupported = sorted(set(keys) - _SIMPLE_KEYS)
+        print(
+            f"Warning: Unsupported match in {package_path} at index {index}; fields={unsupported}. Saved raw YAML to {raw_dir / raw_name}",
+            file=sys.stderr,
+        )
 
     print(
         f"Import summary: total={len(entries)} converted={converted} raw_fallback={raw_fallback}"
+    )
+    return ImportResult(
+        total=len(entries),
+        converted=converted,
+        raw_fallback=raw_fallback,
+        warnings=warnings,
     )

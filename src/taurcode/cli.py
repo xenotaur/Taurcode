@@ -38,6 +38,11 @@ def build_parser() -> argparse.ArgumentParser:
     import_espanso_parser = import_subparsers.add_parser("espanso")
     import_espanso_parser.add_argument("--input", required=True)
     import_espanso_parser.add_argument("--output", default=IMPORT_STAGING_DIR)
+    import_espanso_parser.add_argument(
+        "--merge",
+        action="store_true",
+        help="Merge into existing Markdown prompts while preserving curated metadata",
+    )
 
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("--prompts", default=CANONICAL_PROMPTS_DIR)
@@ -78,7 +83,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"Espanso lint passed: {args.input}")
             return 0
         if args.command == "import" and args.target == "espanso":
-            espanso_import.import_espanso(args.input, args.output)
+            espanso_import.import_espanso(args.input, args.output, merge=args.merge)
             return 0
         if args.command == "validate":
             prompts = prompt_loader.load_prompts(args.prompts)
