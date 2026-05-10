@@ -2,6 +2,7 @@
 prompt_id: PROMPT(TAURCODE-ESPANSO-METADATA-ROUNDTRIP-DEFAULTS)[2026-05-09T10:05:00-04:00]
 date: 2026-05-09
 scope: AD_HOC
+related_work_item: AD_HOC
 status: landed
 ---
 
