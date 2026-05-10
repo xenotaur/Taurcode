@@ -213,24 +213,18 @@ def _load_existing_prompts(output: Path) -> list[ExistingPrompt]:
     ]
 
 
-def _format_metadata_value(value: Any) -> str:
-    if isinstance(value, str):
-        if value == "" or value.startswith(":") or "\n" in value:
-            return yaml.safe_dump(value, default_style='"').strip()
-        return value
-    return yaml.safe_dump(value, default_flow_style=True).strip()
-
-
 def _dump_prompt(metadata: dict[str, Any], body: str) -> str:
-    lines = ["---"]
-    for key, value in metadata.items():
-        lines.append(f"{key}: {_format_metadata_value(value)}")
-    lines.append("---")
-    lines.append("")
+    metadata_text = yaml.safe_dump(
+        metadata,
+        allow_unicode=True,
+        default_flow_style=False,
+        sort_keys=False,
+    ).rstrip("\n")
     normalized_body = body.replace("\r\n", "\n").replace("\r", "\n")
     return (
-        "\n".join(lines)
-        + "\n"
+        "---\n"
+        + metadata_text
+        + "\n---\n\n"
         + normalized_body
         + ("" if normalized_body.endswith("\n") else "\n")
     )

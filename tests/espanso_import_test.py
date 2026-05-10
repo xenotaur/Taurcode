@@ -407,9 +407,83 @@ Old body
             self.assertIn("name: Debug Issue Carefully\n", merged)
             self.assertIn("description: Debug an Issue\n", merged)
             self.assertIn("owner: docs-team\n", merged)
-            self.assertIn('keyword: ":debug"\n', merged)
+            self.assertIn("keyword: :debug\n", merged)
             self.assertTrue(merged.endswith("New Espanso body\n"))
             self.assertNotIn("Imported from Espanso", merged)
+
+    def test_merge_preserves_yaml_safe_metadata_scalars(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            prompt = output / "safe.md"
+            prompt.write_text(
+                """---
+id: safe
+name: Safe Metadata
+description: "desc # keep"
+keyword: ":safe"
+enabled: true
+count: 2
+tags:
+  - review
+---
+
+Old body
+""",
+                encoding="utf-8",
+            )
+            source.write_text(
+                """matches:
+  - trigger: ":safe"
+    replace: Updated once
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                    "--merge",
+                ]
+            )
+            self.assertEqual(rc, 0)
+            merged = prompt.read_text(encoding="utf-8")
+            self.assertNotIn("\n...\n", merged)
+            self.assertIn("description: 'desc # keep'\n", merged)
+            self.assertIn("enabled: true\n", merged)
+            self.assertIn("count: 2\n", merged)
+            self.assertIn("tags:\n- review\n", merged)
+
+            source.write_text(
+                """matches:
+  - trigger: ":safe"
+    replace: Updated twice
+""",
+                encoding="utf-8",
+            )
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                    "--merge",
+                ]
+            )
+            self.assertEqual(rc, 0)
+            merged_again = prompt.read_text(encoding="utf-8")
+            self.assertIn("description: 'desc # keep'\n", merged_again)
+            self.assertIn("enabled: true\n", merged_again)
+            self.assertTrue(merged_again.endswith("Updated twice\n"))
 
     def test_merge_updates_keyword_when_matched_by_filename(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -450,7 +524,7 @@ Old body
             )
             self.assertEqual(rc, 0)
             merged = (output / "rename-me.md").read_text(encoding="utf-8")
-            self.assertIn('keyword: ":rename-me"\n', merged)
+            self.assertIn("keyword: :rename-me\n", merged)
             self.assertTrue(merged.endswith("New body\n"))
 
     def test_merge_creates_new_prompt_for_new_match(self) -> None:
