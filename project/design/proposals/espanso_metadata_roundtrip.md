@@ -158,7 +158,7 @@ Merge import should use field ownership rules rather than rewriting the whole fr
 
 Espanso-derived fields are owned by the Espanso source during merge import and should be updated from `package.yml`. They include:
 
-- `trigger` and any fields directly needed to regenerate supported Espanso matches.
+- Taurcode `keyword`, which corresponds to Espanso `trigger`, and any fields directly needed to regenerate supported Espanso matches.
 - Replacement/body content imported from Espanso.
 - Other supported Espanso match fields, if Taurcode already models them.
 
@@ -180,10 +180,12 @@ Unknown frontmatter fields should be preserved by default. Taurcode should only 
 
 Merge import should avoid matching by `name` because curated names may intentionally differ from trigger-derived names. The proposed matching priority is:
 
-1. Existing Markdown frontmatter `trigger` equals the Espanso trigger.
+1. Existing Markdown frontmatter `keyword` equals the Espanso trigger.
 2. Existing Markdown filename stem equals the generated slug for the Espanso trigger.
 3. Existing stable `id` field, if Taurcode already has one for prompt files.
 4. Otherwise create a new Markdown file.
+
+The merge design should match existing Taurcode prompt files by `keyword`, not by a new `trigger` frontmatter field. If a future schema migration introduces `trigger` as an alias or replacement, that migration should be explicit and tested before merge import relies on it.
 
 If any priority level produces multiple possible matches for a single Espanso entry, Taurcode should fail the import with a clear ambiguity error and leave files unchanged. A future implementation may add a dry-run report or conflict-resolution command, but silent selection would risk overwriting the wrong curated prompt.
 
