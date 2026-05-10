@@ -2,8 +2,7 @@ import json
 import shutil
 from pathlib import Path
 
-from . import espanso_metadata
-from .prompt_model import Prompt
+from taurcode import espanso_lint, espanso_metadata, prompt_model
 
 _METADATA_ASSETS = ("_manifest.yml", "README.md", "LICENSE")
 
@@ -52,8 +51,8 @@ def _load_manifest_for_readme(output: Path, package_name: str) -> dict:
 
 
 def export_espanso(
-    prompts: list[Prompt], output_dir: str, source_dir: str | None = None
-) -> None:
+    prompts: list[prompt_model.Prompt], output_dir: str, source_dir: str | None = None
+) -> espanso_lint.LintResult:
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     package_name = output.name
@@ -80,3 +79,8 @@ def export_espanso(
             package_name, readme_manifest
         )
         (output / "README.md").write_text(readme_content, encoding="utf-8")
+
+    result = espanso_lint.lint_espanso_package_build(output)
+    if result.has_errors():
+        raise ValueError(espanso_lint.format_lint_result(result))
+    return result

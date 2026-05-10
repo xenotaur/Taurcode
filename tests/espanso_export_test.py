@@ -1,3 +1,5 @@
+import contextlib
+import io
 import tempfile
 import unittest
 from pathlib import Path
@@ -86,6 +88,7 @@ class TestEspansoExport(unittest.TestCase):
             metadata_dir.mkdir(parents=True)
             manifest = (
                 b'name: sample\n# preserve manifest formatting\ntitle: "Sample"\n'
+                b"version: 1.0.0\ndescription: Sample package\nauthor: Example Author\n"
             )
             readme = b"# Sample\n\nPreserve this README exactly.\n"
             license_text = b"Sample license\n\nLine two.\n"
@@ -241,7 +244,8 @@ This is a test prompt body.
                 encoding="utf-8",
             )
             (metadata_dir / "_manifest.yml").write_text(
-                "name: sample\ntitle: Custom Sample Title\n", encoding="utf-8"
+                "name: sample\ntitle: Custom Sample Title\nversion: 1.0.0\ndescription: Sample package\nauthor: Example Author\n",
+                encoding="utf-8",
             )
 
             rc = main(
@@ -260,6 +264,84 @@ This is a test prompt body.
             self.assertTrue(readme_text.strip())
             self.assertIn("Custom Sample Title", readme_text)
             self.assertIn("Generated Espanso package", readme_text)
+
+    def test_export_reports_warnings_without_failing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            prompts_dir = base / "prompts"
+            metadata_dir = prompts_dir / "espanso"
+            output_dir = base / "build" / "espanso" / "sample"
+            metadata_dir.mkdir(parents=True)
+            (prompts_dir / "prompt.md").write_text(
+                """---
+id: test-prompt
+name: Test Prompt
+description: A test prompt
+keyword: ":tc-test"
+---
+
+This is a test prompt body.
+""",
+                encoding="utf-8",
+            )
+            (metadata_dir / "README.md").write_text("tiny\n", encoding="utf-8")
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    [
+                        "export",
+                        "espanso",
+                        "--prompts",
+                        str(prompts_dir),
+                        "--output",
+                        str(output_dir),
+                    ]
+                )
+
+            self.assertEqual(rc, 0)
+            self.assertIn("Warnings:", stderr.getvalue())
+            self.assertTrue((output_dir / "package.yml").exists())
+
+    def test_export_fails_metadata_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            prompts_dir = base / "prompts"
+            metadata_dir = prompts_dir / "espanso"
+            output_dir = base / "build" / "espanso" / "sample"
+            metadata_dir.mkdir(parents=True)
+            (prompts_dir / "prompt.md").write_text(
+                """---
+id: test-prompt
+name: Test Prompt
+description: A test prompt
+keyword: ":tc-test"
+---
+
+This is a test prompt body.
+""",
+                encoding="utf-8",
+            )
+            (metadata_dir / "_manifest.yml").write_text(
+                "name: sample\ndescription: Missing version\nauthor: Example Author\n",
+                encoding="utf-8",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    [
+                        "export",
+                        "espanso",
+                        "--prompts",
+                        str(prompts_dir),
+                        "--output",
+                        str(output_dir),
+                    ]
+                )
+
+            self.assertEqual(rc, 1)
+            self.assertIn("manifest-version-missing", stderr.getvalue())
 
 
 if __name__ == "__main__":

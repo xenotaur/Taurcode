@@ -1,12 +1,15 @@
 import argparse
 import sys
+from pathlib import Path
 from typing import List, Optional
 
-from .espanso_export import export_espanso
-from .espanso_import import import_espanso
-from .espanso_lint import format_diagnostics, lint_espanso_package
-from .prompt_loader import load_prompts
-from .validate import validate_prompts
+from taurcode import (
+    espanso_export,
+    espanso_import,
+    espanso_lint,
+    prompt_loader,
+    validate,
+)
 
 CANONICAL_PROMPTS_DIR = "prompts/taurcode"
 IMPORT_STAGING_DIR = "prompts/imported"
@@ -49,23 +52,36 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     try:
         if args.command == "export" and args.target == "espanso":
-            prompts = load_prompts(args.prompts)
-            validate_prompts(prompts)
-            export_espanso(prompts, args.output, source_dir=args.prompts)
+            prompts = prompt_loader.load_prompts(args.prompts)
+            validate.validate_prompts(prompts)
+            result = espanso_export.export_espanso(
+                prompts, args.output, source_dir=args.prompts
+            )
+            if result.has_warnings():
+                print(espanso_lint.format_lint_result(result), file=sys.stderr)
             return 0
         if args.command == "lint" and args.target == "espanso":
-            diagnostics = lint_espanso_package(args.input)
-            if diagnostics:
-                print(format_diagnostics(diagnostics), file=sys.stderr)
+            diagnostics = espanso_lint.lint_espanso_package(args.input)
+            metadata_result = espanso_lint.LintResult(errors=[], warnings=[])
+            input_path = Path(args.input)
+            if input_path.is_dir() and not diagnostics:
+                metadata_result = espanso_lint.lint_espanso_package_build(input_path)
+            result = espanso_lint.LintResult(
+                errors=[*diagnostics, *metadata_result.errors],
+                warnings=metadata_result.warnings,
+            )
+            if result.has_errors() or result.has_warnings():
+                print(espanso_lint.format_lint_result(result), file=sys.stderr)
+            if result.has_errors():
                 return 1
             print(f"Espanso lint passed: {args.input}")
             return 0
         if args.command == "import" and args.target == "espanso":
-            import_espanso(args.input, args.output)
+            espanso_import.import_espanso(args.input, args.output)
             return 0
         if args.command == "validate":
-            prompts = load_prompts(args.prompts)
-            validate_prompts(prompts)
+            prompts = prompt_loader.load_prompts(args.prompts)
+            validate.validate_prompts(prompts)
             print(f"Validation passed: {len(prompts)} prompt(s) in {args.prompts}")
             return 0
     except (OSError, ValueError) as error:

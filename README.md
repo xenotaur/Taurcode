@@ -57,16 +57,28 @@ In this workflow, `prompts/imported/` is only a temporary staging area that reco
 
 `taurcode lint espanso --input <path>` accepts either a `package.yml` file or a package directory containing `package.yml`. The same preflight diagnostics run automatically before `taurcode import espanso` parses package contents.
 
-The linter checks for:
+The linter reports metadata **errors** separately from **warnings**. Errors represent invalid or unsafe package output and return a nonzero status. Warnings represent likely stale or low-quality metadata and are non-blocking by default. Export also runs build-output metadata linting; warning-only metadata does not fail the export, while metadata errors do fail it.
+
+The linter checks for errors such as:
 
 - missing `package.yml` when the input is a directory
 - invalid UTF-8 bytes
 - parser-sensitive invisible Unicode line break characters: `U+2028 LINE SEPARATOR`, `U+2029 PARAGRAPH SEPARATOR`, and `U+0085 NEXT LINE`
 - malformed YAML, including parser line and column information when PyYAML provides it
+- missing build output files: `package.yml`, `_manifest.yml`, or `README.md`
+- invalid Espanso package metadata, including malformed `_manifest.yml`, missing or mismatched manifest names, package names outside lowercase letters/digits/hyphen, missing versions, or versions without a numeric `MAJOR.MINOR.PATCH` core
+
+The linter checks for warnings such as:
+
+- empty or very small `README.md` files
+- README content that does not mention the package name or manifest title
+- placeholder manifest `description` or `author` values
+- homepage values that are not `http://` or `https://` URLs
+- homepage repository slugs that obviously point at a different package
 
 Invisible Unicode line separators can be troublesome because some tools may treat them like line breaks while YAML parsers reject them or report confusing locations. Taurcode reports the file, line, column, character name, and a manual fix suggestion. For example, replace an invisible separator inside a block scalar with a normal newline and keep the following content indented under the scalar.
 
-Taurcode does not silently rewrite, normalize, or repair source Espanso files. Fix the source package manually, rerun `taurcode lint espanso`, and then rerun the import.
+Taurcode does not silently rewrite, normalize, or repair source Espanso files. Fix the source package manually, rerun `taurcode lint espanso`, and then rerun the import. Taurcode does not perform network validation of homepages, and it does not yet detect package-content-changed/version-unchanged freshness because no content-hash state is tracked.
 
 ## Export to Espanso
 Use the CLI to export canonical prompts to an Espanso package:

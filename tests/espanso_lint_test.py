@@ -178,5 +178,219 @@ class TestEspansoLint(unittest.TestCase):
             self.assertNotIn("malformed YAML", stderr.getvalue())
 
 
+class TestEspansoMetadataLint(unittest.TestCase):
+    def _write_build_package(
+        self,
+        package_dir: Path,
+        manifest: str | None = None,
+        readme: str = "# sample\n\nSample package documentation.\n",
+    ) -> None:
+        package_dir.mkdir(parents=True)
+        (package_dir / "package.yml").write_text("matches: []\n", encoding="utf-8")
+        manifest_text = manifest or (
+            "name: sample\n"
+            "title: Sample\n"
+            "description: Useful sample package\n"
+            "version: 1.2.3\n"
+            "author: Example Author\n"
+            "homepage: https://github.com/example/sample\n"
+        )
+        (package_dir / "_manifest.yml").write_text(manifest_text, encoding="utf-8")
+        (package_dir / "README.md").write_text(readme, encoding="utf-8")
+
+    def _error_codes(self, result: espanso_lint.LintResult) -> set[str]:
+        return {diagnostic.code for diagnostic in result.errors}
+
+    def _warning_codes(self, result: espanso_lint.LintResult) -> set[str]:
+        return {diagnostic.code for diagnostic in result.warnings}
+
+    def test_invalid_yaml_manifest_produces_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(package_dir, manifest="name: [unterminated\n")
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertIn("manifest-malformed-yaml", self._error_codes(result))
+            self.assertIn("_manifest.yml", espanso_lint.format_lint_result(result))
+
+    def test_manifest_name_missing_produces_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(
+                package_dir,
+                manifest="title: Sample\nversion: 1.0.0\nauthor: Person\ndescription: Text\n",
+            )
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertIn("manifest-name-missing", self._error_codes(result))
+
+    def test_manifest_name_mismatch_produces_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(
+                package_dir,
+                manifest="name: other\nversion: 1.0.0\nauthor: Person\ndescription: Text\n",
+            )
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertIn("manifest-name-mismatch", self._error_codes(result))
+
+    def test_invalid_package_name_produces_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "Bad_Name"
+            self._write_build_package(
+                package_dir,
+                manifest="name: Bad_Name\nversion: 1.0.0\nauthor: Person\ndescription: Text\n",
+            )
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertIn("invalid-package-name", self._error_codes(result))
+
+    def test_missing_version_produces_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(
+                package_dir,
+                manifest="name: sample\nauthor: Person\ndescription: Text\n",
+            )
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertIn("manifest-version-missing", self._error_codes(result))
+
+    def test_invalid_version_core_produces_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(
+                package_dir,
+                manifest="name: sample\nversion: v1\nauthor: Person\ndescription: Text\n",
+            )
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertIn("manifest-version-invalid", self._error_codes(result))
+
+    def test_missing_required_build_output_file_produces_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(package_dir)
+            (package_dir / "README.md").unlink()
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertIn("missing-build-file", self._error_codes(result))
+
+    def test_empty_or_tiny_readme_produces_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(package_dir, readme="tiny\n")
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertIn("readme-too-small", self._warning_codes(result))
+            self.assertFalse(result.has_errors())
+
+    def test_readme_missing_package_name_or_title_produces_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(
+                package_dir,
+                readme="# Completely Different\n\nHelpful documentation text.\n",
+            )
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertIn("readme-missing-package-name", self._warning_codes(result))
+
+    def test_placeholder_description_produces_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(
+                package_dir,
+                manifest=(
+                    "name: sample\nversion: 1.0.0\n"
+                    "description: Generated prompt package\nauthor: Person\n"
+                ),
+            )
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertIn(
+                "manifest-description-placeholder", self._warning_codes(result)
+            )
+
+    def test_placeholder_author_produces_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(
+                package_dir,
+                manifest=(
+                    "name: sample\nversion: 1.0.0\n"
+                    "description: Useful package\nauthor: Taurcode\n"
+                ),
+            )
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertIn("manifest-author-placeholder", self._warning_codes(result))
+
+    def test_non_http_homepage_produces_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(
+                package_dir,
+                manifest=(
+                    "name: sample\nversion: 1.0.0\n"
+                    "description: Useful package\nauthor: Person\n"
+                    "homepage: git@example.com:example/sample.git\n"
+                ),
+            )
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertIn("manifest-homepage-non-http", self._warning_codes(result))
+
+    def test_warnings_do_not_fail_lint_command_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(package_dir, readme="tiny\n")
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(["lint", "espanso", "--input", str(package_dir)])
+
+            self.assertEqual(rc, 0)
+            self.assertIn("Warnings:", stderr.getvalue())
+            self.assertIn("readme", stderr.getvalue().lower())
+
+    def test_errors_fail_lint_command(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(package_dir, manifest="name: sample\n")
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(["lint", "espanso", "--input", str(package_dir)])
+
+            self.assertEqual(rc, 1)
+            self.assertIn("Errors:", stderr.getvalue())
+
+    def test_source_lint_uses_defaults_when_metadata_is_absent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            package_dir.mkdir()
+
+            result = espanso_lint.lint_espanso_package_source(package_dir)
+
+            self.assertFalse(result.has_errors())
+            self.assertIn(
+                "manifest-description-placeholder", self._warning_codes(result)
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
