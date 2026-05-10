@@ -30,6 +30,54 @@ class TestEspansoImport(unittest.TestCase):
                 """---\nid: tc-example\nname: Tc Example\ndescription: Imported from Espanso\nkeyword: \":tc-example\"\n---\n\nHello world\n""",
             )
 
+    def test_import_normalizes_prompt_with_no_final_newline_to_one(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            source.write_text(
+                """matches:
+  - trigger: ":no-final-newline"
+    replace: |-
+      Body without source final newline
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
+            self.assertEqual(rc, 0)
+            imported = (output / "no-final-newline.md").read_bytes()
+            self.assertTrue(imported.endswith(b"Body without source final newline\n"))
+            self.assertFalse(imported.endswith(b"\n\n"))
+
+    def test_import_normalizes_multiple_final_newlines_to_one(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            source.write_text(
+                """matches:
+  - trigger: ":many-final-newlines"
+    replace: |+
+      Body with extra source final newlines
+
+
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
+            self.assertEqual(rc, 0)
+            imported = (output / "many-final-newlines.md").read_bytes()
+            self.assertTrue(
+                imported.endswith(b"Body with extra source final newlines\n")
+            )
+            self.assertFalse(imported.endswith(b"\n\n"))
+
     def test_import_unsupported_match_to_raw_yaml(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
@@ -117,6 +165,37 @@ class TestEspansoImport(unittest.TestCase):
             self.assertEqual((metadata_dir / "_manifest.yml").read_bytes(), manifest)
             self.assertEqual((metadata_dir / "README.md").read_bytes(), readme)
             self.assertEqual((metadata_dir / "LICENSE").read_bytes(), license_text)
+
+    def test_import_preserves_license_without_final_newline_exactly(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source_dir = base / "espanso-package"
+            source_dir.mkdir()
+            output = base / "prompts"
+            license_text = b"Sample license text.\n\nAll rights reserved."
+            (source_dir / "package.yml").write_text(
+                """matches:
+  - trigger: ":tc-license"
+    replace: Body
+""",
+                encoding="utf-8",
+            )
+            (source_dir / "LICENSE").write_bytes(license_text)
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source_dir),
+                    "--output",
+                    str(output),
+                ]
+            )
+            self.assertEqual(rc, 0)
+            self.assertEqual(
+                (output / "espanso" / "LICENSE").read_bytes(), license_text
+            )
 
     def test_import_does_not_create_metadata_dir_without_supported_assets(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
