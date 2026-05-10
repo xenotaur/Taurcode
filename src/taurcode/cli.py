@@ -1,6 +1,5 @@
 import argparse
 import sys
-from pathlib import Path
 from typing import List, Optional
 
 from taurcode import (
@@ -61,11 +60,13 @@ def main(argv: Optional[List[str]] = None) -> int:
                 print(espanso_lint.format_lint_result(result), file=sys.stderr)
             return 0
         if args.command == "lint" and args.target == "espanso":
-            diagnostics = espanso_lint.lint_espanso_package(args.input)
+            package_path = espanso_lint.resolve_package_yml(args.input)
+            diagnostics = espanso_lint.lint_espanso_package(package_path)
             metadata_result = espanso_lint.LintResult(errors=[], warnings=[])
-            input_path = Path(args.input)
-            if input_path.is_dir() and not diagnostics:
-                metadata_result = espanso_lint.lint_espanso_package_build(input_path)
+            if not diagnostics:
+                metadata_result = espanso_lint.lint_espanso_package_build(
+                    package_path.parent
+                )
             result = espanso_lint.LintResult(
                 errors=[*diagnostics, *metadata_result.errors],
                 warnings=metadata_result.warnings,

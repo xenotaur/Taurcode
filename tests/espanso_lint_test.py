@@ -379,6 +379,20 @@ class TestEspansoMetadataLint(unittest.TestCase):
             self.assertEqual(rc, 1)
             self.assertIn("Errors:", stderr.getvalue())
 
+    def test_package_yml_input_runs_metadata_lint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(package_dir, manifest="name: sample\n")
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    ["lint", "espanso", "--input", str(package_dir / "package.yml")]
+                )
+
+            self.assertEqual(rc, 1)
+            self.assertIn("manifest-version-missing", stderr.getvalue())
+
     def test_source_lint_uses_defaults_when_metadata_is_absent(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             package_dir = Path(tmpdir) / "sample"
