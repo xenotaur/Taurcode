@@ -1,5 +1,6 @@
 import contextlib
 import io
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,13 +12,27 @@ from taurcode.cli import main
 class TestEspansoLint(unittest.TestCase):
     def test_clean_package_has_no_diagnostics(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            package = Path(tmpdir) / "package.yml"
+            package_dir = Path(tmpdir) / "sample"
+            package_dir.mkdir()
+            package = package_dir / "package.yml"
             package.write_text(
                 """matches:
   - trigger: ":hello"
     replace: "hello"
 """,
                 encoding="utf-8",
+            )
+            (package_dir / "_manifest.yml").write_text(
+                "name: sample\n"
+                "title: Sample\n"
+                "description: Useful sample package\n"
+                "version: 1.0.0\n"
+                "author: Example Author\n"
+                "homepage: https://github.com/example/sample\n",
+                encoding="utf-8",
+            )
+            (package_dir / "README.md").write_text(
+                "# Sample\n\nSample package documentation.\n", encoding="utf-8"
             )
 
             diagnostics = espanso_lint.lint_espanso_package(package)
@@ -393,6 +408,52 @@ class TestEspansoMetadataLint(unittest.TestCase):
             self.assertEqual(rc, 1)
             self.assertIn("manifest-version-missing", stderr.getvalue())
 
+    def test_package_yml_input_from_package_cwd_uses_directory_name(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(package_dir)
+            previous_cwd = Path.cwd()
+
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+            try:
+                os.chdir(package_dir)
+                with (
+                    contextlib.redirect_stdout(stdout),
+                    contextlib.redirect_stderr(stderr),
+                ):
+                    rc = main(["lint", "espanso", "--input", "package.yml"])
+            finally:
+                os.chdir(previous_cwd)
+
+            self.assertEqual(rc, 0)
+            self.assertIn("Espanso lint passed", stdout.getvalue())
+            self.assertNotIn("invalid-package-name", stderr.getvalue())
+            self.assertNotIn("manifest-name-mismatch", stderr.getvalue())
+
+    def test_dot_input_from_package_cwd_uses_directory_name(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(package_dir)
+            previous_cwd = Path.cwd()
+
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+            try:
+                os.chdir(package_dir)
+                with (
+                    contextlib.redirect_stdout(stdout),
+                    contextlib.redirect_stderr(stderr),
+                ):
+                    rc = main(["lint", "espanso", "--input", "."])
+            finally:
+                os.chdir(previous_cwd)
+
+            self.assertEqual(rc, 0)
+            self.assertIn("Espanso lint passed", stdout.getvalue())
+            self.assertNotIn("invalid-package-name", stderr.getvalue())
+            self.assertNotIn("manifest-name-mismatch", stderr.getvalue())
+
     def test_source_lint_uses_defaults_when_metadata_is_absent(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             package_dir = Path(tmpdir) / "sample"
@@ -403,6 +464,30 @@ class TestEspansoMetadataLint(unittest.TestCase):
             self.assertFalse(result.has_errors())
             self.assertIn(
                 "manifest-description-placeholder", self._warning_codes(result)
+            )
+            self.assertTrue(
+                all(
+                    diagnostic.path == package_dir.resolve()
+                    for diagnostic in result.warnings
+                )
+            )
+
+    def test_nested_homepage_path_does_not_warn_package_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir) / "sample"
+            self._write_build_package(
+                package_dir,
+                manifest=(
+                    "name: sample\nversion: 1.0.0\n"
+                    "description: Useful package\nauthor: Person\n"
+                    "homepage: https://gitlab.com/group/subgroup/sample\n"
+                ),
+            )
+
+            result = espanso_lint.lint_espanso_package_build(package_dir)
+
+            self.assertNotIn(
+                "manifest-homepage-package-mismatch", self._warning_codes(result)
             )
 
 
