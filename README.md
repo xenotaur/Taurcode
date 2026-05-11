@@ -111,7 +111,7 @@ The optional `prompts/<package>/espanso/` directory is reserved for Espanso pack
 
 Note: installation into a local Espanso configuration is currently manual.
 
-## Validate prompts
+## Validate and lint prompts
 Validate all canonical prompt files before export:
 
 ```bash
@@ -134,6 +134,47 @@ Common errors:
 - `Missing required field 'id' in prompts/taurcode/example.md`
 
 Export commands run the same validation step and fail if prompt data is invalid.
+
+Prompt-source linting checks the Markdown files themselves before the loader converts
+them into prompt objects:
+
+```bash
+taurcode lint prompts --prompts prompts/taurcode
+```
+
+Prompt-source lint **errors** are objective source problems and return a nonzero
+status. They include missing frontmatter delimiters, malformed YAML frontmatter,
+frontmatter that is not a mapping, missing required frontmatter fields, missing or
+non-string keywords, keywords that do not start with `:`, and duplicate keyword
+values within a package.
+
+Prompt-source lint **warnings** are non-blocking by default. They include filename
+stems that do not match the keyword-derived slug, empty bodies, files that do not
+end with exactly one final newline, unquoted keyword values, and descriptions that
+appear to have been wrapped by a generic YAML dumper. Unknown frontmatter fields
+are allowed and should not warn by default. The reserved `prompts/<package>/espanso/`
+directory is ignored by prompt discovery and prompt-source linting because it holds
+Espanso package metadata rather than prompt content.
+
+Preferred human-editable prompt frontmatter style is:
+
+```markdown
+---
+id: debug
+name: Debug an Issue
+description: Debug an Issue
+keyword: ":debug"
+---
+```
+
+Keep frontmatter field order stable as `id`, `name`, `description`, `keyword`, then
+any user-defined extra fields. Quote `keyword` because it is syntax-like and quote
+preservation avoids round-trip churn such as `keyword: ":debug"` becoming
+`keyword: :debug`. Keep `description` on one line when practical. Unknown or
+user-defined fields are allowed and should be preserved by prompt workflows.
+Generated or rewritten Markdown prompt files should end with exactly one final
+newline. A safe formatter may be added later, but linting currently only reports
+style issues.
 
 ## Design proposals
 
