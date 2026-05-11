@@ -6,6 +6,7 @@ from taurcode import (
     espanso_export,
     espanso_import,
     espanso_lint,
+    prompt_lint,
     prompt_loader,
     validate,
 )
@@ -31,6 +32,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     lint_espanso_parser = lint_subparsers.add_parser("espanso")
     lint_espanso_parser.add_argument("--input", required=True)
+
+    lint_prompts_parser = lint_subparsers.add_parser("prompts")
+    lint_prompts_parser.add_argument("--prompts", default=CANONICAL_PROMPTS_DIR)
 
     import_parser = subparsers.add_parser("import")
     import_subparsers = import_parser.add_subparsers(dest="target", required=True)
@@ -81,6 +85,14 @@ def main(argv: Optional[List[str]] = None) -> int:
             if result.has_errors():
                 return 1
             print(f"Espanso lint passed: {args.input}")
+            return 0
+        if args.command == "lint" and args.target == "prompts":
+            result = prompt_lint.lint_prompt_package(args.prompts)
+            if result.has_errors() or result.has_warnings():
+                print(espanso_lint.format_lint_result(result), file=sys.stderr)
+            if result.has_errors():
+                return 1
+            print(f"Prompt lint passed: {args.prompts}")
             return 0
         if args.command == "import" and args.target == "espanso":
             espanso_import.import_espanso(args.input, args.output, merge=args.merge)
