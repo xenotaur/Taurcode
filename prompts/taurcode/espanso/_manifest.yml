@@ -1,0 +1,10 @@
+name: taurcode
+title: Taurcode
+description: Prompt snippets for Taurcode development workflows.
+version: 0.1.0
+author: Anthony Francis
+tags:
+  - prompts
+  - development
+  - codex
+homepage: https://github.com/xenotaur/Taurcode
