@@ -18,7 +18,52 @@ def lint_prompt_package(prompt_dir: str | Path) -> espanso_lint.LintResult:
     warnings: list[espanso_lint.Diagnostic] = []
     keyword_sources: dict[str, Path] = {}
 
-    for prompt_file in _iter_prompt_files(directory):
+    if not directory.exists():
+        return espanso_lint.LintResult(
+            errors=[
+                espanso_lint.Diagnostic(
+                    path=directory,
+                    line=None,
+                    column=None,
+                    code="prompt-package-missing",
+                    message="Prompt package directory does not exist",
+                    suggestion="Check the --prompts path and rerun prompt lint.",
+                )
+            ],
+            warnings=[],
+        )
+    if not directory.is_dir():
+        return espanso_lint.LintResult(
+            errors=[
+                espanso_lint.Diagnostic(
+                    path=directory,
+                    line=None,
+                    column=None,
+                    code="prompt-package-not-directory",
+                    message="Prompt package path is not a directory",
+                    suggestion="Pass a prompt package directory to --prompts.",
+                )
+            ],
+            warnings=[],
+        )
+
+    prompt_files = _iter_prompt_files(directory)
+    if not prompt_files:
+        return espanso_lint.LintResult(
+            errors=[
+                espanso_lint.Diagnostic(
+                    path=directory,
+                    line=None,
+                    column=None,
+                    code="prompt-package-empty",
+                    message="No prompt markdown files found",
+                    suggestion="Add prompt .md files outside reserved metadata directories such as espanso/.",
+                )
+            ],
+            warnings=[],
+        )
+
+    for prompt_file in prompt_files:
         file_errors, file_warnings, metadata, body, frontmatter_text = (
             _lint_prompt_file(prompt_file)
         )
@@ -54,8 +99,6 @@ def lint_prompt_package(prompt_dir: str | Path) -> espanso_lint.LintResult:
 
 def _iter_prompt_files(directory: Path) -> list[Path]:
     prompt_files: list[Path] = []
-    if not directory.exists():
-        return prompt_files
     for prompt_file in sorted(directory.rglob("*.md")):
         if not prompt_file.is_file():
             continue

@@ -19,6 +19,31 @@ class TestPromptLint(unittest.TestCase):
             self.assertFalse(result.has_errors())
             self.assertFalse(result.has_warnings())
 
+    def test_missing_prompt_directory_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            missing_dir = Path(tmpdir) / "missing"
+
+            result = prompt_lint.lint_prompt_package(missing_dir)
+
+            self.assertDiagnosticCode(result.errors, "prompt-package-missing")
+
+    def test_empty_prompt_directory_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = prompt_lint.lint_prompt_package(tmpdir)
+
+            self.assertDiagnosticCode(result.errors, "prompt-package-empty")
+
+    def test_cli_missing_prompt_directory_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            missing_dir = Path(tmpdir) / "missing"
+            stderr = io.StringIO()
+
+            with contextlib.redirect_stderr(stderr):
+                rc = main(["lint", "prompts", "--prompts", str(missing_dir)])
+
+            self.assertEqual(rc, 1)
+            self.assertIn("prompt-package-missing", stderr.getvalue())
+
     def test_missing_frontmatter_errors(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             prompt = Path(tmpdir) / "debug.md"

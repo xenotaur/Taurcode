@@ -2,6 +2,7 @@
 prompt_id: PROMPT(TAURCODE-PROMPT-SOURCE-LINT-POLICY)[2026-05-11T01:50:00-04:00]
 date: 2026-05-11
 scope: AD_HOC
+related_work_item: AD_HOC
 status: landed
 ---
 

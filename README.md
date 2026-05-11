@@ -143,10 +143,11 @@ taurcode lint prompts --prompts prompts/taurcode
 ```
 
 Prompt-source lint **errors** are objective source problems and return a nonzero
-status. They include missing frontmatter delimiters, malformed YAML frontmatter,
-frontmatter that is not a mapping, missing required frontmatter fields, missing or
-non-string keywords, keywords that do not start with `:`, and duplicate keyword
-values within a package.
+status. They include missing or empty prompt package directories, missing
+frontmatter delimiters, malformed YAML frontmatter, frontmatter that is not a
+mapping, missing required frontmatter fields, missing or non-string keywords,
+keywords that do not start with `:`, and duplicate keyword values within a
+package.
 
 Prompt-source lint **warnings** are non-blocking by default. They include filename
 stems that do not match the keyword-derived slug, empty bodies, files that do not
