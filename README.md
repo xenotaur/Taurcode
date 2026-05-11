@@ -174,8 +174,25 @@ preservation avoids round-trip churn such as `keyword: ":debug"` becoming
 `keyword: :debug`. Keep `description` on one line when practical. Unknown or
 user-defined fields are allowed and should be preserved by prompt workflows.
 Generated or rewritten Markdown prompt files should end with exactly one final
-newline. A safe formatter may be added later, but linting currently only reports
-style issues.
+newline.
+
+Taurcode also provides an opt-in conservative prompt formatter:
+
+```bash
+taurcode format prompts --prompts prompts/taurcode
+taurcode format prompts --prompts prompts/taurcode --check
+```
+
+The formatter is intended to reduce round-trip diff noise while preserving
+human-authored prompt sources. Its safe fixes are intentionally narrow: it quotes
+simple frontmatter `keyword` values such as `keyword: :debug` as
+`keyword: ":debug"`, and it normalizes each formatted prompt file to exactly one
+final newline. It does not run the frontmatter through a generic YAML dumper, wrap
+or unwrap descriptions, change block scalar styles, trim or normalize prompt body
+whitespace beyond the final newline count, or rewrite Espanso package metadata
+under `prompts/<package>/espanso/`. Field ordering remains a documentation and
+lint preference rather than an automatic rewrite so comments, unknown fields, and
+existing frontmatter formatting are preserved.
 
 ## Design proposals
 
