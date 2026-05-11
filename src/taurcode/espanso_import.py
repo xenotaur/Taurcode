@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from . import espanso_lint
+from . import espanso_lint, text_normalization
 
 _SIMPLE_KEYS = {"trigger", "replace"}
 _METADATA_ASSETS = ("_manifest.yml", "README.md", "LICENSE")
@@ -169,14 +169,14 @@ def _normalize_replace(value: object) -> str:
 
 
 def _fresh_prompt_content(prompt_id: str, trigger: str, replace: str) -> str:
-    return (
+    return text_normalization.normalize_final_newline(
         "---\n"
         f"id: {prompt_id}\n"
         f"name: {_derive_name(prompt_id)}\n"
         "description: Imported from Espanso\n"
         f'keyword: "{trigger}"\n'
         "---\n\n"
-        f"{replace}" + ("" if replace.endswith("\n") else "\n")
+        f"{replace}"
     )
 
 
@@ -221,12 +221,8 @@ def _dump_prompt(metadata: dict[str, Any], body: str) -> str:
         sort_keys=False,
     ).rstrip("\n")
     normalized_body = body.replace("\r\n", "\n").replace("\r", "\n")
-    return (
-        "---\n"
-        + metadata_text
-        + "\n---\n\n"
-        + normalized_body
-        + ("" if normalized_body.endswith("\n") else "\n")
+    return text_normalization.normalize_final_newline(
+        "---\n" + metadata_text + "\n---\n\n" + normalized_body
     )
 
 

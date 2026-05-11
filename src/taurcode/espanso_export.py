@@ -2,7 +2,7 @@ import json
 import shutil
 from pathlib import Path
 
-from taurcode import espanso_lint, espanso_metadata, prompt_model
+from taurcode import espanso_lint, espanso_metadata, prompt_model, text_normalization
 
 _METADATA_ASSETS = ("_manifest.yml", "README.md", "LICENSE")
 
@@ -78,6 +78,7 @@ def export_espanso(
         readme_content = espanso_metadata.generate_default_readme(
             package_name, readme_manifest
         )
+        readme_content = text_normalization.normalize_final_newline(readme_content)
         (output / "README.md").write_text(readme_content, encoding="utf-8")
 
     result = espanso_lint.lint_espanso_package_build(output)

@@ -1,0 +1,8 @@
+matches:
+  - trigger: ":debug"
+    replace: |+
+      New body from Espanso
+
+      Preserve this internal blank line.
+
+
