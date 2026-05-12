@@ -6,11 +6,7 @@ from taurcode import text_normalization
 
 _RESERVED_PROMPT_DIRS = {"espanso"}
 _KEYWORD_FORMAT_LINE_RE = re.compile(
-    r"^(?P<prefix>keyword\s*:\s*)"
-    r"(?P<value>[^#\r\n]*?)"
-    r"(?P<space>\s*)"
-    r"(?P<comment>#.*)?"
-    r"(?P<newline>\r?\n?)$"
+    r"^(?P<prefix>keyword\s*:\s*)" r"(?P<rest>[^\r\n]*)" r"(?P<newline>\r?\n?)$"
 )
 
 
@@ -100,15 +96,15 @@ def _format_keyword_line(line: str) -> str:
     if match is None:
         return line
 
-    raw_value = match.group("value")
-    value = raw_value.strip()
-    if not value or _value_is_quoted(value) or value.startswith(("|", ">")):
+    rest = match.group("rest")
+    if _rest_starts_with_preserved_scalar(rest):
         return line
 
-    comment = match.group("comment") or ""
-    space = match.group("space")
-    if comment and not space:
-        space = " "
+    raw_value, space, comment = _split_plain_value_and_comment(rest)
+    value = raw_value.strip()
+    if not value:
+        return line
+
     escaped_value = value.replace("\\", "\\\\").replace('"', '\\"')
     return (
         f'{match.group("prefix")}"{escaped_value}"'
@@ -116,5 +112,21 @@ def _format_keyword_line(line: str) -> str:
     )
 
 
-def _value_is_quoted(value: str) -> bool:
-    return len(value) >= 2 and value[0] in {'"', "'"} and value[-1] == value[0]
+def _rest_starts_with_preserved_scalar(rest: str) -> bool:
+    value = rest.lstrip()
+    return value.startswith(('"', "'", "|", ">"))
+
+
+def _split_plain_value_and_comment(rest: str) -> tuple[str, str, str]:
+    for index, character in enumerate(rest):
+        if character != "#":
+            continue
+        if index > 0 and rest[index - 1] not in {" ", "\t"}:
+            continue
+
+        space_start = index
+        while space_start > 0 and rest[space_start - 1] in {" ", "\t"}:
+            space_start -= 1
+        return rest[:space_start], rest[space_start:index], rest[index:]
+
+    return rest, "", ""

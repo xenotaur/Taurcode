@@ -22,6 +22,28 @@ class TestPromptFormat(unittest.TestCase):
 
         self.assertEqual(document, formatted)
 
+    def test_preserves_hash_characters_inside_plain_keyword_values(self) -> None:
+        document = _prompt_document(keyword=":foo#bar")
+
+        formatted = prompt_format.format_prompt_document(document)
+
+        self.assertIn('keyword: ":foo#bar"\n', formatted)
+        self.assertNotIn('keyword: ":foo"#bar', formatted)
+
+    def test_preserves_yaml_comments_after_plain_keyword_values(self) -> None:
+        document = _prompt_document(keyword=":foo#bar # comment")
+
+        formatted = prompt_format.format_prompt_document(document)
+
+        self.assertIn('keyword: ":foo#bar" # comment\n', formatted)
+
+    def test_leaves_quoted_keyword_values_with_hash_unchanged(self) -> None:
+        document = _prompt_document(keyword='":foo # bar" # comment')
+
+        formatted = prompt_format.format_prompt_document(document)
+
+        self.assertEqual(document, formatted)
+
     def test_preserves_description_as_single_line(self) -> None:
         description = (
             "Use this deliberately long single-line description without wrapping it"
