@@ -19,6 +19,7 @@ class ExistingPrompt:
     path: Path
     metadata: dict[str, Any]
     body: str
+    frontmatter_text: str | None = None
 
 
 @dataclass
@@ -185,7 +186,9 @@ def _read_prompt_file(prompt_file: Path) -> ExistingPrompt:
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
     lines = normalized.split("\n")
     if not lines or lines[0] != "---":
-        return ExistingPrompt(path=prompt_file, metadata={}, body=normalized)
+        return ExistingPrompt(
+            path=prompt_file, metadata={}, body=normalized, frontmatter_text=None
+        )
 
     closing_index = None
     for index in range(1, len(lines)):
@@ -204,7 +207,12 @@ def _read_prompt_file(prompt_file: Path) -> ExistingPrompt:
     body = "\n".join(lines[closing_index + 1 :])
     if body.startswith("\n"):
         body = body[1:]
-    return ExistingPrompt(path=prompt_file, metadata=dict(metadata), body=body)
+    return ExistingPrompt(
+        path=prompt_file,
+        metadata=dict(metadata),
+        body=body,
+        frontmatter_text=metadata_text,
+    )
 
 
 def _load_existing_prompts(output: Path) -> list[ExistingPrompt]:
@@ -220,10 +228,48 @@ def _dump_prompt(metadata: dict[str, Any], body: str) -> str:
         default_flow_style=False,
         sort_keys=False,
     ).rstrip("\n")
+    return _compose_prompt(metadata_text, body)
+
+
+def _compose_prompt(frontmatter_text: str, body: str) -> str:
     normalized_body = body.replace("\r\n", "\n").replace("\r", "\n")
     return text_normalization.normalize_final_newline(
-        "---\n" + metadata_text + "\n---\n\n" + normalized_body
+        "---\n" + frontmatter_text + "\n---\n\n" + normalized_body
     )
+
+
+def _quoted_frontmatter_string(value: str) -> str:
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def _keyword_line(trigger: str) -> str:
+    return f"keyword: {_quoted_frontmatter_string(trigger)}"
+
+
+def _frontmatter_with_keyword(frontmatter_text: str, trigger: str) -> str:
+    lines = frontmatter_text.split("\n")
+    for index, line in enumerate(lines):
+        if re.match(r"^keyword\s*:", line):
+            lines[index] = _keyword_line(trigger)
+            return "\n".join(lines)
+
+    lines.append(_keyword_line(trigger))
+    return "\n".join(lines)
+
+
+def _render_merged_prompt(existing: ExistingPrompt, trigger: str, body: str) -> str:
+    existing_keyword = str(existing.metadata.get("keyword", ""))
+    if existing.frontmatter_text is not None and existing_keyword == trigger:
+        return _compose_prompt(existing.frontmatter_text, body)
+    if existing.frontmatter_text is not None:
+        return _compose_prompt(
+            _frontmatter_with_keyword(existing.frontmatter_text, trigger), body
+        )
+
+    metadata = dict(existing.metadata)
+    metadata["keyword"] = trigger
+    return _dump_prompt(metadata, body)
 
 
 def _match_existing_prompt(
@@ -286,9 +332,9 @@ def _merge_simple_matches(
         existing_updates.append((existing, trigger, replace))
 
     for existing, trigger, replace in existing_updates:
-        metadata = dict(existing.metadata)
-        metadata["keyword"] = trigger
-        existing.path.write_text(_dump_prompt(metadata, replace), encoding="utf-8")
+        existing.path.write_text(
+            _render_merged_prompt(existing, trigger, replace), encoding="utf-8"
+        )
 
     for trigger, replace in new_prompts:
         prompt_id = _unique_id(_normalize_id(trigger), used_ids)

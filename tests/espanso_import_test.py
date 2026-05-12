@@ -486,9 +486,55 @@ Old body
             self.assertIn("name: Debug Issue Carefully\n", merged)
             self.assertIn("description: Debug an Issue\n", merged)
             self.assertIn("owner: docs-team\n", merged)
-            self.assertIn("keyword: :debug\n", merged)
+            self.assertIn('keyword: ":debug"\n', merged)
             self.assertTrue(merged.endswith("New Espanso body\n"))
             self.assertNotIn("Imported from Espanso", merged)
+
+    def test_merge_preserves_frontmatter_text_when_only_body_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            prompt = output / "debug.md"
+            frontmatter = (
+                "---\n"
+                "# keep leading comment\n"
+                "owner: docs-team  # keep inline comment\n"
+                "id: debug\n"
+                "name: Debug Issue Carefully\n"
+                "description: This intentionally long description stays on one line so merge import does not create cosmetic wrapping churn in human-authored prompt packages.\n"
+                'keyword: ":debug"\n'
+                "---\n"
+            )
+            prompt.write_text(frontmatter + "\nOld body\n", encoding="utf-8")
+            source.write_text(
+                """matches:
+  - trigger: ":debug"
+    replace: |
+      New Espanso body
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                    "--merge",
+                ]
+            )
+            self.assertEqual(rc, 0)
+
+            merged = prompt.read_text(encoding="utf-8")
+            self.assertEqual(
+                merged,
+                frontmatter + "\nNew Espanso body\n",
+            )
 
     def test_merge_preserves_yaml_safe_metadata_scalars(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -535,10 +581,10 @@ Old body
             self.assertEqual(rc, 0)
             merged = prompt.read_text(encoding="utf-8")
             self.assertNotIn("\n...\n", merged)
-            self.assertIn("description: 'desc # keep'\n", merged)
+            self.assertIn('description: "desc # keep"\n', merged)
             self.assertIn("enabled: true\n", merged)
             self.assertIn("count: 2\n", merged)
-            self.assertIn("tags:\n- review\n", merged)
+            self.assertIn("tags:\n  - review\n", merged)
 
             source.write_text(
                 """matches:
@@ -560,7 +606,7 @@ Old body
             )
             self.assertEqual(rc, 0)
             merged_again = prompt.read_text(encoding="utf-8")
-            self.assertIn("description: 'desc # keep'\n", merged_again)
+            self.assertIn('description: "desc # keep"\n', merged_again)
             self.assertIn("enabled: true\n", merged_again)
             self.assertTrue(merged_again.endswith("Updated twice\n"))
 
@@ -603,7 +649,8 @@ Old body
             )
             self.assertEqual(rc, 0)
             merged = (output / "rename-me.md").read_text(encoding="utf-8")
-            self.assertIn("keyword: :rename-me\n", merged)
+            self.assertIn('keyword: ":rename-me"\n', merged)
+            self.assertIn("description: Keep me\n", merged)
             self.assertTrue(merged.endswith("New body\n"))
 
     def test_merge_creates_new_prompt_for_new_match(self) -> None:
