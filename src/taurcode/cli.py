@@ -6,6 +6,7 @@ from taurcode import (
     espanso_export,
     espanso_import,
     espanso_lint,
+    prompt_format,
     prompt_lint,
     prompt_loader,
     validate,
@@ -35,6 +36,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     lint_prompts_parser = lint_subparsers.add_parser("prompts")
     lint_prompts_parser.add_argument("--prompts", default=CANONICAL_PROMPTS_DIR)
+
+    format_parser = subparsers.add_parser("format")
+    format_subparsers = format_parser.add_subparsers(dest="target", required=True)
+
+    format_prompts_parser = format_subparsers.add_parser("prompts")
+    format_prompts_parser.add_argument("--prompts", default=CANONICAL_PROMPTS_DIR)
+    format_prompts_parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Check whether prompt files are formatted without writing changes",
+    )
 
     import_parser = subparsers.add_parser("import")
     import_subparsers = import_parser.add_subparsers(dest="target", required=True)
@@ -93,6 +105,15 @@ def main(argv: Optional[List[str]] = None) -> int:
             if result.has_errors():
                 return 1
             print(f"Prompt lint passed: {args.prompts}")
+            return 0
+        if args.command == "format" and args.target == "prompts":
+            result = prompt_format.format_prompt_package(args.prompts, check=args.check)
+            for changed_file in result.changed_files:
+                action = "Would format" if args.check else "Formatted"
+                print(f"{action}: {changed_file}")
+            if args.check and result.has_changes():
+                return 1
+            print(f"Prompt format passed: {args.prompts}")
             return 0
         if args.command == "import" and args.target == "espanso":
             espanso_import.import_espanso(args.input, args.output, merge=args.merge)

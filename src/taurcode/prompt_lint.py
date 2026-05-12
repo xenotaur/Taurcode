@@ -135,7 +135,7 @@ def _lint_prompt_file(
                 column=None,
                 code="prompt-final-newline",
                 message="Prompt file should end with exactly one final newline",
-                suggestion="Rewrite the file so it has one trailing newline and no extra blank newline at EOF.",
+                suggestion="Run taurcode format prompts to normalize the file to exactly one final newline.",
             )
         )
 
@@ -291,7 +291,7 @@ def _style_warnings(
                     column=1,
                     code="prompt-keyword-unquoted",
                     message="Prompt keyword should be quoted in source frontmatter",
-                    suggestion='Prefer keyword: ":debug" to avoid YAML formatting churn.',
+                    suggestion='Run taurcode format prompts to rewrite this as keyword: ":debug".',
                 )
             )
 
