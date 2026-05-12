@@ -1,3 +1,4 @@
+import json
 import re
 import shutil
 import sys
@@ -239,36 +240,84 @@ def _compose_prompt(frontmatter_text: str, body: str) -> str:
 
 
 def _quoted_frontmatter_string(value: str) -> str:
-    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"'
+    return json.dumps(value)
 
 
 def _keyword_line(trigger: str) -> str:
     return f"keyword: {_quoted_frontmatter_string(trigger)}"
 
 
-def _frontmatter_with_keyword(frontmatter_text: str, trigger: str) -> str:
+def _frontmatter_with_keyword(frontmatter_text: str, trigger: str) -> str | None:
     lines = frontmatter_text.split("\n")
     for index, line in enumerate(lines):
-        if re.match(r"^keyword\s*:", line):
-            lines[index] = _keyword_line(trigger)
-            return "\n".join(lines)
+        match = re.match(r"^(?P<prefix>keyword\s*:\s*)(?P<rest>.*)$", line)
+        if match is None:
+            continue
+
+        updated_line = _keyword_line_with_existing_format(match, trigger)
+        if updated_line is None:
+            return None
+        lines[index] = updated_line
+        return "\n".join(lines)
 
     lines.append(_keyword_line(trigger))
     return "\n".join(lines)
+
+
+def _keyword_line_with_existing_format(
+    match: re.Match[str], trigger: str
+) -> str | None:
+    rest = match.group("rest")
+    if rest.lstrip().startswith(("|", ">")):
+        return None
+
+    _value, space, comment = _split_plain_value_and_comment(rest)
+    return (
+        f'{match.group("prefix")}{_quoted_frontmatter_string(trigger)}{space}{comment}'
+    )
+
+
+def _split_plain_value_and_comment(rest: str) -> tuple[str, str, str]:
+    quote: str | None = None
+    escaped = False
+    for index, character in enumerate(rest):
+        if escaped:
+            escaped = False
+            continue
+        if quote == '"' and character == "\\":
+            escaped = True
+            continue
+        if character in {"'", '"'}:
+            if quote is None:
+                quote = character
+                continue
+            if quote == character:
+                quote = None
+                continue
+        if quote is not None or character != "#":
+            continue
+        if index > 0 and rest[index - 1] not in {" ", "\t"}:
+            continue
+
+        space_start = index
+        while space_start > 0 and rest[space_start - 1] in {" ", "\t"}:
+            space_start -= 1
+        return rest[:space_start], rest[space_start:index], rest[index:]
+
+    return rest, "", ""
 
 
 def _render_merged_prompt(existing: ExistingPrompt, trigger: str, body: str) -> str:
     existing_keyword = str(existing.metadata.get("keyword", ""))
     if existing.frontmatter_text is not None and existing_keyword == trigger:
         return _compose_prompt(existing.frontmatter_text, body)
-    if existing.frontmatter_text is not None:
-        return _compose_prompt(
-            _frontmatter_with_keyword(existing.frontmatter_text, trigger), body
-        )
-
     metadata = dict(existing.metadata)
     metadata["keyword"] = trigger
+    if existing.frontmatter_text is not None:
+        frontmatter_text = _frontmatter_with_keyword(existing.frontmatter_text, trigger)
+        if frontmatter_text is not None:
+            return _compose_prompt(frontmatter_text, body)
+
     return _dump_prompt(metadata, body)
 
 

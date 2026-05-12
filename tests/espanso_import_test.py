@@ -653,6 +653,135 @@ Old body
             self.assertIn("description: Keep me\n", merged)
             self.assertTrue(merged.endswith("New body\n"))
 
+    def test_merge_keyword_edit_preserves_inline_comment_and_spacing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            prompt = output / "rename-me.md"
+            prompt.write_text(
+                """---
+id: rename-me
+name: Rename Me
+description: Keep me
+keyword:    ":old-trigger"  # keep keyword comment
+---
+
+Old body
+""",
+                encoding="utf-8",
+            )
+            source.write_text(
+                """matches:
+  - trigger: ":rename-me"
+    replace: New body
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                    "--merge",
+                ]
+            )
+            self.assertEqual(rc, 0)
+            merged = prompt.read_text(encoding="utf-8")
+            self.assertIn('keyword:    ":rename-me"  # keep keyword comment\n', merged)
+            self.assertTrue(merged.endswith("New body\n"))
+
+    def test_merge_keyword_edit_falls_back_for_block_scalar_keyword(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            prompt = output / "rename-me.md"
+            prompt.write_text(
+                """---
+id: rename-me
+name: Rename Me
+description: Keep me
+keyword: >-
+  :old-trigger
+---
+
+Old body
+""",
+                encoding="utf-8",
+            )
+            source.write_text(
+                """matches:
+  - trigger: ":rename-me"
+    replace: New body
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                    "--merge",
+                ]
+            )
+            self.assertEqual(rc, 0)
+            merged = prompt.read_text(encoding="utf-8")
+            self.assertIn("keyword: :rename-me\n", merged)
+            self.assertNotIn("  :old-trigger", merged)
+            self.assertTrue(merged.endswith("New body\n"))
+
+    def test_merge_keyword_edit_uses_json_string_escaping(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            prompt = output / "rename-me.md"
+            prompt.write_text(
+                """---
+id: rename-me
+name: Rename Me
+description: Keep me
+keyword: ":old-trigger"
+---
+
+Old body
+""",
+                encoding="utf-8",
+            )
+            source.write_text(
+                'matches:\n  - trigger: ":rename\\tme"\n    replace: New body\n',
+                encoding="utf-8",
+            )
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                    "--merge",
+                ]
+            )
+            self.assertEqual(rc, 0)
+            merged = prompt.read_text(encoding="utf-8")
+            self.assertIn('keyword: ":rename\\tme"\n', merged)
+            self.assertNotIn('keyword: ":rename\tme"\n', merged)
+            self.assertTrue(merged.endswith("New body\n"))
+
     def test_merge_creates_new_prompt_for_new_match(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
