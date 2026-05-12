@@ -27,7 +27,7 @@ The shim does not call `yaml.safe_load`. It is therefore not a YAML parser. It t
 
 The only production import of `frontmatter` is in `src/taurcode/prompt_loader.py`. `load_prompts()` calls `frontmatter.loads(text)` and reads these metadata keys from `post.metadata`: `id`, `name`, `description`, `keyword`, and `targets`.
 
-Prompt validation and prompt linting do not use the shim. `src/taurcode/prompt_lint.py` parses prompt frontmatter with `yaml.safe_load`, reports malformed YAML with line/column diagnostics, requires mapping frontmatter, and validates schema expectations. Espanso import and metadata handling also use `PyYAML` directly.
+The standalone validator module does not parse frontmatter directly, but the `taurcode validate` CLI path still calls `prompt_loader.load_prompts()` before `validate.validate_prompts()`. Because `prompt_loader` is the production module that imports `frontmatter`, validation has the same environment-dependent parser behavior as loading and export. Prompt linting is different: `src/taurcode/prompt_lint.py` parses prompt frontmatter with `yaml.safe_load`, reports malformed YAML with line/column diagnostics, requires mapping frontmatter, and validates schema expectations. Espanso import and metadata handling also use `PyYAML` directly.
 
 ### Packaging and import interaction
 
@@ -103,6 +103,7 @@ If an offline fallback is still required, keep it only under a Taurcode-owned na
   - nested `targets`,
   - malformed YAML frontmatter,
   - the current decision for multiline YAML fields.
+- Cover both direct `prompt_loader.load_prompts()` callers and CLI paths that load prompts before acting, especially `taurcode validate` and `taurcode export espanso`.
 - Add a small import-shadowing test or packaging assertion that fails if Taurcode still ships top-level `frontmatter` after the migration PR.
 - Keep the local shim unchanged in this PR if the tests are intended to document current failure modes.
 
