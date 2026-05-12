@@ -1,3 +1,4 @@
+import json
 import re
 import shutil
 import sys
@@ -19,6 +20,7 @@ class ExistingPrompt:
     path: Path
     metadata: dict[str, Any]
     body: str
+    frontmatter_text: str | None = None
 
 
 @dataclass
@@ -185,7 +187,9 @@ def _read_prompt_file(prompt_file: Path) -> ExistingPrompt:
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
     lines = normalized.split("\n")
     if not lines or lines[0] != "---":
-        return ExistingPrompt(path=prompt_file, metadata={}, body=normalized)
+        return ExistingPrompt(
+            path=prompt_file, metadata={}, body=normalized, frontmatter_text=None
+        )
 
     closing_index = None
     for index in range(1, len(lines)):
@@ -204,7 +208,12 @@ def _read_prompt_file(prompt_file: Path) -> ExistingPrompt:
     body = "\n".join(lines[closing_index + 1 :])
     if body.startswith("\n"):
         body = body[1:]
-    return ExistingPrompt(path=prompt_file, metadata=dict(metadata), body=body)
+    return ExistingPrompt(
+        path=prompt_file,
+        metadata=dict(metadata),
+        body=body,
+        frontmatter_text=metadata_text,
+    )
 
 
 def _load_existing_prompts(output: Path) -> list[ExistingPrompt]:
@@ -220,10 +229,96 @@ def _dump_prompt(metadata: dict[str, Any], body: str) -> str:
         default_flow_style=False,
         sort_keys=False,
     ).rstrip("\n")
+    return _compose_prompt(metadata_text, body)
+
+
+def _compose_prompt(frontmatter_text: str, body: str) -> str:
     normalized_body = body.replace("\r\n", "\n").replace("\r", "\n")
     return text_normalization.normalize_final_newline(
-        "---\n" + metadata_text + "\n---\n\n" + normalized_body
+        "---\n" + frontmatter_text + "\n---\n\n" + normalized_body
     )
+
+
+def _quoted_frontmatter_string(value: str) -> str:
+    return json.dumps(value)
+
+
+def _keyword_line(trigger: str) -> str:
+    return f"keyword: {_quoted_frontmatter_string(trigger)}"
+
+
+def _frontmatter_with_keyword(frontmatter_text: str, trigger: str) -> str | None:
+    lines = frontmatter_text.split("\n")
+    for index, line in enumerate(lines):
+        match = re.match(r"^(?P<prefix>keyword\s*:\s*)(?P<rest>.*)$", line)
+        if match is None:
+            continue
+
+        updated_line = _keyword_line_with_existing_format(match, trigger)
+        if updated_line is None:
+            return None
+        lines[index] = updated_line
+        return "\n".join(lines)
+
+    lines.append(_keyword_line(trigger))
+    return "\n".join(lines)
+
+
+def _keyword_line_with_existing_format(
+    match: re.Match[str], trigger: str
+) -> str | None:
+    rest = match.group("rest")
+    if rest.lstrip().startswith(("|", ">")):
+        return None
+
+    _value, space, comment = _split_plain_value_and_comment(rest)
+    return (
+        f'{match.group("prefix")}{_quoted_frontmatter_string(trigger)}{space}{comment}'
+    )
+
+
+def _split_plain_value_and_comment(rest: str) -> tuple[str, str, str]:
+    quote: str | None = None
+    escaped = False
+    for index, character in enumerate(rest):
+        if escaped:
+            escaped = False
+            continue
+        if quote == '"' and character == "\\":
+            escaped = True
+            continue
+        if character in {"'", '"'}:
+            if quote is None:
+                quote = character
+                continue
+            if quote == character:
+                quote = None
+                continue
+        if quote is not None or character != "#":
+            continue
+        if index > 0 and rest[index - 1] not in {" ", "\t"}:
+            continue
+
+        space_start = index
+        while space_start > 0 and rest[space_start - 1] in {" ", "\t"}:
+            space_start -= 1
+        return rest[:space_start], rest[space_start:index], rest[index:]
+
+    return rest, "", ""
+
+
+def _render_merged_prompt(existing: ExistingPrompt, trigger: str, body: str) -> str:
+    existing_keyword = str(existing.metadata.get("keyword", ""))
+    if existing.frontmatter_text is not None and existing_keyword == trigger:
+        return _compose_prompt(existing.frontmatter_text, body)
+    metadata = dict(existing.metadata)
+    metadata["keyword"] = trigger
+    if existing.frontmatter_text is not None:
+        frontmatter_text = _frontmatter_with_keyword(existing.frontmatter_text, trigger)
+        if frontmatter_text is not None:
+            return _compose_prompt(frontmatter_text, body)
+
+    return _dump_prompt(metadata, body)
 
 
 def _match_existing_prompt(
@@ -286,9 +381,9 @@ def _merge_simple_matches(
         existing_updates.append((existing, trigger, replace))
 
     for existing, trigger, replace in existing_updates:
-        metadata = dict(existing.metadata)
-        metadata["keyword"] = trigger
-        existing.path.write_text(_dump_prompt(metadata, replace), encoding="utf-8")
+        existing.path.write_text(
+            _render_merged_prompt(existing, trigger, replace), encoding="utf-8"
+        )
 
     for trigger, replace in new_prompts:
         prompt_id = _unique_id(_normalize_id(trigger), used_ids)

@@ -43,7 +43,8 @@ Import behavior:
   ```
 
 - Merge import matches existing prompts first by frontmatter `keyword` matching the Espanso `trigger`, then by filename stem matching Taurcode's generated trigger slug. It does not use the curated prompt `name` as the primary key.
-- For matched Markdown prompts, merge import preserves human-authored frontmatter such as `name`, `description`, `id`, and unknown fields. It updates Espanso-derived `keyword` and the prompt body from the Espanso `trigger` and `replace`.
+- For matched Markdown prompts, merge import preserves human-authored frontmatter such as `name`, `description`, `id`, and unknown fields. When the Espanso `trigger` already matches the prompt `keyword`, Taurcode reuses the existing frontmatter text exactly, preserving comments, quoting, field order, and line wrapping while updating only the prompt body.
+- If merge import must change an Espanso-derived frontmatter field such as `keyword`, Taurcode uses a targeted edit for that field where practical rather than running the whole frontmatter block through generic YAML serialization. The conservative prompt formatter remains available when users explicitly want safe normalization.
 - Taurcode normalizes generated or re-written Markdown prompt files to exactly one final newline during fresh import and merge import. This reduces noisy diffs such as missing-EOF-newline markers and improves round-trip idempotence. Taurcode only normalizes the final newline count; it does not strip or normalize other prompt body whitespace.
 - Merge import creates new Markdown files for new Espanso matches. Existing Markdown prompts with no matching Espanso entry are kept and reported as warnings; merge import does not prune or delete prompt files.
 - Merge import fails with a clear error when matching is ambiguous, such as multiple Markdown prompts with the same `keyword` for one Espanso trigger or multiple Espanso matches mapping to one Markdown file.
@@ -63,7 +64,7 @@ taurcode validate --prompts prompts/taurcode
 taurcode export espanso --prompts prompts/taurcode --output build/espanso/taurcode
 ```
 
-For curated prompt packages, `--merge` plus final-newline normalization is the recommended update path from Espanso sources because it keeps curated frontmatter while making rewritten Markdown deterministic.
+For curated prompt packages, `--merge` plus final-newline normalization is the recommended update path from Espanso sources because it keeps curated frontmatter human-readable and diff-friendly while making rewritten Markdown deterministic.
 
 In this workflow, `prompts/imported/` is only a temporary staging area that records import provenance. Curated prompts belong in `prompts/taurcode/`.
 
