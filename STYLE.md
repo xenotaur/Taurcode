@@ -336,6 +336,23 @@ Taurcode prefers predictable, automatable tests that can be run from the command
   - Avoid time-dependent behavior
   - Ensure stable ordering
 
+### Test output discipline
+
+Passing tests should not write to stdout or stderr during normal test runs.
+Test suites should run with unittest buffering enabled where practical
+(`python -m unittest -b ...`) so accidental output from passing tests is
+discarded and output from failing tests remains visible.
+
+Tests for CLI behavior should capture stdout/stderr explicitly and assert
+the expected output rather than allowing command output to leak into the
+test runner.
+
+### Coverage
+
+Running `scripts/coverage` runs the unit test suite with coverage tracing enabled and prints a module-level coverage summary. Running `scripts/coverage --html` also produces a full HTML coverage report in `htmlcov/`.
+
+Coverage runs should follow the same output-discipline rules as normal test runs: passing tests should not emit unrelated stdout or stderr. Expected CLI output should be captured and asserted in tests rather than leaking into the coverage run.
+
 ### Running Tests
 
 The canonical project test entry point should be:

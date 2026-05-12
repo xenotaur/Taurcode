@@ -1,19 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-echo "Running tests..."
-set -x
-PYTHONPATH=src python - <<'PY'
-import sys
-import unittest
+echo "Testing taurcode ..."
 
-suite = unittest.TestLoader().discover("tests", pattern="*_test.py")
-count = suite.countTestCases()
-if count == 0:
-    print("ERROR: discovered 0 tests with pattern *_test.py under tests/", file=sys.stderr)
-    raise SystemExit(2)
+if [ "$#" -eq 0 ]; then
+    set -x
+    python -m unittest discover -b -s tests -p "*_test.py"
+elif [ -d "$1" ]; then
+    set -x
+    python -m unittest discover -b -s "$1" -p "*_test.py"
+elif [ -f "$1" ]; then
+    module="${1%.py}"
+    module="${module#./}"
+    module="${module//\//.}"
+    set -x
+    python -m unittest -b "$module"
+else
+    set -x
+    python -m unittest -b "$@"
+fi
 
-runner = unittest.TextTestRunner(verbosity=2)
-result = runner.run(suite)
-raise SystemExit(0 if result.wasSuccessful() else 1)
-PY
+{ set +x; } 2>/dev/null
+echo
