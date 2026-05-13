@@ -158,6 +158,14 @@ are allowed and should not warn by default. The reserved `prompts/<package>/espa
 directory is ignored by prompt discovery and prompt-source linting because it holds
 Espanso package metadata rather than prompt content.
 
+Taurcode prompt files use YAML frontmatter parsed by the `python-frontmatter`
+runtime dependency, which delegates YAML handling to `PyYAML`. Standard YAML
+quoting, comments, and nested mappings are therefore supported during prompt
+loading. The optional `targets` field may be authored as a nested mapping, for
+example `targets.espanso.enabled` and `targets.espanso.package`; today it is
+loaded into prompt objects for target-specific metadata, while Espanso export
+still validates and exports the core prompt fields.
+
 Preferred human-editable prompt frontmatter style is:
 
 ```markdown
@@ -166,16 +174,20 @@ id: debug
 name: Debug an Issue
 description: Debug an Issue
 keyword: ":debug"
+targets:
+  espanso:
+    enabled: true
+    package: taurcode
 ---
 ```
 
 Keep frontmatter field order stable as `id`, `name`, `description`, `keyword`, then
-any user-defined extra fields. Quote `keyword` because it is syntax-like and quote
-preservation avoids round-trip churn such as `keyword: ":debug"` becoming
-`keyword: :debug`. Keep `description` on one line when practical. Unknown or
-user-defined fields are allowed and should be preserved by prompt workflows.
-Generated or rewritten Markdown prompt files should end with exactly one final
-newline.
+any user-defined extra fields such as `targets`. Quote `keyword` because it is
+syntax-like and quote preservation avoids round-trip churn such as
+`keyword: ":debug"` becoming `keyword: :debug`. Keep `description` on one line
+when practical. Unknown or user-defined fields are allowed and should be
+preserved by prompt workflows. Generated or rewritten Markdown prompt files
+should end with exactly one final newline.
 
 Taurcode also provides an opt-in conservative prompt formatter:
 

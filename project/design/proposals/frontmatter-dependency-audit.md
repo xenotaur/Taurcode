@@ -10,6 +10,10 @@ Recommended path: move prompt loading fully to the formal `python-frontmatter` d
 
 This PR does not remove or rewrite the shim. The safe next step is a small implementation PR with focused tests that prove Taurcode loads the same supported prompt metadata through the third-party dependency and that unsupported rich metadata is either documented or rejected consistently.
 
+## Implementation status
+
+Implemented by `PROMPT(AD_HOC:REMOVE_FRONTMATTER_SHIM)[2026-05-12T16:55:00-04:00]`: Taurcode now relies on the declared `python-frontmatter` dependency for prompt loading, constrains setuptools package discovery to `taurcode*`, and no longer ships a top-level `src/frontmatter` shim.
+
 ## Current behavior
 
 ### What the local shim provides
