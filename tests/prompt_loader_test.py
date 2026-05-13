@@ -2,8 +2,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import yaml
-
 from taurcode import prompt_loader
 
 
@@ -87,7 +85,7 @@ Prompt body.
                 encoding="utf-8",
             )
 
-            with self.assertRaises(yaml.YAMLError):
+            with self.assertRaisesRegex(ValueError, "Malformed YAML frontmatter"):
                 prompt_loader.load_prompts(str(prompts_dir))
 
     def test_repository_no_longer_contains_frontmatter_shim(self) -> None:

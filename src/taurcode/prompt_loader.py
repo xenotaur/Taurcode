@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List
 
 import frontmatter
+import yaml
 
 from .prompt_model import Prompt
 
@@ -39,7 +40,12 @@ def load_prompts(prompts_dir: str) -> List[Prompt]:
         if _is_reserved_prompt_file(prompt_file, directory):
             continue
         text = prompt_file.read_text(encoding="utf-8")
-        post = frontmatter.loads(text)
+        try:
+            post = frontmatter.loads(text)
+        except yaml.YAMLError as error:
+            raise ValueError(
+                f"Malformed YAML frontmatter in {prompt_file}: {error}"
+            ) from error
         body = _extract_prompt_body(text)
         prompts.append(
             Prompt(

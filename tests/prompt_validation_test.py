@@ -63,6 +63,63 @@ class TestPromptValidation(unittest.TestCase):
                 first_output.find('trigger: ":tc-b"'),
             )
 
+    def test_malformed_yaml_frontmatter_validate_fails_without_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompts_dir = Path(tmpdir) / "prompts"
+            _write_prompt(
+                prompts_dir / "broken.md",
+                """---
+id: [unterminated
+name: Broken Prompt
+---
+
+Body
+""",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(["validate", "--prompts", str(prompts_dir)])
+
+            self.assertEqual(rc, 1)
+            self.assertIn("Error: Malformed YAML frontmatter", stderr.getvalue())
+            self.assertIn("broken.md", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_malformed_yaml_frontmatter_export_fails_without_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            prompts_dir = base / "prompts"
+            output_dir = base / "build" / "espanso" / "taurcode"
+            _write_prompt(
+                prompts_dir / "broken.md",
+                """---
+id: [unterminated
+name: Broken Prompt
+---
+
+Body
+""",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    [
+                        "export",
+                        "espanso",
+                        "--prompts",
+                        str(prompts_dir),
+                        "--output",
+                        str(output_dir),
+                    ]
+                )
+
+            self.assertEqual(rc, 1)
+            self.assertIn("Error: Malformed YAML frontmatter", stderr.getvalue())
+            self.assertIn("broken.md", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+
     def test_duplicate_id_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             prompts_dir = Path(tmpdir) / "prompts"
