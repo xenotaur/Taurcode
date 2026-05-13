@@ -11,4 +11,4 @@ Use this directory for design direction that is more specific than `project/desi
 - [Espanso Metadata Round-Trip Proposal](espanso_metadata_roundtrip.md)
 - [Prompting Best Practices and Review Framework](prompting-best-practices-and-review-framework.md)
 - [Semantic Roundtrip and Regression Suite Design Proposal](semantic_roundtrip_regression_design.md)
-
+- [Frontmatter Dependency Audit](frontmatter-dependency-audit.md) audits the local `frontmatter` shim, its interaction with `python-frontmatter`, and the recommended migration path.
