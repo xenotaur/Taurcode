@@ -159,3 +159,16 @@ If the removal causes unexpected installation failures, restore functionality by
 - Decide whether `targets` is currently supported behavior or reserved design metadata, then update README and validation accordingly.
 - Add a packaging check that confirms installed top-level packages are only Taurcode-owned names.
 - Consider pinning `python-frontmatter>=1.1.0` after behavior is validated against the supported prompt corpus.
+
+## Closure note
+
+The frontmatter shim workstream is complete.
+
+Taurcode no longer ships the local top-level `src/frontmatter` shim. Prompt frontmatter parsing now relies on the declared `python-frontmatter` dependency, avoiding package shadowing and enabling real YAML metadata support. The change is covered by prompt-loader tests, documentation updates, and execution records.
+
+Final validation:
+- `scripts/develop` passes.
+- `scripts/lint` passes.
+- `scripts/format --check` passes.
+- `scripts/test` passes.
+- `import frontmatter` resolves to the installed dependency, not a Taurcode-local package.
