@@ -1,8 +1,21 @@
+---
+id: espanso-metadata-roundtrip
+type: design_proposal
+status: accepted
+title: Espanso Metadata Round-Trip
+---
+
 # Espanso Metadata Round-Trip Proposal
 
 ## Status
 
-Proposed.
+Accepted and implemented on main.
+
+## Implementation Note
+
+The metadata round-trip scope has been implemented on main. Completed capabilities include Espanso package metadata preservation, generated required Espanso defaults, metadata linting, merge import preserving curated prompt frontmatter, final-newline normalization, prompt-source lint policy, conservative prompt formatting, and frontmatter-format-preserving merge import. The expected local smoke test for this proposal is export -> merge import -> no prompt diffs.
+
+Remaining future work belongs to broader Espanso construct coverage and semantic round-trip regression testing, not the metadata round-trip proposal itself.
 
 ## Summary
 

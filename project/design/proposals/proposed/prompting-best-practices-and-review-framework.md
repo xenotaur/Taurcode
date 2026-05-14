@@ -1,3 +1,10 @@
+---
+id: prompting-best-practices-and-review-framework
+type: design_proposal
+status: proposed
+title: Prompting Best Practices and Prompt Review Framework
+---
+
 # Prompting Best Practices and Prompt Review Framework Proposal
 
 ## Status

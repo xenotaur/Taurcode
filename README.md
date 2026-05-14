@@ -233,7 +233,7 @@ existing frontmatter formatting are preserved.
 
 ## Design proposals
 
-Architectural proposals for future Taurcode and LRH control-plane work live under `project/design/proposals/`. These documents capture design direction for later implementation prompts and work-item planning without making the proposed behavior immediately normative.
+Architectural proposals for future Taurcode and LRH control-plane work live under `project/design/proposals/`. Proposed designs live in `project/design/proposals/proposed/`, and accepted proposal history lives in `project/design/proposals/adopted/`. These documents capture design direction for later implementation prompts and work-item planning; frontmatter status is authoritative for each proposal lifecycle state.
 
 ## Development workflow
 

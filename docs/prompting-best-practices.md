@@ -2,7 +2,7 @@
 
 ## Purpose and scope
 
-This is Taurcode's canonical human-facing guide for writing and reviewing prompts. It distills the design direction in `project/design/proposals/prompting-best-practices-and-review-framework.md` into practical rules that prompt authors can use during normal PR work.
+This is Taurcode's canonical human-facing guide for writing and reviewing prompts. It distills the design direction in `project/design/proposals/proposed/prompting-best-practices-and-review-framework.md` into practical rules that prompt authors can use during normal PR work.
 
 Use this guide for:
 
