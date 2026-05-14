@@ -1,3 +1,10 @@
+---
+id: semantic-roundtrip-regression-design
+type: design_proposal
+status: proposed
+title: Semantic Roundtrip and Regression Suite Design
+---
+
 # Semantic Roundtrip and Regression Suite Design Proposal
 
 ## Status
@@ -426,7 +433,7 @@ This proposal should be read alongside:
 
 - `project/design/design.md`, which defines canonical Markdown prompt files as
   the source of truth and Espanso as an export target;
-- `project/design/proposals/espanso_metadata_roundtrip.md`, which defines
+- `project/design/proposals/adopted/espanso_metadata_roundtrip.md`, which defines
   package metadata preservation, merge-import field ownership, and metadata
   linting direction;
 - future canonical prompt schema documentation, which should specify required

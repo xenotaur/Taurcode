@@ -1,3 +1,10 @@
+---
+id: frontmatter-dependency-audit
+type: design_proposal
+status: accepted
+title: Frontmatter Dependency Audit
+---
+
 # Frontmatter dependency audit
 
 Prompt ID: `PROMPT(AD_HOC:FRONTMATTER_SHIM_AUDIT)[2026-05-12T02:33:16-04:00]`
