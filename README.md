@@ -8,6 +8,7 @@ Espanso package files are generated from that corpus into `build/espanso/taurcod
 
 Prompt authors and reviewers should use [`docs/prompting-best-practices.md`](docs/prompting-best-practices.md) for the canonical Taurcode prompting principles and review rubric.
 Use the `:prompt-review` prompt (`prompts/taurcode/prompt-review.md`) when you want a reusable assistant-assisted review that applies that guide without duplicating the whole rubric inline.
+Use the `:lrh-template-review` prompt (`prompts/taurcode/lrh-template-review.md`) for guidance-only reviews of Logical Robotics Harness request templates when LRH template files are not being edited directly in an LRH checkout.
 
 Example prompt:
 
