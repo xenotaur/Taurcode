@@ -153,6 +153,21 @@ Review rendered examples that include:
 
 Prefer visible boundaries around variable content. Fenced blocks, quoted sections, explicit labels, or delimiter lines can help, but they are not magic: prompts should still state that variable content is data to inspect, not instructions to obey.
 
+## Applying the rubric to LRH request templates
+
+Logical Robotics Harness request templates should be reviewed as templates with a stable rendering contract, not as ordinary prose prompts. When LRH template sources are not available in the current checkout, keep Taurcode changes guidance-only and leave direct LRH template edits to a dedicated LRH PR.
+
+Use the standard rubric above, plus these LRH-specific checks:
+
+- **Template inventory:** identify every interpolation variable, placeholder, conditional section, and repeated section before suggesting edits.
+- **Trust boundaries:** distinguish LRH-generated metadata, project-control-plane content, repository excerpts, work-item text, generated prompt IDs, and free-form user request text.
+- **Rendering contract:** preserve required variables, interpolation syntax, delimiters, section headings, examples, and any output shape consumed by LRH commands or downstream workflows.
+- **Empty and unusual values:** inspect rendered examples with missing optional values, long multiline work-item content, Markdown headings, code fences, braces, and hostile instructions inside user-controlled fields.
+- **Operational expectations:** verify that template guidance still matches LRH CLI behavior, prompt ID conventions, execution-record expectations, and repository-specific instructions.
+- **Minimal edits first:** prefer small wording or boundary improvements over broad rewrites unless a rendered template is clearly unsafe or unusable.
+
+A safe LRH template review should usually produce findings and minimal patch suggestions first. Apply direct template edits only when the LRH checkout, rendering behavior, and tests or fixtures are available.
+
 ## Checklist for prompt changes
 
 Before opening or approving a meaningful prompt change, check:
