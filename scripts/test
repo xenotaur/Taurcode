@@ -3,6 +3,11 @@ set -euo pipefail
 
 echo "Testing taurcode ..."
 
+# Run tests against the src/ layout from a fresh checkout, even before an
+# editable install has added the package to site-packages. Preserve any caller
+# supplied PYTHONPATH entries after the repository source path.
+export PYTHONPATH="src${PYTHONPATH:+:${PYTHONPATH}}"
+
 if [ "$#" -eq 0 ]; then
     set -x
     python -m unittest discover -b -s tests -p "*_test.py"

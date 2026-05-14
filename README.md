@@ -10,6 +10,26 @@ Prompt authors and reviewers should use [`docs/prompting-best-practices.md`](doc
 Use the `:prompt-review` prompt (`prompts/taurcode/prompt-review.md`) when you want a reusable assistant-assisted review that applies that guide without duplicating the whole rubric inline.
 Use the `:lrh-template-review` prompt (`prompts/taurcode/lrh-template-review.md`) for guidance-only reviews of Logical Robotics Harness request templates when LRH template files are not being edited directly in an LRH checkout.
 
+### Manual prompt review workflow
+
+Use the prompt-review system as a lightweight manual review aid rather than as a required automation layer:
+
+1. Open `docs/prompting-best-practices.md` and the prompt you want to review.
+2. Start an assistant session with `:prompt-review`, or paste `prompts/taurcode/prompt-review.md` into the session.
+3. Attach or paste the target prompt after the `Prompt or prompt template to review:` divider. Representative first targets are `prompts/taurcode/debug.md` and `prompts/taurcode/plan.md` because they exercise task framing, workflow steps, and output expectations.
+4. Ask for severity-ranked findings and make only minimal, intent-preserving edits unless a blocker is clear.
+5. Rerun prompt validation before export:
+
+   ```bash
+   taurcode validate --prompts prompts/taurcode
+   taurcode lint prompts --prompts prompts/taurcode
+   taurcode format prompts --prompts prompts/taurcode --check
+   ```
+
+For LRH request-template review, use `:lrh-template-review` with a rendered example when available. If the LRH template source or renderer is not present in the checkout, keep the result as review guidance and defer direct template edits to a dedicated LRH change.
+
+Deferred follow-up ideas that should stay lightweight until justified include prompt metadata validation, prompt-review examples, prompt evaluation fixtures, LRH template rendering tests, and future automation hooks for recurring reviews.
+
 Example prompt:
 
 ```markdown
