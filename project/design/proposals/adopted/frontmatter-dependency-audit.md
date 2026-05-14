@@ -1,7 +1,8 @@
 ---
 id: frontmatter-dependency-audit
 type: design_proposal
-status: accepted
+status: adopted
+implementation_status: implemented
 title: Frontmatter Dependency Audit
 ---
 

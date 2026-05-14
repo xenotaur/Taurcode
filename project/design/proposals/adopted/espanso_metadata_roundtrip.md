@@ -1,7 +1,8 @@
 ---
 id: espanso-metadata-roundtrip
 type: design_proposal
-status: accepted
+status: adopted
+implementation_status: implemented
 title: Espanso Metadata Round-Trip
 ---
 
