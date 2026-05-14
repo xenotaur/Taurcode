@@ -3,6 +3,18 @@ id: espanso-metadata-roundtrip
 type: design_proposal
 status: adopted
 implementation_status: implemented
+implemented_by:
+  - project/executions/2026-05-09-taurcode-espanso-metadata-roundtrip-preserve.md
+  - project/executions/2026-05-09-taurcode-espanso-metadata-roundtrip-defaults.md
+  - project/executions/2026-05-10-taurcode-espanso-metadata-roundtrip-lint.md
+  - project/executions/2026-05-10-taurcode-roundtrip-merge-import.md
+  - project/executions/2026-05-10-taurcode-roundtrip-newline-normalization-tests.md
+  - project/executions/2026-05-11-taurcode-prompt-source-lint-policy.md
+  - project/executions/2026-05-11-taurcode-safe-prompt-formatter.md
+  - project/executions/2026-05-12-preserve-frontmatter-merge.md
+evidence:
+  - project/executions/2026-05-10-taurcode-roundtrip-newline-normalization-tests.md
+  - project/executions/2026-05-12-preserve-frontmatter-merge.md
 title: Espanso Metadata Round-Trip
 ---
 
