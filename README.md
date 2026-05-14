@@ -7,6 +7,7 @@ The checked-in Taurcode prompt corpus lives under `prompts/taurcode/`. This dire
 Espanso package files are generated from that corpus into `build/espanso/taurcode/`; Espanso is an export target, not the canonical storage location.
 
 Prompt authors and reviewers should use [`docs/prompting-best-practices.md`](docs/prompting-best-practices.md) for the canonical Taurcode prompting principles and review rubric.
+Use the `:prompt-review` prompt (`prompts/taurcode/prompt-review.md`) when you want a reusable assistant-assisted review that applies that guide without duplicating the whole rubric inline.
 
 Example prompt:
 
