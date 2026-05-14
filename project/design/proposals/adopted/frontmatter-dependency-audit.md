@@ -3,11 +3,8 @@ id: frontmatter-dependency-audit
 type: design_proposal
 status: adopted
 implementation_status: implemented
-implemented_by:
-  - project/executions/2026-05-12-frontmatter-shim-audit.md
-  - project/executions/2026-05-12-remove-frontmatter-shim.md
 evidence:
-  - project/executions/2026-05-12-remove-frontmatter-shim.md
+  - EV-0003
 title: Frontmatter Dependency Audit
 ---
 
