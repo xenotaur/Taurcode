@@ -224,6 +224,72 @@ class TestEspansoImport(unittest.TestCase):
             self.assertEqual(rc, 0)
             self.assertFalse((output / "espanso").exists())
 
+    def test_import_missing_metadata_reports_warnings_and_continues(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source_dir = base / "espanso-package"
+            source_dir.mkdir()
+            output = base / "prompts"
+            (source_dir / "package.yml").write_text(
+                """matches:
+  - trigger: ":tc-missing-meta"
+    replace: Body
+""",
+                encoding="utf-8",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    [
+                        "import",
+                        "espanso",
+                        "--input",
+                        str(source_dir),
+                        "--output",
+                        str(output),
+                    ]
+                )
+            self.assertEqual(rc, 0)
+            self.assertTrue((output / "tc-missing-meta.md").exists())
+            self.assertFalse((output / "espanso").exists())
+            self.assertIn("metadata asset missing", stderr.getvalue())
+
+    def test_package_yml_input_skips_metadata_asset_import(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source_dir = base / "espanso-package"
+            source_dir.mkdir()
+            output = base / "prompts"
+            package_yml = source_dir / "package.yml"
+            package_yml.write_text(
+                """matches:
+  - trigger: ":tc-package-file"
+    replace: Body
+""",
+                encoding="utf-8",
+            )
+            (source_dir / "README.md").write_text(
+                "# Sibling README should be skipped\n", encoding="utf-8"
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    [
+                        "import",
+                        "espanso",
+                        "--input",
+                        str(package_yml),
+                        "--output",
+                        str(output),
+                    ]
+                )
+            self.assertEqual(rc, 0)
+            self.assertTrue((output / "tc-package-file.md").exists())
+            self.assertFalse((output / "espanso").exists())
+            self.assertIn("metadata asset import skipped", stderr.getvalue())
+
     def test_import_invalid_yaml_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)

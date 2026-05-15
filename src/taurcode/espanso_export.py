@@ -20,10 +20,12 @@ def _as_block(value: str, indent: str = "      ") -> str:
     return "\n".join(f"{indent}{line}" for line in lines) + "\n"
 
 
-def _sync_metadata_assets(source_dir: str | None, output: Path) -> set[str]:
+def export_espanso_metadata_assets(
+    prompt_collection_dir: str | Path | None, output: Path
+) -> set[str]:
     metadata_dir = None
-    if source_dir is not None:
-        candidate = Path(source_dir) / "espanso"
+    if prompt_collection_dir is not None:
+        candidate = Path(prompt_collection_dir) / "espanso"
         if candidate.is_dir():
             metadata_dir = candidate
 
@@ -70,7 +72,7 @@ def export_espanso(
 
     (output / "package.yml").write_text(package_content, encoding="utf-8")
 
-    copied_metadata = _sync_metadata_assets(source_dir, output)
+    copied_metadata = export_espanso_metadata_assets(source_dir, output)
     if "_manifest.yml" not in copied_metadata:
         (output / "_manifest.yml").write_text(manifest_content, encoding="utf-8")
     if "README.md" not in copied_metadata:

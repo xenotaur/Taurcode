@@ -72,7 +72,8 @@ Import behavior:
 - Taurcode normalizes generated or re-written Markdown prompt files to exactly one final newline during fresh import and merge import. This reduces noisy diffs such as missing-EOF-newline markers and improves round-trip idempotence. Taurcode only normalizes the final newline count; it does not strip or normalize other prompt body whitespace.
 - Merge import creates new Markdown files for new Espanso matches. Existing Markdown prompts with no matching Espanso entry are kept and reported as warnings; merge import does not prune or delete prompt files.
 - Merge import fails with a clear error when matching is ambiguous, such as multiple Markdown prompts with the same `keyword` for one Espanso trigger or multiple Espanso matches mapping to one Markdown file.
-- If present in the source Espanso package, `_manifest.yml`, `README.md`, and `LICENSE` are copied into `<output>/espanso/` for later export. The `<output>/espanso/` directory is reserved for package metadata and its Markdown files are not treated as prompt sources during merge matching, validation, or export. Copied metadata assets, including `LICENSE`, are preserved exactly rather than newline-normalized.
+- If `--input` points to an Espanso package directory and package-level `_manifest.yml`, `README.md`, or `LICENSE` files are present, they are copied into `<output>/espanso/` for later export. The `<output>/espanso/` directory is reserved for package metadata and its Markdown files are not treated as prompt sources during merge matching, validation, or export. Copied metadata assets, including `LICENSE`, are preserved exactly rather than newline-normalized.
+- Missing metadata assets do not block import. Taurcode reports warnings for missing supported assets and continues importing prompts. If `--input` points directly to `package.yml`, prompt import still works but metadata asset import is skipped with a warning because sibling files may not be discoverable from that invocation.
 - `replace` block scalars (`|` literal and `>` folded) are preserved according to YAML parsing semantics.
 - Unsupported or complex matches are preserved under `<output>/imported_raw/*.yml`.
 - Raw fallback keeps unsupported match YAML content so prompt text is not lost.
@@ -91,6 +92,10 @@ taurcode export espanso --prompts prompts/taurcode --output build/espanso/taurco
 For curated prompt packages, `--merge` plus final-newline normalization is the recommended update path from Espanso sources because it keeps curated frontmatter human-readable and diff-friendly while making rewritten Markdown deterministic.
 
 In this workflow, `prompts/imported/` is only a temporary staging area that records import provenance. Curated prompts belong in `prompts/taurcode/`.
+
+### Espanso metadata ownership
+
+Taurcode uses `prompts/<package>/espanso/` as the curated source of truth for Espanso package metadata assets. Import copies `_manifest.yml`, `README.md`, and `LICENSE` into that directory as a starting point, and users may then edit or curate those files in source control. Export prefers curated files from `prompts/<package>/espanso/` and copies them to `build/espanso/<package>/` before generating any fallback metadata. Taurcode does not attempt a three-way merge for metadata assets in the MVP. Importing into an output directory is an explicit write to that destination, so existing supported metadata files there may be replaced by the imported package copies; review staged metadata before treating it as canonical. Local Espanso install or sync remains out of scope.
 
 ### Espanso preflight diagnostics
 
@@ -132,9 +137,9 @@ Generated output always includes the basic Espanso package files:
 - `build/espanso/taurcode/_manifest.yml`
 - `build/espanso/taurcode/README.md`
 
-The optional `prompts/<package>/espanso/` directory is reserved for Espanso package metadata. When `_manifest.yml` or `README.md` exists there, export copies it into the generated package instead of treating it as prompt content; otherwise Taurcode generates conservative defaults for Markdown-only packages. Generated README files are normalized to exactly one final newline. When `LICENSE` exists there, export copies it exactly; otherwise no `LICENSE` is generated.
+The optional `prompts/<package>/espanso/` directory is reserved for Espanso package metadata. When `_manifest.yml` or `README.md` exists there, export copies it into the generated package instead of treating it as prompt content; otherwise Taurcode generates conservative defaults for Markdown-only packages. Generated README files are normalized to exactly one final newline. When `LICENSE` exists there, export copies it exactly; otherwise no `LICENSE` is generated. Export removes stale supported metadata assets from the generated output when no curated source exists and no default is generated for that asset, so `build/espanso/<package>/` remains a generated view of the canonical prompt package.
 
-Note: installation into a local Espanso configuration is currently manual.
+Note: installation into a local Espanso configuration is currently manual; Taurcode does not automatically sync packages into a local Espanso configuration.
 
 ## Validate and lint prompts
 Validate all canonical prompt files before export:

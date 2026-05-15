@@ -124,6 +124,56 @@ This is a test prompt body.
             self.assertEqual((output_dir / "README.md").read_bytes(), readme)
             self.assertEqual((output_dir / "LICENSE").read_bytes(), license_text)
 
+    def test_export_prefers_curated_metadata_over_generated_defaults(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            prompts_dir = base / "prompts"
+            metadata_dir = prompts_dir / "espanso"
+            output_dir = base / "build" / "espanso" / "sample"
+            metadata_dir.mkdir(parents=True)
+            (prompts_dir / "prompt.md").write_text(
+                """---
+id: test-prompt
+name: Test Prompt
+description: A test prompt
+keyword: ":tc-test"
+---
+
+This is a test prompt body.
+""",
+                encoding="utf-8",
+            )
+            curated_manifest = (
+                b"name: sample\n"
+                b"title: Curated Title\n"
+                b"version: 9.9.9\n"
+                b"description: Curated description\n"
+                b"author: Curator\n"
+            )
+            curated_readme = b"# Curated Title\n\nCurated README.\n"
+            (metadata_dir / "_manifest.yml").write_bytes(curated_manifest)
+            (metadata_dir / "README.md").write_bytes(curated_readme)
+
+            rc = main(
+                [
+                    "export",
+                    "espanso",
+                    "--prompts",
+                    str(prompts_dir),
+                    "--output",
+                    str(output_dir),
+                ]
+            )
+            self.assertEqual(rc, 0)
+            self.assertEqual(
+                (output_dir / "_manifest.yml").read_bytes(), curated_manifest
+            )
+            self.assertEqual((output_dir / "README.md").read_bytes(), curated_readme)
+            self.assertNotIn(
+                "Generated prompt package",
+                (output_dir / "_manifest.yml").read_text(encoding="utf-8"),
+            )
+
     def test_export_removes_stale_metadata_assets(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
