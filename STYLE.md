@@ -94,6 +94,14 @@ Taurcode should use a clearly documented Python version and a reproducible devel
 
 Project tooling should work from the documented project root. Development dependencies should be installable in a standard way, preferably via `pyproject.toml`.
 
+Set up local development and agent environments with:
+
+```bash
+scripts/develop
+```
+
+Do not install or upgrade lint, format, test, or coverage tools ad hoc while working on Taurcode. Development tool versions are pinned in `constraints-dev.txt` so local, CI, and Codex validation use the same toolchain. If a tool version needs to change, update `constraints-dev.txt` intentionally and run the full validation suite before merging.
+
 ## Imports
 
 ### Core Import Policy
