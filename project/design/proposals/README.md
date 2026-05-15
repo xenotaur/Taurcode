@@ -35,6 +35,14 @@ Move a proposal to `adopted/` when its frontmatter status changes to `accepted`.
 4. Update links that referenced the old path.
 5. If the decision is now canonical project behavior, copy the durable rule into the appropriate top-level design document.
 
+## Traceability Fields
+
+Adopted design proposal frontmatter may include implementation traceability. Keep these fields ID-based so LRH validation can resolve them:
+
+- `implemented_by` entries must reference work item IDs, such as `WI-CANONICAL-PROMPTS-0002`.
+- `evidence` entries must reference evidence record IDs, such as `EV-0002`.
+- Execution-record paths may be cited in evidence record bodies, but should not be used as `implemented_by` or `evidence` frontmatter values.
+
 ## Current Proposals
 
 ### Proposed

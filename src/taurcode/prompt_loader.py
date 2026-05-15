@@ -1,9 +1,8 @@
 from pathlib import Path
 from typing import List
 
-import yaml
-
 import frontmatter
+import yaml
 
 from .prompt_model import Prompt
 
