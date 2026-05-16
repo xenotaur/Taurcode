@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import List
 
 import frontmatter
 import yaml
 
-from .prompt_model import Prompt
+from taurcode import prompt_model
 
 _RESERVED_PROMPT_DIRS = {"espanso"}
 
@@ -14,7 +13,7 @@ def _is_reserved_prompt_file(prompt_file: Path, directory: Path) -> bool:
     return bool(relative_parts and relative_parts[0] in _RESERVED_PROMPT_DIRS)
 
 
-def _extract_prompt_body(text: str) -> str:
+def extract_prompt_body(text: str) -> str:
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
     lines = normalized.split("\n")
     if not lines or lines[0] != "---":
@@ -30,9 +29,13 @@ def _extract_prompt_body(text: str) -> str:
     return normalized
 
 
-def load_prompts(prompts_dir: str) -> List[Prompt]:
+def _extract_prompt_body(text: str) -> str:
+    return extract_prompt_body(text)
+
+
+def load_prompts(prompts_dir: str) -> list[prompt_model.Prompt]:
     directory = Path(prompts_dir)
-    prompts: List[Prompt] = []
+    prompts: list[prompt_model.Prompt] = []
 
     for prompt_file in sorted(directory.rglob("*.md")):
         if not prompt_file.is_file():
@@ -46,9 +49,9 @@ def load_prompts(prompts_dir: str) -> List[Prompt]:
             raise ValueError(
                 f"Malformed YAML frontmatter in {prompt_file}: {error}"
             ) from error
-        body = _extract_prompt_body(text)
+        body = extract_prompt_body(text)
         prompts.append(
-            Prompt(
+            prompt_model.Prompt(
                 id=post.metadata.get("id", ""),
                 name=post.metadata.get("name", ""),
                 description=post.metadata.get("description", ""),
