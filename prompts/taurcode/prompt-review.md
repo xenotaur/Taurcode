@@ -6,7 +6,7 @@ keyword: ":prompt-review"
 ---
 
 Review the prompt or prompt template below against
-`docs/prompting-best-practices.md`.
+`docs/how-to/best-practices/prompting-best-practices.md`.
 
 If you cannot access that guide in the current session, ask the user to
 attach or paste it before doing the review. Do not invent a substitute rubric.

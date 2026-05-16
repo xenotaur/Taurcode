@@ -76,7 +76,7 @@ The proposed architecture has four near-term pieces and several optional future 
 Create a human-readable guidance document, likely:
 
 ```text
-docs/prompting-best-practices.md
+docs/how-to/best-practices/prompting-best-practices.md
 ```
 
 This document should be the canonical source for Taurcode prompting principles. It should explain:
@@ -96,9 +96,9 @@ This document should be concise enough for prompt authors to actually read, but 
 Add a review rubric as either a section of the guidance document or a separate document if it grows, likely one of:
 
 ```text
-docs/prompting-best-practices.md
+docs/how-to/best-practices/prompting-best-practices.md
 # or
-docs/prompt-review-rubric.md
+docs/how-to/best-practices/prompt-review-rubric.md
 ```
 
 The rubric should define review dimensions, example questions, and severity guidance. It should be usable by humans in PR review and by AI assistants when asked to review prompt changes.
@@ -157,7 +157,7 @@ Future automation should be additive, not required for the first rollout:
 - `taurcode prompt review`: run an assistant-assisted review prompt against a prompt file.
 - `taurcode validate --strict-prompts`: deterministic checks for metadata, duplicate variables, or missing output contract sections.
 - `tests/fixtures/prompts/`: representative prompt fixtures for review and rendering tests.
-- `docs/prompt-review-rubric.md`: split rubric into a dedicated document if it becomes too large.
+- `docs/how-to/best-practices/prompt-review-rubric.md`: split rubric into a dedicated document if it becomes too large.
 - `prompts/taurcode/prompt-rewrite.md`: optional rewrite assistant prompt once review-only behavior is established.
 - `project/templates/` or LRH-owned locations: optional extension for LRH request templates.
 
@@ -350,7 +350,7 @@ This should remain optional until Taurcode's own prompt corpus review process is
 Roll out the framework in staged PRs:
 
 1. **Design proposal:** add this proposal under `project/design/proposals/` and document the proposal area.
-2. **Guidance document:** add `docs/prompting-best-practices.md` with principles, examples, and the initial rubric.
+2. **Guidance document:** add `docs/how-to/best-practices/prompting-best-practices.md` with principles, examples, and the initial rubric.
 3. **Review prompt:** add `prompts/taurcode/prompt-review.md` as a canonical reusable review prompt.
 4. **Taurcode prompt review pass:** use the review prompt to audit existing `prompts/taurcode/*.md`; make narrow updates where the review identifies high-value improvements.
 5. **Template follow-up:** evaluate whether LRH request templates need the same rubric or a specialized variant.
