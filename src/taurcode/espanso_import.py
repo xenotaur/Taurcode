@@ -154,16 +154,40 @@ def _parse_espanso_package(package_path: Path) -> list[tuple[dict, str]]:
     return entries
 
 
-def _copy_metadata_assets(package_dir: Path, output: Path) -> None:
-    sources = [package_dir / asset_name for asset_name in _METADATA_ASSETS]
-    if not any(source.is_file() for source in sources):
-        return
+def resolve_espanso_package_dir(input_path: str | Path) -> Path | None:
+    path = Path(input_path)
+    if path.is_dir():
+        return path
+    return None
 
-    metadata_dir = output / "espanso"
-    metadata_dir.mkdir(parents=True, exist_ok=True)
-    for source in sources:
-        if source.is_file():
-            shutil.copyfile(source, metadata_dir / source.name)
+
+def import_espanso_metadata_assets(
+    package_dir: Path | None, prompt_collection_dir: Path
+) -> tuple[set[str], list[str]]:
+    if package_dir is None:
+        warning = (
+            "Warning: Espanso metadata asset import skipped because --input points "
+            "directly to package.yml; pass the package directory to import sibling "
+            "metadata assets."
+        )
+        print(warning, file=sys.stderr)
+        return set(), [warning]
+
+    copied: set[str] = set()
+    warnings: list[str] = []
+    metadata_dir = prompt_collection_dir / "espanso"
+    for asset_name in _METADATA_ASSETS:
+        source = package_dir / asset_name
+        if not source.is_file():
+            warning = f"Warning: Espanso metadata asset missing; skipped {source}"
+            warnings.append(warning)
+            print(warning, file=sys.stderr)
+            continue
+
+        metadata_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, metadata_dir / asset_name)
+        copied.add(asset_name)
+    return copied, warnings
 
 
 def _normalize_replace(value: object) -> str:
@@ -413,7 +437,10 @@ def import_espanso(
     entries = _parse_espanso_package(package_path)
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
-    _copy_metadata_assets(package_path.parent, output)
+    package_dir = resolve_espanso_package_dir(input_path)
+    _copied_metadata, metadata_warnings = import_espanso_metadata_assets(
+        package_dir, output
+    )
     raw_dir = output / "imported_raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
 
@@ -421,7 +448,7 @@ def import_espanso(
     next_raw_index = _next_raw_index(raw_dir)
     converted = 0
     raw_fallback = 0
-    warnings: list[str] = []
+    warnings: list[str] = [*metadata_warnings]
 
     if merge:
         converted, _matched_paths, merge_warnings = _merge_simple_matches(
