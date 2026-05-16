@@ -152,9 +152,9 @@ Espanso semantic mode compares the parts that roundtrip through Espanso package 
 - prompt replacement/body text;
 - parsed `_manifest.yml` semantics, independent of YAML field ordering or inline versus block list style;
 - `README.md` and `LICENSE` text with normalized line endings;
-- unsupported extra Espanso match fields when they are present in normalized Espanso packages, so accidental loss is visible.
+- unsupported extra Espanso match fields when the expected normalized package contains them, so accidental loss is visible without failing canonical-to-Espanso comparisons solely because the Espanso side has extra match fields.
 
-Espanso semantic mode intentionally ignores canonical-only prompt annotations such as curated `name`, `description`, and `tags` when comparing canonical prompt sources to exported Espanso packages. Plain Espanso `package.yml` does not represent those fields, so their absence in an exported package is not a semantic export failure.
+Espanso semantic mode intentionally ignores canonical-only prompt annotations such as curated `name`, `description`, and `tags` when comparing canonical prompt sources to exported Espanso packages. Plain Espanso `package.yml` does not represent those fields, so their absence in an exported package is not a semantic export failure. When the expected side has no curated metadata asset, Espanso semantic mode also allows an actual exported package to contain generated `_manifest.yml`, `README.md`, or `LICENSE` assets without treating them as unexpected semantic drift.
 
 Canonical semantic mode is the fuller prompt-source comparison concept. It compares canonical prompt identity and annotation fields (`id`, `name`, `description`, `tags`) in addition to keyword/body semantics and package metadata assets. This mode is available for tests and future tooling, and it leaves room for richer target-specific metadata as Taurcode grows.
 

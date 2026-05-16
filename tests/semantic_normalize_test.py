@@ -125,10 +125,148 @@ name: sample
         self.assertEqual(
             {(difference.path, difference.message) for difference in differences},
             {
-                ("prompts[:old]", "Expected prompt is missing"),
-                ("prompts[:new]", "Unexpected extra prompt"),
+                ("prompts[:old]", "Expected 1 prompt(s) missing"),
+                ("prompts[:new]", "Unexpected 1 extra prompt(s)"),
             },
         )
+
+    def test_duplicate_triggers_are_not_collapsed(self) -> None:
+        expected = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":dupe", trigger=":dupe", body="First\n"
+                ),
+                semantic_normalize.NormalizedPrompt(
+                    key=":dupe", trigger=":dupe", body="Second\n"
+                ),
+            )
+        )
+        actual = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":dupe", trigger=":dupe", body="Second\n"
+                ),
+            )
+        )
+
+        differences = semantic_normalize.compare_packages(expected, actual)
+
+        self.assertEqual(len(differences), 1)
+        self.assertEqual(differences[0].path, "prompts[:dupe]")
+        self.assertIn("missing", differences[0].message)
+        self.assertIn("First", differences[0].message)
+
+    def test_duplicate_prompt_ordering_normalizes_away(self) -> None:
+        expected = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":dupe", trigger=":dupe", body="First\n"
+                ),
+                semantic_normalize.NormalizedPrompt(
+                    key=":dupe", trigger=":dupe", body="Second\n"
+                ),
+            )
+        )
+        actual = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":dupe", trigger=":dupe", body="Second\n"
+                ),
+                semantic_normalize.NormalizedPrompt(
+                    key=":dupe", trigger=":dupe", body="First\n"
+                ),
+            )
+        )
+
+        self.assertEqual(semantic_normalize.compare_packages(expected, actual), [])
+
+    def test_espanso_mode_ignores_actual_only_unsupported_fields(self) -> None:
+        expected = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":word", trigger=":word", body="Word\n"
+                ),
+            )
+        )
+        actual = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":word",
+                    trigger=":word",
+                    body="Word\n",
+                    unsupported_fields=(("word", True),),
+                ),
+            )
+        )
+
+        self.assertEqual(semantic_normalize.compare_packages(expected, actual), [])
+
+    def test_espanso_mode_detects_dropped_expected_unsupported_fields(self) -> None:
+        expected = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":word",
+                    trigger=":word",
+                    body="Word\n",
+                    unsupported_fields=(("word", True),),
+                ),
+            )
+        )
+        actual = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":word", trigger=":word", body="Word\n"
+                ),
+            )
+        )
+
+        differences = semantic_normalize.compare_packages(expected, actual)
+
+        self.assertEqual(len(differences), 1)
+        self.assertEqual(differences[0].path, "prompts[:word].unsupported_fields")
+        self.assertIn("expected", differences[0].message)
+
+    def test_espanso_mode_allows_actual_only_metadata_assets(self) -> None:
+        expected = semantic_normalize.NormalizedPackage(prompts=())
+        actual = semantic_normalize.NormalizedPackage(
+            prompts=(),
+            manifest=(("name", "sample"),),
+            readme="# Sample\n",
+            license_text="License\n",
+        )
+
+        self.assertEqual(semantic_normalize.compare_packages(expected, actual), [])
+
+    def test_canonical_mode_reports_actual_only_metadata_assets(self) -> None:
+        expected = semantic_normalize.NormalizedPackage(prompts=())
+        actual = semantic_normalize.NormalizedPackage(
+            prompts=(),
+            manifest=(("name", "sample"),),
+        )
+
+        differences = semantic_normalize.compare_packages(
+            expected, actual, mode=semantic_normalize.CANONICAL_SEMANTIC_MODE
+        )
+
+        self.assertEqual(len(differences), 1)
+        self.assertEqual(differences[0].path, "_manifest.yml")
+        self.assertIn("Unexpected extra metadata asset", differences[0].message)
+
+    def test_metadata_difference_messages_include_expected_and_actual_values(
+        self,
+    ) -> None:
+        expected = semantic_normalize.NormalizedPackage(
+            prompts=(), manifest=(("version", "1.0.0"),)
+        )
+        actual = semantic_normalize.NormalizedPackage(
+            prompts=(), manifest=(("version", "2.0.0"),)
+        )
+
+        differences = semantic_normalize.compare_packages(expected, actual)
+
+        self.assertEqual(len(differences), 1)
+        self.assertIn("1.0.0", differences[0].message)
+        self.assertIn("2.0.0", differences[0].message)
 
     def test_metadata_assets_are_compared(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
