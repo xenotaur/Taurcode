@@ -103,7 +103,7 @@ Taurcode uses `prompts/<package>/espanso/` as the curated source of truth for Es
 
 ### Espanso preflight diagnostics
 
-`taurcode lint espanso --input <path>` accepts either a `package.yml` file or a package directory containing `package.yml`. The same preflight diagnostics run automatically before `taurcode import espanso` parses package contents.
+`taurcode lint espanso --input <path>` accepts either a `package.yml` file or a package directory containing `package.yml`. Import runs the parser-safety package diagnostics before reading matches. Run the linter directly when you also want package-build metadata checks before import.
 
 The linter reports metadata **errors** separately from **warnings**. Errors represent invalid or unsafe package output and return a nonzero status. Warnings represent likely stale or low-quality metadata and are non-blocking by default. Export also runs build-output metadata linting; warning-only metadata does not fail the export, while metadata errors do fail it.
 

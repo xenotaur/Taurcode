@@ -8,7 +8,7 @@ Use this guide when `taurcode import espanso` fails or produces warnings.
 taurcode lint espanso --input path/to/espanso/package
 ```
 
-The same preflight diagnostics also run during import, but running the linter directly gives a smaller feedback loop while fixing source files.
+Import runs the parser-safety package diagnostics before reading matches. Running the linter directly gives a smaller feedback loop and also reports package-build metadata checks that import does not block on.
 
 ## 2. Fix source package errors manually
 
