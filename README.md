@@ -1,12 +1,16 @@
 # Taurcode
 Taurcode is a set of prompts for AI-generated coding with tools to format them for various injection systems like Espanso.
 
+## Documentation
+
+Start with the [Taurcode documentation index](docs/README.md) for tutorials, how-to guides, reference pages, and explanations. The docs include the canonical prompt workflow, Espanso import/export integration, semantic roundtrip checks, and prompt-authoring best practices.
+
 ## Canonical prompts
 The checked-in Taurcode prompt corpus lives under `prompts/taurcode/`. This directory is the authoritative source of truth for the Taurcode prompt package.
 
 Espanso package files are generated from that corpus into `build/espanso/taurcode/`; Espanso is an export target, not the canonical storage location.
 
-Prompt authors and reviewers should use [`docs/prompting-best-practices.md`](docs/prompting-best-practices.md) for the canonical Taurcode prompting principles and review rubric.
+Prompt authors and reviewers should use [`docs/how-to/best-practices/prompting-best-practices.md`](docs/how-to/best-practices/prompting-best-practices.md) for the canonical Taurcode prompting principles and review rubric.
 Use the `:prompt-review` prompt (`prompts/taurcode/prompt-review.md`) when you want a reusable assistant-assisted review that applies that guide without duplicating the whole rubric inline.
 Use the `:lrh-template-review` prompt (`prompts/taurcode/lrh-template-review.md`) for guidance-only reviews of Logical Robotics Harness request templates when LRH template files are not being edited directly in an LRH checkout.
 
@@ -14,7 +18,7 @@ Use the `:lrh-template-review` prompt (`prompts/taurcode/lrh-template-review.md`
 
 Use the prompt-review system as a lightweight manual review aid rather than as a required automation layer:
 
-1. Open `docs/prompting-best-practices.md` and the prompt you want to review.
+1. Open `docs/how-to/best-practices/prompting-best-practices.md` and the prompt you want to review.
 2. Start an assistant session with `:prompt-review`, or paste `prompts/taurcode/prompt-review.md` into the session.
 3. Attach or paste the target prompt after the `Prompt or prompt template to review:` divider. Representative first targets are `prompts/taurcode/debug.md` and `prompts/taurcode/plan.md` because they exercise task framing, workflow steps, and output expectations.
 4. Ask for severity-ranked findings and make only minimal, intent-preserving edits unless a blocker is clear.
@@ -99,7 +103,7 @@ Taurcode uses `prompts/<package>/espanso/` as the curated source of truth for Es
 
 ### Espanso preflight diagnostics
 
-`taurcode lint espanso --input <path>` accepts either a `package.yml` file or a package directory containing `package.yml`. The same preflight diagnostics run automatically before `taurcode import espanso` parses package contents.
+`taurcode lint espanso --input <path>` accepts either a `package.yml` file or a package directory containing `package.yml`. Import runs the parser-safety package diagnostics before reading matches. Run the linter directly when you also want package-build metadata checks before import.
 
 The linter reports metadata **errors** separately from **warnings**. Errors represent invalid or unsafe package output and return a nonzero status. Warnings represent likely stale or low-quality metadata and are non-blocking by default. Export also runs build-output metadata linting; warning-only metadata does not fail the export, while metadata errors do fail it.
 

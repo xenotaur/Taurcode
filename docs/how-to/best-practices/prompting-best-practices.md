@@ -198,7 +198,7 @@ These sources informed the design proposal and should guide future revisions wit
 
 ## Open questions
 
-- Should this guide eventually split the rubric into `docs/prompt-review-rubric.md`?
+- Should this guide eventually split the rubric into `docs/how-to/best-practices/prompt-review-rubric.md`?
 - Should canonical prompt frontmatter include optional metadata such as variables, audience, review status, or last-reviewed date?
 - Which rendered-template cases should become automated regression tests?
 - How should Taurcode document model-specific guidance without fragmenting the prompt corpus?

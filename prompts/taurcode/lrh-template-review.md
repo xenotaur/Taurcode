@@ -6,7 +6,7 @@ keyword: ":lrh-template-review"
 ---
 
 Review the Logical Robotics Harness request template below against
-`docs/prompting-best-practices.md`, with special attention to the LRH
+`docs/how-to/best-practices/prompting-best-practices.md`, with special attention to the LRH
 request-template notes in that guide.
 
 If you cannot access that guide in the current session, ask the user to
