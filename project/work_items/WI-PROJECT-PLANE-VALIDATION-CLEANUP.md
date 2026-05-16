@@ -57,9 +57,16 @@ Warnings:
 
 ## Scope
 
+### Status update
+
+The Espanso roundtrip closeout resolved `WI-CANONICAL-PROMPTS-0002` and moved it to
+`project/work_items/resolved/` with schema-shaped frontmatter and closeout evidence.
+This cleanup item should now treat any remaining canonical-prompt work item validation
+issues as verification rather than as active implementation work.
+
 ### Required changes
 
-- Update `project/work_items/active/WI-CANONICAL-PROMPTS-0002.md` so its frontmatter conforms to the current LRH work item schema.
+- Verify `project/work_items/resolved/WI-CANONICAL-PROMPTS-0002.md` remains compatible with the current LRH work item schema.
 - Update `project/work_items/resolved/WI-BOOTSTRAP-0001.md` so its frontmatter conforms to the current LRH work item schema.
 - Convert `related_focus` fields from scalar values to lists where required.
 - Add required work item fields:
@@ -79,7 +86,7 @@ Warnings:
 - Do not weaken, bypass, or special-case LRH validation to make these issues disappear.
 - Do not make Taurcode runtime code changes unless needed only for documentation or validation wiring.
 - Do not rework unrelated design proposals, evidence records, or execution records.
-- Do not close or resolve `WI-CANONICAL-PROMPTS-0002` unless there is clear evidence that its acceptance criteria are complete.
+- Do not reopen `WI-CANONICAL-PROMPTS-0002` unless validation shows the closeout evidence is materially incorrect.
 - Do not invent major new lifecycle conventions if LRH already defines the required schema.
 
 ## Suggested implementation approach
@@ -106,14 +113,14 @@ Warnings:
    - summarize that repository bootstrap/project-plane scaffolding was completed
    - cite existing evidence or execution records if appropriate
 
-5. Attach `WI-CANONICAL-PROMPTS-0002` to planning:
-   - link to an appropriate focus/workstream if one exists
-   - otherwise create a minimal follow-up planning parent only if consistent with Taurcode conventions
+5. Verify resolved `WI-CANONICAL-PROMPTS-0002` closeout state:
+   - confirm the resolved work item path and evidence references are valid
+   - avoid reopening the work item unless its acceptance criteria are demonstrably incomplete
 
 ## Acceptance criteria
 
 - `lrh validate` reports no errors for:
-  - `work_items/active/WI-CANONICAL-PROMPTS-0002.md`
+  - `work_items/resolved/WI-CANONICAL-PROMPTS-0002.md`
   - `work_items/resolved/WI-BOOTSTRAP-0001.md`
   - `contributors/contributors.md`
 - `lrh validate` no longer reports `UNKNOWN_OWNER` for `owner: TBD`.

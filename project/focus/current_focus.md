@@ -1,6 +1,6 @@
 ---
 id: FOCUS-BOOTSTRAP
-title: Bootstrap focus (canonical prompt alignment phase)
+title: Post-roundtrip foundation stabilization
 status: active
 priority: high
 owner: TBD
@@ -9,23 +9,36 @@ owner: TBD
 # Current Focus
 
 ## Active Priority
-- Align project control-plane artifacts around canonical Markdown/frontmatter prompt authoring and Espanso-as-export-target behavior.
+- Keep the completed canonical prompt and Espanso roundtrip foundation stable while separating
+  project-plane cleanup and future feature expansion into narrow follow-up work.
 
 ## Why This Appears Current
-- Existing repository evidence is Espanso package-centric.
-- A design decision is needed so future implementation PRs converge on one canonical format.
+- Taurcode now has the v1 implementation path that earlier project artifacts called for:
+  canonical prompt sources, Espanso import/export, metadata preservation, semantic
+  roundtrip checks, lint/preflight diagnostics, operational scripts, tests, a migrated
+  prompt corpus, and Diátaxis-style docs.
+- The next useful work is not another broad foundation slice; it is targeted hardening,
+  project/control-plane hygiene, and separately designed feature expansion.
 
 ## Priorities
-1. Treat `prompts/taurcode/*.md` as the intended source of truth for the Taurcode prompt package.
-2. Define v1 required/optional canonical fields and validation checks.
-3. Define deterministic export path `build/espanso/<package>/` with no automatic local install.
-4. Capture migration expectations from existing Espanso package assets.
+1. Treat `prompts/taurcode/*.md` as the canonical source of truth for the Taurcode
+   prompt package.
+2. Preserve supported Espanso roundtrip semantics when modifying prompt loading, export,
+   import, linting, formatting, or docs.
+3. Keep unsupported Espanso constructs explicit through diagnostics or raw fallback
+   preservation instead of silently claiming support.
+4. Complete project-plane validation cleanup under its dedicated work item.
+5. Scope future exporter targets, install behavior, or advanced Espanso support as
+   separate design/implementation work.
 
 ## Non-Goals
-- Implementing the Python package or CLI in this alignment PR.
-- Claiming support for advanced Espanso features without explicit handling.
+- Adding new CLI commands in this closeout phase.
+- Expanding Espanso importer/exporter behavior without a dedicated design and tests.
+- Building additional regression automation as part of the closeout itself.
+- Collapsing project/control-plane cleanup into runtime feature work.
 
 ## Exit Criteria
-- Design docs clearly describe canonical prompt format and source-of-truth boundary.
-- Work item backlog includes implementation slices for loader/validator/exporter/importer/docs.
-- Execution record exists for this design-alignment prompt.
+- Current status, roadmap, focus, work item state, evidence, and execution records
+  accurately show the Espanso roundtrip foundation as complete.
+- Future work is represented as follow-up stabilization or explicitly scoped feature work,
+  not as unfinished foundation implementation.

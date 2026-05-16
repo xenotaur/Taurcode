@@ -9,7 +9,9 @@ title: Semantic Roundtrip and Regression Suite Design
 
 ## Status
 
-Proposed.
+Proposed. Semantic normalization and the `taurcode roundtrip espanso` CLI have been
+implemented as part of the Espanso roundtrip foundation. The broader regression suite
+and future construct coverage described here remain proposed follow-up work.
 
 ## Summary
 
