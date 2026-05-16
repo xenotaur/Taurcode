@@ -28,8 +28,12 @@ builds on the Espanso metadata round-trip proposal by treating `package.yml`,
 `_manifest.yml`, `README.md`, `LICENSE`, Markdown frontmatter, and raw fallback
 blocks as parts of a semantic prompt package rather than as unrelated files.
 
-The proposal is design-only. It does not add CLI behavior, implement a
-comparison engine, create a fixture corpus, or change importer/exporter output.
+This proposal was originally design-only. Since then, Taurcode has implemented the
+semantic normalization layer and `taurcode roundtrip espanso` CLI for the current
+supported Espanso roundtrip boundary. The remaining proposal scope is the broader
+regression-suite work: fixture corpus design, reusable regression harness expansion,
+future construct coverage rules, and any additional importer/exporter behavior needed
+for constructs outside the current v1 model.
 
 ## Problem Statement
 

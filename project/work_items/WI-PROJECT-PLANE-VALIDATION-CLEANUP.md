@@ -30,7 +30,7 @@ After the lint/toolchain drift fix landed, the Taurcode code validation passed:
 
 However, `lrh validate` still reported known project-plane metadata issues. These are pre-existing or adjacent control-plane hygiene issues, not regressions in the lint/toolchain workstream.
 
-Representative validation output:
+Historical representative validation output before the Espanso roundtrip closeout:
 
 ```text
 Validation completed: 14 error(s), 1 warning(s)
@@ -55,6 +55,11 @@ Warnings:
 - [PLANNING_ORPHANED_ACTIVE_WORK_ITEM] work_items/active/WI-CANONICAL-PROMPTS-0002.md: active work item 'WI-CANONICAL-PROMPTS-0002' is not attached to a planning parent
 ```
 
+The `work_items/active/WI-CANONICAL-PROMPTS-0002.md` entries above are retained as
+historical context for the validation failure that originally motivated this cleanup
+item. The closeout moved that work item to `project/work_items/resolved/`, so follow-up
+cleanup should verify the resolved path instead of chasing the deleted active path.
+
 ## Scope
 
 ### Status update
@@ -66,7 +71,7 @@ issues as verification rather than as active implementation work.
 
 ### Required changes
 
-- Verify `project/work_items/resolved/WI-CANONICAL-PROMPTS-0002.md` remains compatible with the current LRH work item schema.
+- Verify `project/work_items/resolved/WI-CANONICAL-PROMPTS-0002.md` remains compatible with the current LRH work item schema and does not reference an unknown `owner: TBD` value.
 - Update `project/work_items/resolved/WI-BOOTSTRAP-0001.md` so its frontmatter conforms to the current LRH work item schema.
 - Convert `related_focus` fields from scalar values to lists where required.
 - Add required work item fields:
@@ -79,7 +84,7 @@ issues as verification rather than as active implementation work.
   - replacing `TBD` with a valid contributor ID, or
   - adding an appropriate contributor record/frontmatter for the placeholder only if that is consistent with Taurcode conventions.
 - Add required YAML frontmatter to `project/contributors/contributors.md`, or restructure contributor metadata according to current Taurcode/LRH conventions.
-- Address the orphaned active work item warning for `WI-CANONICAL-PROMPTS-0002` by attaching it to the appropriate planning parent, workstream, focus, or documented interim parent relationship.
+- Verify the historical orphaned active work item warning for `WI-CANONICAL-PROMPTS-0002` no longer applies after the item moved to `project/work_items/resolved/`.
 
 ### Out of scope
 
@@ -125,7 +130,7 @@ issues as verification rather than as active implementation work.
   - `contributors/contributors.md`
 - `lrh validate` no longer reports `UNKNOWN_OWNER` for `owner: TBD`.
 - `lrh validate` no longer reports `WORK_ITEM_RESOLUTION_REQUIRED` for `WI-BOOTSTRAP-0001.md`.
-- The orphaned active work item warning is resolved or explicitly documented as deferred with a clear reason.
+- The historical orphaned active work item warning for `WI-CANONICAL-PROMPTS-0002` is resolved by the move to `resolved/` or explicitly documented as deferred with a clear reason.
 - `scripts/lint` passes.
 - `scripts/test` passes.
 - No unrelated project-plane files are changed.

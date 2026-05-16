@@ -4,7 +4,6 @@ title: Implement canonical prompt pipeline and Espanso export flow
 type: work_item
 status: resolved
 priority: high
-owner: TBD
 related_focus:
   - FOCUS-BOOTSTRAP
 blocked: false

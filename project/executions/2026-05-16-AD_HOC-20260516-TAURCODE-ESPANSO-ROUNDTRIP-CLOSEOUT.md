@@ -2,6 +2,7 @@
 prompt_id: AD_HOC-20260516-TAURCODE-ESPANSO-ROUNDTRIP-CLOSEOUT
 date: 2026-05-16
 scope: AD_HOC
+related_work_item: AD_HOC
 status: landed
 ---
 
