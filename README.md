@@ -141,12 +141,21 @@ The optional `prompts/<package>/espanso/` directory is reserved for Espanso pack
 
 Note: installation into a local Espanso configuration is currently manual; Taurcode does not automatically sync packages into a local Espanso configuration.
 
-## Semantic normalization for roundtrip checks
-Taurcode uses semantic normalization as the comparison model for future roundtrip checks. The goal is to compare prompt meaning instead of raw YAML bytes, because YAML emitters can change field ordering, quoting, scalar style, and list formatting without changing the package Espanso receives.
+## Espanso roundtrip checks
+Taurcode uses semantic normalization as the comparison model for Espanso roundtrip checks. The goal is to compare prompt meaning instead of raw YAML bytes, because YAML emitters can change field ordering, quoting, scalar style, and list formatting without changing the package Espanso receives.
+
+Run the CLI after exporting a package to verify that the Espanso output still matches the canonical Taurcode prompt semantics:
+
+```bash
+taurcode export espanso --prompts prompts/taurcode --output tmp/exported/taurcode
+taurcode roundtrip espanso --input tmp/exported/taurcode --prompts prompts/taurcode
+```
+
+`--input` accepts either an Espanso package directory or a direct `package.yml` path. `--prompts` points at the canonical prompt directory, such as `prompts/taurcode`. The command prints a human-readable pass/fail summary and returns exit code `0` when the normalized semantics are equivalent. It returns nonzero when semantic differences are found or when inputs are malformed and cannot be parsed.
 
 The normalization layer currently lives in `src/taurcode/semantic_normalize.py`. It can normalize an Espanso package directory, a direct `package.yml` path, or a canonical Taurcode prompt collection such as `prompts/taurcode/`. Text values are normalized to `\n` line endings, but Taurcode otherwise preserves final-newline semantics: a parsed YAML value ending in `\n` compares equal to another parsed value ending in `\n`, while a value without that newline remains different.
 
-Espanso semantic mode compares the parts that roundtrip through Espanso package output today:
+The `taurcode roundtrip espanso` command uses Espanso semantic mode. It compares the parts that roundtrip through Espanso package output today:
 
 - prompt trigger/keyword values;
 - prompt replacement/body text;
@@ -158,7 +167,9 @@ Espanso semantic mode intentionally ignores canonical-only prompt annotations su
 
 Canonical semantic mode is the fuller prompt-source comparison concept. It compares canonical prompt identity and annotation fields (`id`, `name`, `description`, `tags`) in addition to keyword/body semantics and package metadata assets. This mode is available for tests and future tooling, and it leaves room for richer target-specific metadata as Taurcode grows.
 
-This module prepares the model for a future `taurcode roundtrip espanso` command, but it does not add that CLI command yet.
+Missing metadata assets are deterministic: if the canonical prompt package has `_manifest.yml`, `README.md`, or `LICENSE` under `prompts/<package>/espanso/`, the Espanso package must contain the corresponding normalized asset. If the canonical prompt package has no curated metadata asset, Espanso semantic mode allows generated assets on the Espanso side and does not fail solely because they are present.
+
+Limitations: Espanso semantic mode is not a byte-for-byte YAML diff, does not validate local Espanso installation state, and intentionally does not compare canonical-only prompt annotations that plain Espanso packages cannot represent. Canonical semantic mode remains available for tests and future tooling when full Taurcode prompt-source annotations need to be compared.
 
 ## Validate and lint prompts
 Validate all canonical prompt files before export:

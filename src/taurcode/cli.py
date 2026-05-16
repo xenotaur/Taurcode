@@ -9,6 +9,7 @@ from taurcode import (
     prompt_format,
     prompt_lint,
     prompt_loader,
+    roundtrip,
     validate,
 )
 
@@ -47,6 +48,13 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Check whether prompt files are formatted without writing changes",
     )
+
+    roundtrip_parser = subparsers.add_parser("roundtrip")
+    roundtrip_subparsers = roundtrip_parser.add_subparsers(dest="target", required=True)
+
+    roundtrip_espanso_parser = roundtrip_subparsers.add_parser("espanso")
+    roundtrip_espanso_parser.add_argument("--input", required=True)
+    roundtrip_espanso_parser.add_argument("--prompts", default=CANONICAL_PROMPTS_DIR)
 
     import_parser = subparsers.add_parser("import")
     import_subparsers = import_parser.add_subparsers(dest="target", required=True)
@@ -118,6 +126,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.command == "import" and args.target == "espanso":
             espanso_import.import_espanso(args.input, args.output, merge=args.merge)
             return 0
+        if args.command == "roundtrip" and args.target == "espanso":
+            comparison = roundtrip.compare_espanso_roundtrip(args.input, args.prompts)
+            print(roundtrip.format_roundtrip_summary(comparison))
+            if comparison.passed():
+                return 0
+            return 1
         if args.command == "validate":
             prompts = prompt_loader.load_prompts(args.prompts)
             validate.validate_prompts(prompts)

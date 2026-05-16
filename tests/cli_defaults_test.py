@@ -22,6 +22,13 @@ class TestCliDefaults(unittest.TestCase):
 
         self.assertEqual(args.prompts, cli.CANONICAL_PROMPTS_DIR)
 
+    def test_roundtrip_uses_canonical_prompts_by_default(self) -> None:
+        args = cli.build_parser().parse_args(
+            ["roundtrip", "espanso", "--input", "build/espanso/taurcode"]
+        )
+
+        self.assertEqual(args.prompts, cli.CANONICAL_PROMPTS_DIR)
+
     def test_import_uses_staging_directory_by_default(self) -> None:
         args = cli.build_parser().parse_args(
             ["import", "espanso", "--input", "espanso/package/package.yml"]
