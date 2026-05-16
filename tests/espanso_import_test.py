@@ -269,10 +269,6 @@ class TestEspansoImport(unittest.TestCase):
 """,
                 encoding="utf-8",
             )
-            (source_dir / "README.md").write_text(
-                "# Sibling README should be skipped\n", encoding="utf-8"
-            )
-
             stderr = io.StringIO()
             with contextlib.redirect_stderr(stderr):
                 rc = main(
@@ -1043,7 +1039,7 @@ Body
                     ]
                 )
             self.assertEqual(rc, 0)
-            self.assertEqual(stderr.getvalue(), "")
+            self.assertIn("metadata asset import skipped", stderr.getvalue())
             self.assertEqual(
                 (metadata_dir / "README.md").read_text(encoding="utf-8"),
                 "# Package metadata\n",

@@ -2,6 +2,7 @@
 prompt_id: AD_HOC-20260515-TAURCODE-ESPANSO-METADATA-ROUNDTRIP-MVP
 date: 2026-05-15
 scope: AD_HOC
+related_work_item: AD_HOC
 status: landed
 ---
 

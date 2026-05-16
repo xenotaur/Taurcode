@@ -162,16 +162,9 @@ def resolve_espanso_package_dir(input_path: str | Path) -> Path | None:
 
 
 def import_espanso_metadata_assets(
-    package_dir: Path | None,
-    prompt_collection_dir: Path,
-    package_file_dir: Path | None = None,
+    package_dir: Path | None, prompt_collection_dir: Path
 ) -> tuple[set[str], list[str]]:
     if package_dir is None:
-        sibling_metadata_exists = package_file_dir is not None and any(
-            (package_file_dir / asset_name).is_file() for asset_name in _METADATA_ASSETS
-        )
-        if not sibling_metadata_exists:
-            return set(), []
         warning = (
             "Warning: Espanso metadata asset import skipped because --input points "
             "directly to package.yml; pass the package directory to import sibling "
@@ -446,7 +439,7 @@ def import_espanso(
     output.mkdir(parents=True, exist_ok=True)
     package_dir = resolve_espanso_package_dir(input_path)
     _copied_metadata, metadata_warnings = import_espanso_metadata_assets(
-        package_dir, output, package_path.parent
+        package_dir, output
     )
     raw_dir = output / "imported_raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
