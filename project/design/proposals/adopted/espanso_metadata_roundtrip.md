@@ -7,6 +7,7 @@ implemented_by:
   - WI-CANONICAL-PROMPTS-0002
 evidence:
   - EV-0002
+  - EV-0004
 title: Espanso Metadata Round-Trip
 ---
 
@@ -18,9 +19,19 @@ Accepted and implemented on main.
 
 ## Implementation Note
 
-The metadata round-trip scope has been implemented on main. Completed capabilities include Espanso package metadata preservation, generated required Espanso defaults, metadata linting, merge import preserving curated prompt frontmatter, final-newline normalization, prompt-source lint policy, conservative prompt formatting, and frontmatter-format-preserving merge import. The expected local smoke test for this proposal is export -> merge import -> no prompt diffs.
+The metadata round-trip scope has been implemented on main. Completed capabilities
+include Espanso package metadata preservation, generated required Espanso defaults,
+metadata linting, merge import preserving curated prompt frontmatter, final-newline
+normalization, prompt-source lint policy, conservative prompt formatting, and
+frontmatter-format-preserving merge import. The expected local smoke test for this
+proposal is export -> merge import -> no prompt diffs.
 
-Remaining future work belongs to broader Espanso construct coverage and semantic round-trip regression testing, not the metadata round-trip proposal itself.
+The broader Espanso roundtrip foundation closeout is captured in `EV-0004`, including
+semantic normalization, `taurcode roundtrip espanso`, migrated corpus evidence, and
+Diátaxis-style documentation references.
+
+Remaining future work belongs to broader Espanso construct coverage and semantic
+round-trip regression testing, not the metadata round-trip proposal itself.
 
 ## Summary
 
