@@ -19,13 +19,17 @@ do not re-derive or re-analyze it.
 Generate a prompt ID that reflects the design topic. Choose a slug that
 names what you are implementing (e.g., `review-response-protocol-fix`).
 
-Preferred (when LRH is installed):
-
     lrh prompt label --slug <descriptive-slug>
 
-Fallback:
+This step requires LRH. If `lrh` is not on PATH, install it once,
+globally, independent of the target repository:
 
-    scripts/prompts/label-prompt --slug <descriptive-slug>
+    pipx install lrh
+
+LRH is not yet published to PyPI (tracked by `PROP-TAG-PUSH-PYPI-PUBLISHING`
+in the LRH repo); until it is, `pipx install <path-to-local-lrh-checkout>`
+or a locally built wheel installs the same `lrh` console script. There is
+currently no non-LRH fallback for prompt labeling.
 
 **State the generated prompt ID prominently at the top of your response.**
 This is the execution ID for this session. You will use it in the PR and
@@ -35,10 +39,16 @@ the execution record.
 
 ### Step 2 — Idempotence check
 
+Preferred (when LRH is installed):
+
     lrh prompt check-execution --prompt-id "<prompt-id>" --project-root .
 
-If a prior `landed` or `in_progress` record exists, stop and report.
-Do not proceed unless this is an explicit rerun.
+Fallback (soft idempotence check, per `PROMPTS.md`):
+
+    grep -rl "<prompt-id>" project/executions/
+
+If a prior `landed` or `in_progress` record exists (either path), stop and
+report. Do not proceed unless this is an explicit rerun.
 
 ---
 
@@ -112,13 +122,16 @@ Create a pull request. Include in the PR body:
 
 ### Step 8 — Execution record
 
-After the PR is created, record the execution. Preferred (when LRH is
-installed):
+After the PR is created — not yet merged — record the execution with
+status `in_progress`. Only update the record to `landed` once the PR has
+actually merged; do not record `landed` for an open PR.
+
+Preferred (when LRH is installed):
 
     lrh prompt record-execution \
       --prompt-id "<prompt-id>" \
       --slug <slug> \
-      --status landed \
+      --status in_progress \
       --project-root .
 
 Fallback:
@@ -126,7 +139,7 @@ Fallback:
     scripts/prompts/record-execution \
       --prompt-id "<prompt-id>" \
       --slug <slug> \
-      --status landed
+      --status in_progress
 
 Include the PR URL as the primary artifact. Record only for this prompt —
 do not modify execution records for other prompts.
