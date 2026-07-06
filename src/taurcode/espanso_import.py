@@ -346,14 +346,12 @@ def _render_merged_prompt(existing: ExistingPrompt, trigger: str, body: str) -> 
 
 
 def _match_existing_prompt(
-    match: dict, existing_prompts: list[ExistingPrompt]
+    match: dict,
+    prompts_by_keyword: dict[str, list[ExistingPrompt]],
+    prompts_by_stem: dict[str, list[ExistingPrompt]],
 ) -> ExistingPrompt | None:
     trigger = str(match["trigger"])
-    trigger_matches = [
-        prompt
-        for prompt in existing_prompts
-        if str(prompt.metadata.get("keyword", "")) == trigger
-    ]
+    trigger_matches = prompts_by_keyword.get(trigger, [])
     if len(trigger_matches) > 1:
         paths = ", ".join(str(prompt.path) for prompt in trigger_matches)
         raise ValueError(
@@ -364,9 +362,7 @@ def _match_existing_prompt(
         return trigger_matches[0]
 
     prompt_id = _normalize_id(trigger)
-    stem_matches = [
-        prompt for prompt in existing_prompts if prompt.path.stem == prompt_id
-    ]
+    stem_matches = prompts_by_stem.get(prompt_id, [])
     if len(stem_matches) > 1:
         paths = ", ".join(str(prompt.path) for prompt in stem_matches)
         raise ValueError(
@@ -382,6 +378,16 @@ def _merge_simple_matches(
     entries: list[tuple[dict, str]], output: Path, used_ids: set[str]
 ) -> tuple[int, set[Path], list[str]]:
     existing_prompts = _load_existing_prompts(output)
+
+    prompts_by_keyword: dict[str, list[ExistingPrompt]] = {}
+    prompts_by_stem: dict[str, list[ExistingPrompt]] = {}
+
+    for prompt in existing_prompts:
+        kw = str(prompt.metadata.get("keyword", ""))
+        if kw:
+            prompts_by_keyword.setdefault(kw, []).append(prompt)
+        prompts_by_stem.setdefault(prompt.path.stem, []).append(prompt)
+
     matched_paths: set[Path] = set()
     existing_updates: list[tuple[ExistingPrompt, str, str]] = []
     new_prompts: list[tuple[str, str]] = []
@@ -392,7 +398,7 @@ def _merge_simple_matches(
             continue
         trigger = str(match["trigger"])
         replace = _normalize_replace(match["replace"])
-        existing = _match_existing_prompt(match, existing_prompts)
+        existing = _match_existing_prompt(match, prompts_by_keyword, prompts_by_stem)
         if existing is None:
             new_prompts.append((trigger, replace))
             continue
