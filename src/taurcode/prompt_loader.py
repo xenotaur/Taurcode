@@ -14,17 +14,24 @@ def _is_reserved_prompt_file(prompt_file: Path, directory: Path) -> bool:
 
 
 def extract_prompt_body(text: str) -> str:
+    # ⚡ Bolt: Use string slicing instead of splitting into lines to avoid large array allocations, significantly improving performance for large files.
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
-    lines = normalized.split("\n")
-    if not lines or lines[0] != "---":
+    if not normalized.startswith("---"):
+        return normalized
+    if normalized == "---":
+        return normalized
+    if not normalized.startswith("---\n"):
         return normalized
 
-    for index in range(1, len(lines)):
-        if lines[index] == "---":
-            body = "\n".join(lines[index + 1 :])
-            if body.startswith("\n"):
-                body = body[1:]
-            return body
+    end_idx = normalized.find("\n---\n", 3)
+    if end_idx != -1:
+        body = normalized[end_idx + 5 :]
+        if body.startswith("\n"):
+            return body[1:]
+        return body
+
+    if normalized.endswith("\n---"):
+        return ""
 
     return normalized
 

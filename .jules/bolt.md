@@ -1,0 +1,3 @@
+## 2024-05-24 - [Avoid large string splitting for parsing text bodies]
+**Learning:** In Python, avoiding `text.split("\n")` on large string files is an easy performance win when looking for a specific text delimiter because `split()` creates a list of strings scaling O(n) memory proportional to the number of lines.
+**Action:** Use `.find()` or `.startswith()`/`.endswith()` along with string slicing instead. This approach finds patterns without making temporary string objects per line.
