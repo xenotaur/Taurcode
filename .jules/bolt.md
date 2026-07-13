@@ -1,0 +1,3 @@
+## 2024-05-24 - [O(N^2) list lookup bottleneck in Espanso import]
+**Learning:** `_match_existing_prompt` inside `_merge_simple_matches` iterated through a list of all existing prompts to match via string comparison for every item being imported, taking O(N^2) time overall. The codebase imports potentially large prompt libraries natively, so N can be several thousand. This takes seconds of execution time and was visibly noticeable in benchmarking.
+**Action:** Changed linear searches into O(1) hash map lookups by precomputing `existing_by_trigger` and `existing_by_stem` dictionaries before the main merge loop. This successfully dropped benchmark execution time for 3000 items from ~3.5s to ~1.2s.
