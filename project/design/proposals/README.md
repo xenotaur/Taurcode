@@ -49,6 +49,7 @@ Adopted design proposal frontmatter may include implementation traceability. Kee
 
 - [Prompting Best Practices and Review Framework](proposed/prompting-best-practices-and-review-framework.md)
 - [Semantic Roundtrip and Regression Suite Design Proposal](proposed/semantic_roundtrip_regression_design.md)
+- [Per-Match `force_clipboard` Opt-In for Espanso Export](proposed/espanso-match-force-clipboard/00_proposal.md) adds an opt-in frontmatter field so short prompts can force Espanso's Clipboard backend, avoiding the Inject backend sending a trailing newline as a live Return keypress.
 
 ### Adopted
 
