@@ -2,14 +2,14 @@
 execution_id: 2026_07_22_22_20_09_ESPANSO_MATCH_FORCE_CLIPBOARD_CONFIRM
 prompt_id: PROMPT(AD_HOC:ESPANSO_MATCH_FORCE_CLIPBOARD_CONFIRM)[2026-07-22T22:18:15-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 
 pr: https://github.com/xenotaur/Taurcode/pull/46
-commit: 7290fe4
+commit: 4e83139377f7c3c5ed7c678c47a60e0ca2b6c319
 created_at: 2026-07-22T22:20:09-04:00
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/46
-session_transcript: pending
+session_transcript: claude-app:a1c6f1d5-79a1-4dbc-a2d3-6183c738a3cc
 ---
 
 # Summary
@@ -77,8 +77,6 @@ post-push `HEAD` SHA happens after this record is committed and pushed
 
 # Follow-up
 
-- `session_transcript` above is `pending` — update to `claude-app:<session-id>`
-  after this session ends.
 - This session's working-directory tooling reset between turns and briefly
   wrote this record to `/Users/centaur/Workspace/Taurcode/project/executions/AD_HOC/`
   (outside the git repo, which lives at `/Users/centaur/Workspace/Taurcode/taurcode/`)

@@ -2,14 +2,14 @@
 execution_id: 2026_07_18_16_16_20_ESPANSO_MATCH_FORCE_CLIPBOARD_REVIEW
 prompt_id: PROMPT(AD_HOC:ESPANSO_MATCH_FORCE_CLIPBOARD_REVIEW)[2026-07-18T16:10:24-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 
 pr: https://github.com/xenotaur/Taurcode/pull/46
-commit: b3694ee
+commit: 4e83139377f7c3c5ed7c678c47a60e0ca2b6c319
 created_at: 2026-07-18T16:16:20-04:00
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/46
-session_transcript: pending
+session_transcript: claude-app:a1c6f1d5-79a1-4dbc-a2d3-6183c738a3cc
 ---
 
 # Summary
@@ -76,8 +76,6 @@ identical error set before and after this session's edits.
 
 # Follow-up
 
-- `session_transcript` above is `pending` — update to `claude-app:<session-id>`
-  after this session ends.
 - The pre-existing `tests/espanso_import_test.py` formatting drift and the
   20 pre-existing `lrh validate` errors are out of scope for this PR and
   were not touched.
