@@ -33,6 +33,15 @@ def _extract_prompt_body(text: str) -> str:
     return extract_prompt_body(text)
 
 
+def _normalize_targets(value: object) -> object:
+    # Coalesce only an absent key or an explicit `null` to {} — other falsy
+    # values (`false`, `[]`, `""`, `0`) must survive to validate.py so it can
+    # reject them as malformed, non-mapping `targets` shapes.
+    if value is None:
+        return {}
+    return value
+
+
 def load_prompts(prompts_dir: str) -> list[prompt_model.Prompt]:
     directory = Path(prompts_dir)
     prompts: list[prompt_model.Prompt] = []
@@ -58,7 +67,7 @@ def load_prompts(prompts_dir: str) -> list[prompt_model.Prompt]:
                 keyword=post.metadata.get("keyword", ""),
                 body=body,
                 source=str(prompt_file),
-                targets=post.metadata.get("targets", {}) or {},
+                targets=_normalize_targets(post.metadata.get("targets")),
             )
         )
 

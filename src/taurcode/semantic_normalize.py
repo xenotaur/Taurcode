@@ -291,8 +291,11 @@ def _prompt_signature(
 
 
 def _prompt_signature_message(signature: tuple[Any, ...]) -> str:
-    trigger, body, *_rest = signature
-    return f"trigger={trigger!r}, body={_short_repr(body)}"
+    trigger, body, force_clipboard, *_rest = signature
+    return (
+        f"trigger={trigger!r}, body={_short_repr(body)}, "
+        f"force_clipboard={force_clipboard!r}"
+    )
 
 
 def _unsupported_fields_differ(

@@ -28,9 +28,9 @@ def _validate_espanso_targets(targets: object, prompt_ref: str) -> None:
     if not isinstance(targets, dict):
         raise ValueError(f"Invalid 'targets' in {prompt_ref}: must be a mapping")
 
-    espanso = targets.get("espanso")
-    if espanso is None:
+    if "espanso" not in targets:
         return
+    espanso = targets["espanso"]
     if not isinstance(espanso, dict):
         raise ValueError(
             f"Invalid 'targets.espanso' in {prompt_ref}: must be a mapping"

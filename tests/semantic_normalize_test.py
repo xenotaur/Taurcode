@@ -465,6 +465,10 @@ Shared body.
         messages = {difference.message for difference in differences}
         self.assertTrue(any("missing" in message for message in messages))
         self.assertTrue(any("extra" in message for message in messages))
+        # The message itself must explain *why* the signatures differ, not
+        # just repeat the shared trigger/body.
+        self.assertTrue(any("force_clipboard=True" in message for message in messages))
+        self.assertTrue(any("force_clipboard=False" in message for message in messages))
 
     def test_canonical_normalization_captures_force_clipboard(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

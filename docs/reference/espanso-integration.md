@@ -43,7 +43,7 @@ The simple importer converts static match entries that contain only:
 
 - `trigger`
 - `replace`
-- `force_clipboard` (optional)
+- `force_clipboard: true` (optional — any other value, such as `false`, is not part of the simple shape and causes the match to fall back to raw import instead of mapping into a canonical prompt)
 
 These map cleanly to Taurcode `keyword`, prompt body, and `targets.espanso.force_clipboard` fields respectively. More complex Espanso constructs are outside the current canonical prompt export model and should be reviewed manually if they appear in imported fallback output.
 
