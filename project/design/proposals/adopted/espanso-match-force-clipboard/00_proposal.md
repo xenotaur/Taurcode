@@ -2,9 +2,9 @@
 id: espanso-match-force-clipboard
 type: design_proposal
 title: Per-Match `force_clipboard` Opt-In for Espanso Export
-status: proposed
+status: adopted
 created_on: 2026-07-18
-updated_on: 2026-07-18
+updated_on: 2026-07-23
 implementation_status: not_started
 implemented_by: []
 supersedes: []
