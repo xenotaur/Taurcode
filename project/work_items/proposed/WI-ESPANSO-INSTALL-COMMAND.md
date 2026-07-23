@@ -33,8 +33,11 @@ forbidden_actions:
   - implement_linux_windows_paths
   - implement_continuous_sync
   - write_to_real_espanso_dir_in_tests
+  - rewrite_curated_manifest_metadata
 acceptance:
-  - taurcode install espanso writes package.yml and metadata assets into <packages-dir>/<name>/ via espanso_export.export_espanso, with the generated manifest name matching the directory name
+  - taurcode install espanso writes package.yml and metadata assets into <packages-dir>/<name>/ via espanso_export.export_espanso, where <name> is taken from the curated _manifest.yml name field when one exists and defaults to taurcode otherwise, so the installed directory name and manifest name always agree
+  - The default packages directory is expanded with expanduser() before use, so no directory literally named '~' is ever created relative to the working directory
+  - A failed export leaves a previously installed package byte-identical to its pre-run state; the live package is replaced only after export and its build lint both succeed in a staging directory
   - On non-darwin platforms the command prints a clear unsupported-platform message and exits nonzero without writing files or guessing a path
   - --restart is opt-in; without it the command prints the espanso restart instruction, and with it a missing espanso binary is a clear error and nonzero exit rather than a traceback
   - Every automated test resolves its install target through an injected or parameterized directory; no test writes under the real Espanso application-support path
@@ -60,7 +63,7 @@ artifacts_expected:
 ## Summary
 
 Add a macOS-only `taurcode install espanso` subcommand that exports the
-canonical prompt corpus directly into the local Espanso match-packages
+canonical prompt corpus directly into the local Espanso `match/packages`
 directory, with opt-in `--restart`, so a merged exporter or prompt change can
 be made live in one command.
 
@@ -110,28 +113,54 @@ feature work rather than unfinished foundation work.
 ## Required Changes
 
 1. `src/taurcode/espanso_install.py` — new module holding
-   `MACOS_PACKAGES_DIR = "~/Library/Application Support/espanso/match/packages"`;
-   an `InstallError(ValueError)` subclass so `cli.main`'s existing
-   `except (OSError, ValueError)` handler catches it without a new clause;
-   `resolve_packages_dir(platform, override)` raising `InstallError` on any
-   non-`darwin` platform; `install_espanso(prompts, packages_dir, name,
-   source_dir)` delegating to
-   `espanso_export.export_espanso(prompts, str(packages_dir / name), source_dir=...)`
-   — because `package_name = output.name` in `src/taurcode/espanso_export.py`,
-   the generated manifest name tracks `<name>` automatically; and
-   `restart_espanso()` using `shutil.which("espanso")` followed by
-   `subprocess.run(["espanso", "restart"])`, raising `InstallError` on a
-   missing binary or a nonzero exit.
+   `MACOS_PACKAGES_DIR = "~/Library/Application Support/espanso/match/packages"`
+   and `DEFAULT_PACKAGE_NAME = "taurcode"`; an `InstallError(ValueError)`
+   subclass so `cli.main`'s existing `except (OSError, ValueError)` handler
+   catches it without a new clause; and the following functions:
+   - `resolve_packages_dir(platform, override)` — raises `InstallError` on any
+     non-`darwin` platform, then returns the override or `MACOS_PACKAGES_DIR`.
+     **Both paths must be passed through `Path(...).expanduser()`.** `Path`
+     does not expand `~`, so a literal default would be a relative path and
+     would silently create `<cwd>/~/Library/Application Support/...` while
+     reporting a successful install.
+   - `resolve_package_name(source_dir)` — returns the `name:` field of the
+     curated `<source_dir>/espanso/_manifest.yml` when that file exists (parse
+     via `espanso_metadata.parse_manifest_text`), else `DEFAULT_PACKAGE_NAME`.
+     The installed directory name must be derived from the manifest rather
+     than imposed on it, because `export_espanso_metadata_assets` copies a
+     curated `_manifest.yml` verbatim while `lint_espanso_package_build`
+     derives the expected name from `output.name` — any disagreement is a
+     hard `manifest-name-mismatch` lint error.
+   - `install_espanso(prompts, packages_dir, source_dir)` — export into a
+     staging directory first, and replace the live package only on success.
+     **The staging directory's own basename must equal the resolved package
+     name** (stage at `<tmp>/<name>/`, not `<tmp>/`), or the same
+     `output.name`-derived lint will fail on the staging path with
+     `manifest-name-mismatch` and `invalid-package-name`. Create the temp
+     parent inside `packages_dir` (dot-prefixed, e.g.
+     `.taurcode-install-<random>`) so the final move is a same-filesystem
+     `os.replace`, and clean it up with a context manager on both success and
+     failure. On success, move any existing target aside into the temp parent,
+     `os.replace` the staged directory into place, and let cleanup delete the
+     old copy. Return the installed path.
+   - `restart_espanso()` — `shutil.which("espanso")` followed by
+     `subprocess.run(["espanso", "restart"])`, raising `InstallError` on a
+     missing binary or a nonzero exit.
 2. `src/taurcode/cli.py` — add an `install` parser with an `espanso`
-   subparser taking `--prompts` (default `CANONICAL_PROMPTS_DIR`), `--name`
-   (default `taurcode`), `--packages-dir` (default `None`, meaning platform
-   resolution), and `--restart` (`store_true`). The handler validates prompts
-   first, installs, prints the resolved target path, then either restarts or
-   prints the `espanso restart` instruction.
+   subparser taking `--prompts` (default `CANONICAL_PROMPTS_DIR`),
+   `--packages-dir` (default `None`, meaning platform resolution), and
+   `--restart` (`store_true`). There is no `--name` flag — the package name is
+   derived per Required Change 1. The handler validates prompts first,
+   installs, prints the resolved target path, then either restarts or prints
+   the `espanso restart` instruction.
 3. `tests/espanso_install_test.py` — cover the platform gate with injected
-   `darwin`/`linux`/`win32` values; install into a temporary directory;
-   assert the generated manifest name matches the directory name; cover the
-   `--name` override; assert restart runs only with the flag, via an injected
+   `darwin`/`linux`/`win32` values; install into a temporary directory and
+   assert the installed manifest name equals the installed directory name;
+   assert `resolve_packages_dir` returns an absolute path for the default and
+   creates no `~` directory in the working directory; assert a failing export
+   (for example a curated manifest whose name disagrees with the derived name)
+   leaves an existing installed package byte-identical and leaves no staging
+   directory behind; assert restart runs only with the flag, via an injected
    runner and `which` lookup; cover the missing-binary and nonzero-exit error
    paths.
 4. `tests/cli_defaults_test.py` — add parser-default coverage for the new
@@ -156,6 +185,10 @@ feature work rather than unfinished foundation work.
   this is one-shot install only.
 - Do not shell out to `espanso` for anything beyond `restart`.
 - Do not integrate with `espanso package install` or the Espanso hub.
+- Do not add a `--name` flag, and do not rewrite, patch, or regenerate curated
+  `_manifest.yml` metadata at install time. Install is a re-export to a
+  different destination, not a mutation of package identity; the installed
+  package must stay byte-identical to what `export espanso` would produce.
 - Do not archive or resolve `FOCUS-BOOTSTRAP` — its Exit Criteria depend on
   the still-open `WI-PROJECT-PLANE-VALIDATION-CLEANUP`.
 - Do not change export, import, lint, or roundtrip semantics.
@@ -165,8 +198,17 @@ feature work rather than unfinished foundation work.
 ## Acceptance Criteria
 
 - `taurcode install espanso` writes `package.yml` and metadata assets into
-  `<packages-dir>/<name>/` through `espanso_export.export_espanso`, and the
-  generated manifest `name:` matches the installed directory name.
+  `<packages-dir>/<name>/` through `espanso_export.export_espanso`, where
+  `<name>` comes from the curated `_manifest.yml` `name:` field when one
+  exists and defaults to `taurcode` otherwise, so the installed directory name
+  and manifest `name:` always agree.
+- The default packages directory is expanded with `expanduser()` before use.
+  No directory literally named `~` is created relative to the working
+  directory, and the resolved default is absolute.
+- A failed export leaves a previously installed package byte-identical to its
+  pre-run state, and leaves no staging directory behind. The live package is
+  replaced only after export and its build lint both succeed against the
+  staging copy.
 - On any non-`darwin` platform the command prints a clear unsupported-platform
   message and exits nonzero without writing files or guessing a path.
 - `--restart` is opt-in. Without it the command prints the `espanso restart`
@@ -195,14 +237,29 @@ feature work rather than unfinished foundation work.
 ## Risk Notes
 
 - This is the first Taurcode operation that writes to a machine-local
-  location the user did not name on the command line. A wrong default or a
-  wrong `--name` writes into the developer's live Espanso configuration.
+  location the user did not name on the command line. A wrong default writes
+  into the developer's live Espanso configuration.
 - This is the first `subprocess` use in the codebase. A test that shells out
   for real would restart the developer's live Espanso, so the restart path
   must be injectable and never exercised against the real binary in tests.
-- `export_espanso` calls `mkdir(parents=True, exist_ok=True)` and overwrites
-  `package.yml` in place, so a mistyped `--name` silently creates a new
-  package directory instead of failing.
+- `export_espanso` writes `package.yml` and metadata assets *before* running
+  `lint_espanso_package_build`, and raises only afterwards. Exporting straight
+  into the live package directory would therefore corrupt an installed package
+  on any lint or I/O failure — verified by running
+  `export espanso --output <tmp>/foo`, which exits 1 on
+  `manifest-name-mismatch` and still leaves all four package files on disk.
+  This is why Required Change 1 stages the export. The staging fix must not be
+  weakened into a post-hoc cleanup.
+- The staged replacement is not a single atomic operation: moving the old
+  package aside and moving the new one into place are two `os.replace` calls,
+  so there is a brief window where the target does not exist. That is
+  acceptable because the package is never *partially written* — but it means
+  the operation is crash-safe, not concurrency-safe against a simultaneous
+  Espanso read.
+- The staging parent lives inside `packages_dir`. If the process is killed
+  between `mkdtemp` and cleanup, a dot-prefixed leftover directory remains
+  next to real packages. Dot-prefixing keeps it out of Espanso's way; a
+  same-filesystem staging location is required for `os.replace` to work.
 
 ## Related Workstream and Designs
 
