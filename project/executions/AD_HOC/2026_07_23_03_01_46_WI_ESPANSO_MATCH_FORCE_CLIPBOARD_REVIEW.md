@@ -2,14 +2,14 @@
 execution_id: 2026_07_23_03_01_46_WI_ESPANSO_MATCH_FORCE_CLIPBOARD_REVIEW
 prompt_id: PROMPT(AD_HOC:WI_ESPANSO_MATCH_FORCE_CLIPBOARD_REVIEW)[2026-07-23T02:58:49-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 
 pr: https://github.com/xenotaur/Taurcode/pull/48
-commit: 1961638
+commit: 0ef4277ef0e6901c8e8c7f7630d005bb40437e1d
 created_at: 2026-07-23T03:01:46-04:00
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/48
-session_transcript: pending
+session_transcript: claude-app:a1c6f1d5-79a1-4dbc-a2d3-6183c738a3cc
 ---
 
 # Summary
@@ -73,8 +73,6 @@ session's edits.
 
 # Follow-up
 
-- `session_transcript` above is `pending` — update to `claude-app:<session-id>`
-  after this session ends.
 - Suggest running `/lrh-confirm-fixes https://github.com/xenotaur/Taurcode/pull/48`
   before merge to independently verify these fixes against the live diff
   and resolve the GitHub review threads.
