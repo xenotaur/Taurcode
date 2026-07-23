@@ -2,14 +2,14 @@
 execution_id: 2026_07_23_15_10_23_ESPANSO_INSTALL_DRIFT_DOCS
 prompt_id: PROMPT(AD_HOC:ESPANSO_INSTALL_DRIFT_DOCS)[2026-07-23T15:09:01-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 
 pr: https://github.com/xenotaur/Taurcode/pull/50
-commit: 4709073
+commit: 491c535a8d788217d3eaeaaff351256fb5df73e2
 created_at: 2026-07-23T15:10:23-04:00
 agent: claude_app
 instruction_source: ad_hoc conversation — live incident during the espanso-match-force-clipboard closeout, where the locally-installed Espanso package went stale after merge
-session_transcript: pending
+session_transcript: claude-app:a1c6f1d5-79a1-4dbc-a2d3-6183c738a3cc
 ---
 
 # Summary
@@ -50,5 +50,3 @@ $ lrh validate
   currently say "Adding new CLI commands in this closeout phase," and
   building it should go through this repo's usual work-item process
   rather than being added ad hoc. Not started.
-- `session_transcript` above is `pending` — update to
-  `claude-app:<session-id>` after this session ends.

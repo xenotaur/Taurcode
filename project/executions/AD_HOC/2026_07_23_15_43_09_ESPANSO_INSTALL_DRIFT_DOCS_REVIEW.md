@@ -2,14 +2,14 @@
 execution_id: 2026_07_23_15_43_09_ESPANSO_INSTALL_DRIFT_DOCS_REVIEW
 prompt_id: PROMPT(AD_HOC:ESPANSO_INSTALL_DRIFT_DOCS_REVIEW)[2026-07-23T15:14:06-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 2026_07_23_15_10_23_ESPANSO_INSTALL_DRIFT_DOCS
 pr: https://github.com/xenotaur/Taurcode/pull/50
-commit: abbe458
+commit: 491c535a8d788217d3eaeaaff351256fb5df73e2
 created_at: 2026-07-23T15:43:09-04:00
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/50
-session_transcript: pending
+session_transcript: claude-app:a1c6f1d5-79a1-4dbc-a2d3-6183c738a3cc
 ---
 
 # Summary
@@ -61,8 +61,6 @@ $ lrh validate
 
 # Follow-up
 
-- `session_transcript` above is `pending` — update to
-  `claude-app:<session-id>` after this session ends.
 - Suggest running `/lrh-confirm-fixes https://github.com/xenotaur/Taurcode/pull/50`
   before merge to independently verify these fixes and resolve the review
   threads.

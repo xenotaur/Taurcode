@@ -2,14 +2,14 @@
 execution_id: 2026_07_23_16_03_13_ESPANSO_INSTALL_DRIFT_DOCS_CONFIRM
 prompt_id: PROMPT(AD_HOC:ESPANSO_INSTALL_DRIFT_DOCS_CONFIRM)[2026-07-23T15:46:52-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 2026_07_23_15_10_23_ESPANSO_INSTALL_DRIFT_DOCS
 pr: https://github.com/xenotaur/Taurcode/pull/50
-commit: 5afd180
+commit: 491c535a8d788217d3eaeaaff351256fb5df73e2
 created_at: 2026-07-23T16:03:13-04:00
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/50
-session_transcript: pending
+session_transcript: claude-app:a1c6f1d5-79a1-4dbc-a2d3-6183c738a3cc
 ---
 
 # Summary
@@ -79,5 +79,3 @@ re-check happens after this record is committed and pushed (Step 8).
 - Fix the pre-existing `tests/espanso_import_test.py` Black-formatting bug
   on `main` as its own separate piece of work (deferred per user
   direction — "let's finish PR 50 and come back to that").
-- `session_transcript` above is `pending` — update to
-  `claude-app:<session-id>` after this session ends.
