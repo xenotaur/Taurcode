@@ -31,7 +31,13 @@ Prompt body text goes here.
 
 ## Optional fields
 
-`targets` may be authored as a nested mapping. Taurcode loads it into prompt objects for target-specific metadata, but the current Espanso exporter validates and exports the core prompt fields.
+`targets` may be authored as a nested mapping. Taurcode loads it into prompt objects for target-specific metadata. The Espanso exporter reads one nested field from it today — `targets.espanso.force_clipboard` — and otherwise exports the core prompt fields.
+
+| Field | Type | Rule |
+| --- | --- | --- |
+| `targets.espanso.force_clipboard` | boolean | Optional. When present, `taurcode validate` requires `targets` and `targets.espanso` to be mappings and `force_clipboard` to be a boolean; any other shape is a validation error. When `true`, export emits Espanso's native `force_clipboard: true` match property, forcing Clipboard-backend delivery for that match. Import round-trips the field back into this same shape on both fresh and merge import. Absent or `false` is not an error and is not emitted. |
+
+Espanso's `Auto` backend delivers matches shorter than its `clipboard_threshold` default (100 characters) via simulated keypresses (`Inject`), which sends a trailing `\n` in the match as a real Return keypress rather than inserted text — this can prematurely submit a chat input bound to "Enter sends". `force_clipboard` lets an individual short prompt opt out of that behavior without changing the default for every other prompt. See `docs/reference/espanso-integration.md` for the mechanism, and `project/design/proposals/adopted/espanso-match-force-clipboard/00_proposal.md` for the design rationale.
 
 Unknown or user-defined frontmatter fields are allowed. Import and formatting workflows should preserve them where practical instead of treating them as errors.
 

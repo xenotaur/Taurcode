@@ -43,8 +43,15 @@ The simple importer converts static match entries that contain only:
 
 - `trigger`
 - `replace`
+- `force_clipboard: true` (optional — any other value, such as `false`, is not part of the simple shape and causes the match to fall back to raw import instead of mapping into a canonical prompt)
 
-These map cleanly to Taurcode `keyword` and prompt body fields. More complex Espanso constructs are outside the current canonical prompt export model and should be reviewed manually if they appear in imported fallback output.
+These map cleanly to Taurcode `keyword`, prompt body, and `targets.espanso.force_clipboard` fields respectively. More complex Espanso constructs are outside the current canonical prompt export model and should be reviewed manually if they appear in imported fallback output.
+
+## Inject vs. Clipboard backend and `force_clipboard`
+
+Espanso's `Auto` backend (the default) delivers a match via simulated keypresses (`Inject`) when its `replace` text is shorter than Espanso's `clipboard_threshold` default (100 characters), and via clipboard paste (`Clipboard`) at or above that threshold. Under `Inject`, a trailing `\n` in the match is sent as an actual simulated Return keypress rather than inserted text — in an application bound to "Enter submits" (a chat input, for example), that synthetic keypress can submit the input prematurely. Matches at or above the threshold are unaffected, since Clipboard-backend paste never generates a synthetic Return keydown.
+
+A prompt can opt out of this per match by setting `targets.espanso.force_clipboard: true` in its frontmatter (see `docs/reference/canonical-prompt-format.md`). Export emits this as Espanso's native `force_clipboard: true` match property, which forces Clipboard-backend delivery for that match regardless of its length or the installing user's own `clipboard_threshold`/`backend` configuration. This is scoped to the single match that needs it — it does not change delivery for any other match in the package.
 
 ## Metadata asset layout
 

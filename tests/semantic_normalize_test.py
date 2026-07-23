@@ -372,6 +372,147 @@ Shared body.
                 )
             )
 
+    def test_force_clipboard_difference_is_detected_in_espanso_mode(self) -> None:
+        expected = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":short",
+                    trigger=":short",
+                    body="Short\n",
+                    force_clipboard=True,
+                ),
+            )
+        )
+        actual = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":short", trigger=":short", body="Short\n"
+                ),
+            )
+        )
+
+        differences = semantic_normalize.compare_packages(
+            expected, actual, mode=semantic_normalize.ESPANSO_SEMANTIC_MODE
+        )
+
+        self.assertEqual(len(differences), 1)
+        self.assertEqual(differences[0].path, "prompts[:short].force_clipboard")
+        self.assertIn("True", differences[0].message)
+        self.assertIn("False", differences[0].message)
+
+    def test_force_clipboard_difference_is_detected_in_canonical_mode(self) -> None:
+        expected = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":short",
+                    trigger=":short",
+                    body="Short\n",
+                    force_clipboard=True,
+                ),
+            )
+        )
+        actual = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":short", trigger=":short", body="Short\n"
+                ),
+            )
+        )
+
+        differences = semantic_normalize.compare_packages(
+            expected, actual, mode=semantic_normalize.CANONICAL_SEMANTIC_MODE
+        )
+
+        self.assertTrue(
+            any(
+                difference.path == "prompts[:short].force_clipboard"
+                for difference in differences
+            )
+        )
+
+    def test_force_clipboard_is_part_of_duplicate_prompt_signature(self) -> None:
+        expected = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":dupe",
+                    trigger=":dupe",
+                    body="Same\n",
+                    force_clipboard=True,
+                ),
+                semantic_normalize.NormalizedPrompt(
+                    key=":dupe", trigger=":dupe", body="Same\n", force_clipboard=False
+                ),
+            )
+        )
+        actual = semantic_normalize.NormalizedPackage(
+            prompts=(
+                semantic_normalize.NormalizedPrompt(
+                    key=":dupe", trigger=":dupe", body="Same\n", force_clipboard=False
+                ),
+                semantic_normalize.NormalizedPrompt(
+                    key=":dupe", trigger=":dupe", body="Same\n", force_clipboard=False
+                ),
+            )
+        )
+
+        differences = semantic_normalize.compare_packages(expected, actual)
+
+        # Two prompts share trigger+body, differing only in force_clipboard.
+        # If force_clipboard were excluded from the duplicate signature, both
+        # would collapse into one occurrence count and this drop would be
+        # silently masked.
+        self.assertEqual(len(differences), 2)
+        messages = {difference.message for difference in differences}
+        self.assertTrue(any("missing" in message for message in messages))
+        self.assertTrue(any("extra" in message for message in messages))
+        # The message itself must explain *why* the signatures differ, not
+        # just repeat the shared trigger/body.
+        self.assertTrue(any("force_clipboard=True" in message for message in messages))
+        self.assertTrue(any("force_clipboard=False" in message for message in messages))
+
+    def test_canonical_normalization_captures_force_clipboard(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompts_dir = Path(tmpdir)
+            (prompts_dir / "short.md").write_text(
+                """---
+id: short
+name: Short
+description: A short prompt
+keyword: ":tc-short"
+targets:
+  espanso:
+    force_clipboard: true
+---
+
+Short body.
+""",
+                encoding="utf-8",
+            )
+
+            package = semantic_normalize.normalize_canonical_prompts(prompts_dir)
+
+            self.assertEqual(len(package.prompts), 1)
+            self.assertTrue(package.prompts[0].force_clipboard)
+
+    def test_espanso_normalization_captures_force_clipboard(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            package_dir = Path(tmpdir)
+            (package_dir / "package.yml").write_text(
+                """matches:
+  - trigger: ":tc-short"
+    replace: |
+      Short body.
+    force_clipboard: true
+""",
+                encoding="utf-8",
+            )
+
+            package = semantic_normalize.normalize_espanso_package(package_dir)
+
+            self.assertEqual(len(package.prompts), 1)
+            self.assertTrue(package.prompts[0].force_clipboard)
+            self.assertEqual(package.prompts[0].unsupported_fields, ())
+
     def test_real_corpus_canonical_normalization_smoke(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         prompts_dir = repo_root / "prompts" / "taurcode"

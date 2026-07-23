@@ -64,6 +64,8 @@ def export_espanso(
         package_lines.append(f"  - trigger: {_yaml_quote(prompt.keyword)}")
         package_lines.append("    replace: |")
         package_lines.append(_as_block(prompt.body).rstrip("\n"))
+        if prompt.targets.get("espanso", {}).get("force_clipboard") is True:
+            package_lines.append("    force_clipboard: true")
 
     package_content = "\n".join(package_lines) + "\n"
 

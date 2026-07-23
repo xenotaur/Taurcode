@@ -19,6 +19,31 @@ def validate_prompt(prompt: Prompt) -> None:
             f"Invalid keyword '{prompt.keyword}' in {prompt_ref}: must start with ':' and not be empty"
         )
 
+    _validate_espanso_targets(prompt.targets, prompt_ref)
+
+
+def _validate_espanso_targets(targets: object, prompt_ref: str) -> None:
+    if targets is None:
+        return
+    if not isinstance(targets, dict):
+        raise ValueError(f"Invalid 'targets' in {prompt_ref}: must be a mapping")
+
+    if "espanso" not in targets:
+        return
+    espanso = targets["espanso"]
+    if not isinstance(espanso, dict):
+        raise ValueError(
+            f"Invalid 'targets.espanso' in {prompt_ref}: must be a mapping"
+        )
+
+    force_clipboard = espanso.get("force_clipboard")
+    if force_clipboard is None:
+        return
+    if not isinstance(force_clipboard, bool):
+        raise ValueError(
+            f"Invalid 'targets.espanso.force_clipboard' in {prompt_ref}: must be a boolean"
+        )
+
 
 def validate_prompts(prompts: list[Prompt]) -> None:
     if not prompts:

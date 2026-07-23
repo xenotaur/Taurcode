@@ -23,6 +23,7 @@ class NormalizedPrompt:
     name: str | None = None
     description: str | None = None
     tags: tuple[str, ...] = ()
+    force_clipboard: bool = False
     unsupported_fields: tuple[tuple[str, Any], ...] = ()
 
 
@@ -66,7 +67,7 @@ def normalize_espanso_package(path: str | pathlib.Path) -> NormalizedPackage:
         unsupported = tuple(
             (str(key), _normalize_data(value))
             for key, value in sorted(match.items(), key=lambda item: str(item[0]))
-            if key not in {"trigger", "replace"}
+            if key not in {"trigger", "replace", "force_clipboard"}
         )
         body = _normalize_text(replace)
         prompts.append(
@@ -74,6 +75,7 @@ def normalize_espanso_package(path: str | pathlib.Path) -> NormalizedPackage:
                 key=trigger,
                 trigger=trigger,
                 body=body,
+                force_clipboard=match.get("force_clipboard") is True,
                 unsupported_fields=unsupported,
             )
         )
@@ -114,6 +116,7 @@ def normalize_canonical_prompts(path: str | pathlib.Path) -> NormalizedPackage:
                 name=_optional_str(metadata.get("name")),
                 description=_optional_str(metadata.get("description")),
                 tags=_normalize_tags(metadata.get("tags")),
+                force_clipboard=_force_clipboard_from_metadata(metadata),
             )
         )
 
@@ -212,6 +215,14 @@ def _compare_single_prompt(
         differences.append(
             SemanticDifference(f"prompts[{key}].body", "Prompt body differs")
         )
+    if expected.force_clipboard != actual.force_clipboard:
+        differences.append(
+            SemanticDifference(
+                f"prompts[{key}].force_clipboard",
+                "force_clipboard differs: "
+                f"expected {expected.force_clipboard!r}, got {actual.force_clipboard!r}",
+            )
+        )
     if _unsupported_fields_differ(expected, actual, mode):
         differences.append(
             SemanticDifference(
@@ -265,7 +276,7 @@ def _compare_prompt_group(
 def _prompt_signature(
     prompt: NormalizedPrompt, mode: str, include_unsupported: bool
 ) -> tuple[Any, ...]:
-    signature: tuple[Any, ...] = (prompt.trigger, prompt.body)
+    signature: tuple[Any, ...] = (prompt.trigger, prompt.body, prompt.force_clipboard)
     if include_unsupported:
         signature = (*signature, prompt.unsupported_fields)
     if mode == CANONICAL_SEMANTIC_MODE:
@@ -280,8 +291,11 @@ def _prompt_signature(
 
 
 def _prompt_signature_message(signature: tuple[Any, ...]) -> str:
-    trigger, body, *_rest = signature
-    return f"trigger={trigger!r}, body={_short_repr(body)}"
+    trigger, body, force_clipboard, *_rest = signature
+    return (
+        f"trigger={trigger!r}, body={_short_repr(body)}, "
+        f"force_clipboard={force_clipboard!r}"
+    )
 
 
 def _unsupported_fields_differ(
@@ -406,3 +420,13 @@ def _normalize_tags(value: Any) -> tuple[str, ...]:
     if isinstance(value, list):
         return tuple(str(item) for item in value)
     return (str(value),)
+
+
+def _force_clipboard_from_metadata(metadata: dict[str, Any]) -> bool:
+    targets = metadata.get("targets")
+    if not isinstance(targets, dict):
+        return False
+    espanso = targets.get("espanso")
+    if not isinstance(espanso, dict):
+        return False
+    return espanso.get("force_clipboard") is True

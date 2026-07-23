@@ -51,6 +51,61 @@ class TestEspansoExport(unittest.TestCase):
             self.assertTrue(readme_text.strip())
             self.assertIn("Taurcode", readme_text)
 
+    def test_export_emits_force_clipboard_when_set(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            prompts_dir = base / "prompts"
+            output_dir = base / "build" / "espanso" / "taurcode"
+            prompts_dir.mkdir(parents=True)
+
+            (prompts_dir / "short.md").write_text(
+                """---
+id: short
+name: Short
+description: A short prompt
+keyword: ":tc-short"
+targets:
+  espanso:
+    force_clipboard: true
+---
+
+Short body.
+""",
+                encoding="utf-8",
+            )
+            (prompts_dir / "long.md").write_text(
+                """---
+id: long
+name: Long
+description: A long prompt
+keyword: ":tc-long"
+---
+
+A long prompt body that does not opt into the clipboard-forcing flag at all.
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                [
+                    "export",
+                    "espanso",
+                    "--prompts",
+                    str(prompts_dir),
+                    "--output",
+                    str(output_dir),
+                ]
+            )
+            self.assertEqual(rc, 0)
+
+            package_text = (output_dir / "package.yml").read_text(encoding="utf-8")
+            blocks = package_text.split("  - trigger:")
+            short_block = next(block for block in blocks if '":tc-short"' in block)
+            long_block = next(block for block in blocks if '":tc-long"' in block)
+
+            self.assertIn("force_clipboard: true", short_block)
+            self.assertNotIn("force_clipboard", long_block)
+
     def test_export_supports_crlf_frontmatter(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)

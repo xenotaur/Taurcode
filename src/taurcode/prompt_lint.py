@@ -8,6 +8,10 @@ from taurcode import espanso_lint
 
 _RESERVED_PROMPT_DIRS = {"espanso"}
 _REQUIRED_FRONTMATTER_FIELDS = ("id", "name", "description", "keyword")
+# Mirrors Espanso's own default `clipboard_threshold` config value: matches
+# shorter than this are delivered via the Inject (simulated-keypress) backend
+# under Espanso's Auto backend, not Clipboard paste.
+_ESPANSO_CLIPBOARD_THRESHOLD = 100
 _KEYWORD_LINE_RE = re.compile(r"^keyword\s*:\s*(?P<value>.*?)(?:\s+#.*)?$")
 _DESCRIPTION_LINE_RE = re.compile(r"^description\s*:\s*(?P<value>.*?)(?:\s+#.*)?$")
 
@@ -318,7 +322,43 @@ def _style_warnings(
                 suggestion="Keep description on one line when practical.",
             )
         )
+
+    if (
+        body.strip()
+        and len(body) < _ESPANSO_CLIPBOARD_THRESHOLD
+        and not _force_clipboard_set(metadata)
+    ):
+        warnings.append(
+            espanso_lint.Diagnostic(
+                path=prompt_file,
+                line=None,
+                column=None,
+                code="prompt-short-body-no-force-clipboard",
+                message=(
+                    "Prompt body is shorter than Espanso's default clipboard_threshold "
+                    f"({_ESPANSO_CLIPBOARD_THRESHOLD} chars) and does not set "
+                    "targets.espanso.force_clipboard"
+                ),
+                suggestion=(
+                    "Espanso's Auto backend delivers short matches via simulated "
+                    'keypresses, which can submit chat inputs bound to "Enter sends" '
+                    "if the body ends in a newline. Set "
+                    "targets.espanso.force_clipboard: true to force Clipboard-backend "
+                    "delivery instead."
+                ),
+            )
+        )
     return warnings
+
+
+def _force_clipboard_set(metadata: dict[str, Any]) -> bool:
+    targets = metadata.get("targets")
+    if not isinstance(targets, dict):
+        return False
+    espanso = targets.get("espanso")
+    if not isinstance(espanso, dict):
+        return False
+    return espanso.get("force_clipboard") is True
 
 
 def _frontmatter_yaml_line(line: int | None) -> int | None:

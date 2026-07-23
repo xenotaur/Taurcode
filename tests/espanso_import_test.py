@@ -503,6 +503,53 @@ global_vars:
             self.assertTrue((output / "tc-example-2.md").exists())
             self.assertTrue((raw_dir / "match-2.yml").exists())
 
+    def test_import_fresh_with_force_clipboard(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            source.write_text(
+                """matches:
+  - trigger: ":tc-short"
+    replace: |
+      Short body
+    force_clipboard: true
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
+            self.assertEqual(rc, 0)
+
+            imported = (output / "tc-short.md").read_text(encoding="utf-8")
+            self.assertIn("targets:\n  espanso:\n    force_clipboard: true\n", imported)
+            self.assertEqual(list((output / "imported_raw").iterdir()), [])
+
+    def test_import_force_clipboard_false_falls_back_to_raw(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            source.write_text(
+                """matches:
+  - trigger: ":tc-short"
+    replace: |
+      Short body
+    force_clipboard: false
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                ["import", "espanso", "--input", str(source), "--output", str(output)]
+            )
+            self.assertEqual(rc, 0)
+
+            self.assertFalse((output / "tc-short.md").exists())
+            self.assertTrue((output / "imported_raw" / "match-1.yml").exists())
+
     def test_merge_preserves_curated_metadata_and_updates_body(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
@@ -714,6 +761,148 @@ Old body
             self.assertIn('keyword: ":rename-me"\n', merged)
             self.assertIn("description: Keep me\n", merged)
             self.assertTrue(merged.endswith("New body\n"))
+
+    def test_merge_preserves_existing_force_clipboard_frontmatter_exactly(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            prompt = output / "short.md"
+            original = """---
+id: short
+name: Short
+description: Keep me
+keyword: ":tc-short"
+targets:
+  espanso:
+    force_clipboard: true
+---
+
+Same body
+"""
+            prompt.write_text(original, encoding="utf-8")
+            source.write_text(
+                """matches:
+  - trigger: ":tc-short"
+    replace: Same body
+    force_clipboard: true
+""",
+                encoding="utf-8",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    [
+                        "import",
+                        "espanso",
+                        "--input",
+                        str(source),
+                        "--output",
+                        str(output),
+                        "--merge",
+                    ]
+                )
+            self.assertEqual(rc, 0)
+            self.assertNotIn("Orphan prompt", stderr.getvalue())
+            self.assertEqual(prompt.read_text(encoding="utf-8"), original)
+
+    def test_merge_adds_force_clipboard_to_existing_prompt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            prompt = output / "short.md"
+            prompt.write_text(
+                """---
+id: short
+name: Short
+description: Keep me
+keyword: ":tc-short"
+---
+
+Same body
+""",
+                encoding="utf-8",
+            )
+            source.write_text(
+                """matches:
+  - trigger: ":tc-short"
+    replace: Same body
+    force_clipboard: true
+""",
+                encoding="utf-8",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    [
+                        "import",
+                        "espanso",
+                        "--input",
+                        str(source),
+                        "--output",
+                        str(output),
+                        "--merge",
+                    ]
+                )
+            self.assertEqual(rc, 0)
+            self.assertNotIn("Orphan prompt", stderr.getvalue())
+            merged = prompt.read_text(encoding="utf-8")
+            self.assertIn("description: Keep me\n", merged)
+            self.assertIn("targets:\n  espanso:\n    force_clipboard: true\n", merged)
+
+    def test_merge_removes_force_clipboard_when_match_no_longer_sets_it(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            source = base / "package.yml"
+            output = base / "prompts"
+            output.mkdir()
+            prompt = output / "short.md"
+            prompt.write_text(
+                """---
+id: short
+name: Short
+description: Keep me
+keyword: ":tc-short"
+targets:
+  espanso:
+    force_clipboard: true
+---
+
+Same body
+""",
+                encoding="utf-8",
+            )
+            source.write_text(
+                """matches:
+  - trigger: ":tc-short"
+    replace: Same body
+""",
+                encoding="utf-8",
+            )
+
+            rc = main(
+                [
+                    "import",
+                    "espanso",
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                    "--merge",
+                ]
+            )
+            self.assertEqual(rc, 0)
+            merged = prompt.read_text(encoding="utf-8")
+            self.assertIn("description: Keep me\n", merged)
+            self.assertNotIn("force_clipboard", merged)
+            self.assertNotIn("targets:", merged)
 
     def test_merge_keyword_edit_preserves_inline_comment_and_spacing(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -933,7 +1122,9 @@ keyword: ":dupe"
 ---
 
 Body
-""".format(filename.removesuffix(".md")),
+""".format(
+                        filename.removesuffix(".md")
+                    ),
                     encoding="utf-8",
                 )
             source.write_text(

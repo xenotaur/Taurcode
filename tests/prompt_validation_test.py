@@ -120,6 +120,33 @@ Body
             self.assertIn("broken.md", stderr.getvalue())
             self.assertNotIn("Traceback", stderr.getvalue())
 
+    def test_null_targets_espanso_export_fails_without_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            prompts_dir = base / "prompts"
+            output_dir = base / "build" / "espanso" / "taurcode"
+            _write_prompt(
+                prompts_dir / "a.md",
+                """---\nid: a\nname: A\ndescription: Desc\nkeyword: ":tc-a"\ntargets:\n  espanso: null\n---\n\nBody A\n""",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(
+                    [
+                        "export",
+                        "espanso",
+                        "--prompts",
+                        str(prompts_dir),
+                        "--output",
+                        str(output_dir),
+                    ]
+                )
+
+            self.assertEqual(rc, 1)
+            self.assertIn("Invalid 'targets.espanso'", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+
     def test_duplicate_id_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             prompts_dir = Path(tmpdir) / "prompts"
@@ -211,6 +238,123 @@ Body
                 rc = main(["validate", "--prompts", str(prompts_dir)])
             self.assertEqual(rc, 1)
             self.assertIn("Prompt body must not be blank", stderr.getvalue())
+
+    def test_non_mapping_targets_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompts_dir = Path(tmpdir) / "prompts"
+            _write_prompt(
+                prompts_dir / "a.md",
+                """---\nid: a\nname: A\ndescription: Desc\nkeyword: ":tc-a"\ntargets: true\n---\n\nBody A\n""",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(["validate", "--prompts", str(prompts_dir)])
+            self.assertEqual(rc, 1)
+            self.assertIn("Invalid 'targets'", stderr.getvalue())
+            self.assertIn("must be a mapping", stderr.getvalue())
+
+    def test_falsy_non_null_targets_fails(self) -> None:
+        # `targets: false` (also `[]`, `""`, `0`) must survive prompt loading
+        # to reach validation, rather than being silently coerced to {}.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompts_dir = Path(tmpdir) / "prompts"
+            _write_prompt(
+                prompts_dir / "a.md",
+                """---\nid: a\nname: A\ndescription: Desc\nkeyword: ":tc-a"\ntargets: false\n---\n\nBody A\n""",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(["validate", "--prompts", str(prompts_dir)])
+            self.assertEqual(rc, 1)
+            self.assertIn("Invalid 'targets'", stderr.getvalue())
+            self.assertIn("must be a mapping", stderr.getvalue())
+
+    def test_null_targets_espanso_fails(self) -> None:
+        # An explicit `targets.espanso: null` must be rejected by validation
+        # rather than treated the same as the key being absent — otherwise
+        # the exporter's `targets.get("espanso", {}).get(...)` crashes on
+        # the None value with an AttributeError instead of a clean error.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompts_dir = Path(tmpdir) / "prompts"
+            _write_prompt(
+                prompts_dir / "a.md",
+                """---\nid: a\nname: A\ndescription: Desc\nkeyword: ":tc-a"\ntargets:\n  espanso: null\n---\n\nBody A\n""",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(["validate", "--prompts", str(prompts_dir)])
+            self.assertEqual(rc, 1)
+            self.assertIn("Invalid 'targets.espanso'", stderr.getvalue())
+            self.assertIn("must be a mapping", stderr.getvalue())
+
+    def test_absent_targets_espanso_passes(self) -> None:
+        # Absent targets.espanso (as opposed to an explicit null) is fine.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompts_dir = Path(tmpdir) / "prompts"
+            _write_prompt(
+                prompts_dir / "a.md",
+                """---\nid: a\nname: A\ndescription: Desc\nkeyword: ":tc-a"\ntargets:\n  other: value\n---\n\nBody A\n""",
+            )
+
+            rc = main(["validate", "--prompts", str(prompts_dir)])
+            self.assertEqual(rc, 0)
+
+    def test_non_mapping_targets_espanso_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompts_dir = Path(tmpdir) / "prompts"
+            _write_prompt(
+                prompts_dir / "a.md",
+                """---\nid: a\nname: A\ndescription: Desc\nkeyword: ":tc-a"\ntargets:\n  espanso: true\n---\n\nBody A\n""",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(["validate", "--prompts", str(prompts_dir)])
+            self.assertEqual(rc, 1)
+            self.assertIn("Invalid 'targets.espanso'", stderr.getvalue())
+            self.assertIn("must be a mapping", stderr.getvalue())
+
+    def test_non_boolean_force_clipboard_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompts_dir = Path(tmpdir) / "prompts"
+            _write_prompt(
+                prompts_dir / "a.md",
+                """---\nid: a\nname: A\ndescription: Desc\nkeyword: ":tc-a"\ntargets:\n  espanso:\n    force_clipboard: "yes"\n---\n\nBody A\n""",
+            )
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                rc = main(["validate", "--prompts", str(prompts_dir)])
+            self.assertEqual(rc, 1)
+            self.assertIn(
+                "Invalid 'targets.espanso.force_clipboard'", stderr.getvalue()
+            )
+            self.assertIn("must be a boolean", stderr.getvalue())
+
+    def test_force_clipboard_true_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompts_dir = Path(tmpdir) / "prompts"
+            _write_prompt(
+                prompts_dir / "a.md",
+                """---\nid: a\nname: A\ndescription: Desc\nkeyword: ":tc-a"\ntargets:\n  espanso:\n    force_clipboard: true\n---\n\nBody A\n""",
+            )
+
+            rc = main(["validate", "--prompts", str(prompts_dir)])
+            self.assertEqual(rc, 0)
+
+    def test_force_clipboard_false_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompts_dir = Path(tmpdir) / "prompts"
+            _write_prompt(
+                prompts_dir / "a.md",
+                """---\nid: a\nname: A\ndescription: Desc\nkeyword: ":tc-a"\ntargets:\n  espanso:\n    force_clipboard: false\n---\n\nBody A\n""",
+            )
+
+            rc = main(["validate", "--prompts", str(prompts_dir)])
+            self.assertEqual(rc, 0)
 
 
 if __name__ == "__main__":

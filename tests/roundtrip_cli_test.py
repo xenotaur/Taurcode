@@ -110,6 +110,63 @@ class TestRoundtripCli(unittest.TestCase):
             self.assertIn("prompts[:alpha]", stdout)
             self.assertIn("prompts[:changed-alpha]", stdout)
 
+    def test_roundtrip_reports_dropped_force_clipboard(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            prompts_dir = base / "prompts"
+            package_dir = base / "espanso"
+            prompts_dir.mkdir(parents=True)
+            (prompts_dir / "short.md").write_text(
+                """---
+id: short
+name: Short
+description: A short prompt
+keyword: ":tc-short"
+targets:
+  espanso:
+    force_clipboard: true
+---
+
+Short body.
+""",
+                encoding="utf-8",
+            )
+
+            export_rc, _stdout, export_stderr = _run_cli(
+                [
+                    "export",
+                    "espanso",
+                    "--prompts",
+                    str(prompts_dir),
+                    "--output",
+                    str(package_dir),
+                ]
+            )
+            self.assertEqual(export_rc, 0, export_stderr)
+            exported = (package_dir / "package.yml").read_text(encoding="utf-8")
+            self.assertIn("force_clipboard: true", exported)
+
+            # Simulate an exporter regression that silently drops force_clipboard.
+            (package_dir / "package.yml").write_text(
+                exported.replace("    force_clipboard: true\n", ""), encoding="utf-8"
+            )
+
+            rc, stdout, _stderr = _run_cli(
+                [
+                    "roundtrip",
+                    "espanso",
+                    "--input",
+                    str(package_dir),
+                    "--prompts",
+                    str(prompts_dir),
+                ]
+            )
+
+            self.assertEqual(rc, 1)
+            self.assertIn("Roundtrip semantic comparison failed.", stdout)
+            self.assertIn("prompts[:tc-short].force_clipboard", stdout)
+            self.assertIn("force_clipboard differs", stdout)
+
     def test_roundtrip_reports_metadata_difference(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
