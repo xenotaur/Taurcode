@@ -11,6 +11,7 @@ import yaml
 from . import espanso_lint, text_normalization
 
 _SIMPLE_KEYS = {"trigger", "replace"}
+_OPTIONAL_SIMPLE_KEYS = {"force_clipboard"}
 _METADATA_ASSETS = ("_manifest.yml", "README.md", "LICENSE")
 _RESERVED_PROMPT_DIRS = {"espanso"}
 
@@ -32,7 +33,44 @@ class ImportResult:
 
 
 def is_simple_match(match: dict) -> bool:
-    return isinstance(match, dict) and set(match.keys()) == _SIMPLE_KEYS
+    if not isinstance(match, dict) or not _SIMPLE_KEYS.issubset(match.keys()):
+        return False
+    extra_keys = set(match.keys()) - _SIMPLE_KEYS
+    if not extra_keys.issubset(_OPTIONAL_SIMPLE_KEYS):
+        return False
+    return "force_clipboard" not in match or match["force_clipboard"] is True
+
+
+def _existing_force_clipboard(existing: "ExistingPrompt") -> bool:
+    targets = existing.metadata.get("targets")
+    if not isinstance(targets, dict):
+        return False
+    espanso_targets = targets.get("espanso")
+    if not isinstance(espanso_targets, dict):
+        return False
+    return espanso_targets.get("force_clipboard") is True
+
+
+def _apply_force_clipboard(metadata: dict[str, Any], force_clipboard: bool) -> None:
+    targets = metadata.get("targets")
+    targets = dict(targets) if isinstance(targets, dict) else {}
+    espanso_targets = targets.get("espanso")
+    espanso_targets = dict(espanso_targets) if isinstance(espanso_targets, dict) else {}
+
+    if force_clipboard:
+        espanso_targets["force_clipboard"] = True
+    else:
+        espanso_targets.pop("force_clipboard", None)
+
+    if espanso_targets:
+        targets["espanso"] = espanso_targets
+    else:
+        targets.pop("espanso", None)
+
+    if targets:
+        metadata["targets"] = targets
+    else:
+        metadata.pop("targets", None)
 
 
 def _normalize_id(trigger: str) -> str:
@@ -194,15 +232,23 @@ def _normalize_replace(value: object) -> str:
     return str(value).replace("\r\n", "\n").replace("\r", "\n")
 
 
-def _fresh_prompt_content(prompt_id: str, trigger: str, replace: str) -> str:
+def _fresh_prompt_content(
+    prompt_id: str, trigger: str, replace: str, force_clipboard: bool = False
+) -> str:
+    frontmatter_lines = [
+        "---",
+        f"id: {prompt_id}",
+        f"name: {_derive_name(prompt_id)}",
+        "description: Imported from Espanso",
+        f'keyword: "{trigger}"',
+    ]
+    if force_clipboard:
+        frontmatter_lines.extend(
+            ["targets:", "  espanso:", "    force_clipboard: true"]
+        )
+    frontmatter_lines.append("---")
     return text_normalization.normalize_final_newline(
-        "---\n"
-        f"id: {prompt_id}\n"
-        f"name: {_derive_name(prompt_id)}\n"
-        "description: Imported from Espanso\n"
-        f'keyword: "{trigger}"\n'
-        "---\n\n"
-        f"{replace}"
+        "\n".join(frontmatter_lines) + "\n\n" + replace
     )
 
 
@@ -331,13 +377,25 @@ def _split_plain_value_and_comment(rest: str) -> tuple[str, str, str]:
     return rest, "", ""
 
 
-def _render_merged_prompt(existing: ExistingPrompt, trigger: str, body: str) -> str:
+def _render_merged_prompt(
+    existing: ExistingPrompt, trigger: str, body: str, force_clipboard: bool
+) -> str:
     existing_keyword = str(existing.metadata.get("keyword", ""))
-    if existing.frontmatter_text is not None and existing_keyword == trigger:
+    keyword_matches = existing_keyword == trigger
+    force_clipboard_matches = _existing_force_clipboard(existing) == force_clipboard
+
+    if (
+        keyword_matches
+        and force_clipboard_matches
+        and existing.frontmatter_text is not None
+    ):
         return _compose_prompt(existing.frontmatter_text, body)
+
     metadata = dict(existing.metadata)
     metadata["keyword"] = trigger
-    if existing.frontmatter_text is not None:
+    _apply_force_clipboard(metadata, force_clipboard)
+
+    if force_clipboard_matches and existing.frontmatter_text is not None:
         frontmatter_text = _frontmatter_with_keyword(existing.frontmatter_text, trigger)
         if frontmatter_text is not None:
             return _compose_prompt(frontmatter_text, body)
@@ -383,8 +441,8 @@ def _merge_simple_matches(
 ) -> tuple[int, set[Path], list[str]]:
     existing_prompts = _load_existing_prompts(output)
     matched_paths: set[Path] = set()
-    existing_updates: list[tuple[ExistingPrompt, str, str]] = []
-    new_prompts: list[tuple[str, str]] = []
+    existing_updates: list[tuple[ExistingPrompt, str, str, bool]] = []
+    new_prompts: list[tuple[str, str, bool]] = []
     warnings: list[str] = []
 
     for match, _raw_block in entries:
@@ -392,9 +450,10 @@ def _merge_simple_matches(
             continue
         trigger = str(match["trigger"])
         replace = _normalize_replace(match["replace"])
+        force_clipboard = match.get("force_clipboard") is True
         existing = _match_existing_prompt(match, existing_prompts)
         if existing is None:
-            new_prompts.append((trigger, replace))
+            new_prompts.append((trigger, replace, force_clipboard))
             continue
         if existing.path in matched_paths:
             raise ValueError(
@@ -402,17 +461,19 @@ def _merge_simple_matches(
                 f"multiple Espanso matches map to {existing.path}"
             )
         matched_paths.add(existing.path)
-        existing_updates.append((existing, trigger, replace))
+        existing_updates.append((existing, trigger, replace, force_clipboard))
 
-    for existing, trigger, replace in existing_updates:
+    for existing, trigger, replace, force_clipboard in existing_updates:
         existing.path.write_text(
-            _render_merged_prompt(existing, trigger, replace), encoding="utf-8"
+            _render_merged_prompt(existing, trigger, replace, force_clipboard),
+            encoding="utf-8",
         )
 
-    for trigger, replace in new_prompts:
+    for trigger, replace, force_clipboard in new_prompts:
         prompt_id = _unique_id(_normalize_id(trigger), used_ids)
         (output / f"{prompt_id}.md").write_text(
-            _fresh_prompt_content(prompt_id, trigger, replace), encoding="utf-8"
+            _fresh_prompt_content(prompt_id, trigger, replace, force_clipboard),
+            encoding="utf-8",
         )
 
     for existing in existing_prompts:
@@ -461,8 +522,11 @@ def import_espanso(
                 continue
             trigger = str(match["trigger"])
             replace = _normalize_replace(match["replace"])
+            force_clipboard = match.get("force_clipboard") is True
             prompt_id = _unique_id(_normalize_id(trigger), used_ids)
-            content = _fresh_prompt_content(prompt_id, trigger, replace)
+            content = _fresh_prompt_content(
+                prompt_id, trigger, replace, force_clipboard
+            )
             (output / f"{prompt_id}.md").write_text(content, encoding="utf-8")
             converted += 1
 

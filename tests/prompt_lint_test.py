@@ -144,6 +144,61 @@ class TestPromptLint(unittest.TestCase):
 
             self.assertDiagnosticCode(result.warnings, "prompt-body-empty")
 
+    def test_short_body_without_force_clipboard_warns(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompt = Path(tmpdir) / "dashes.md"
+            prompt.write_text(
+                """---
+id: dashes
+name: Dashes
+description: Seventy-Two Dashes
+keyword: ":dashes"
+---
+
+---
+""",
+                encoding="utf-8",
+            )
+
+            result = prompt_lint.lint_prompt_package(tmpdir)
+
+            self.assertDiagnosticCode(
+                result.warnings, "prompt-short-body-no-force-clipboard"
+            )
+
+    def test_short_body_with_force_clipboard_does_not_warn(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompt = Path(tmpdir) / "dashes.md"
+            prompt.write_text(
+                """---
+id: dashes
+name: Dashes
+description: Seventy-Two Dashes
+keyword: ":dashes"
+targets:
+  espanso:
+    force_clipboard: true
+---
+
+---
+""",
+                encoding="utf-8",
+            )
+
+            result = prompt_lint.lint_prompt_package(tmpdir)
+
+            codes = [diagnostic.code for diagnostic in result.warnings]
+            self.assertNotIn("prompt-short-body-no-force-clipboard", codes)
+
+    def test_long_body_without_force_clipboard_does_not_warn(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _write_prompt(Path(tmpdir) / "debug.md")
+
+            result = prompt_lint.lint_prompt_package(tmpdir)
+
+            codes = [diagnostic.code for diagnostic in result.warnings]
+            self.assertNotIn("prompt-short-body-no-force-clipboard", codes)
+
     def test_missing_final_newline_warning(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             prompt = Path(tmpdir) / "debug.md"
@@ -217,7 +272,10 @@ def _write_prompt(
     path: Path,
     prompt_id: str = "debug",
     keyword: str = '":debug"',
-    body: str = "Debug this issue.",
+    body: str = (
+        "Debug this issue by describing what went wrong, how to reproduce it, "
+        "and what you expected to happen instead."
+    ),
     omit_field: str = "",
 ) -> None:
     values = {
