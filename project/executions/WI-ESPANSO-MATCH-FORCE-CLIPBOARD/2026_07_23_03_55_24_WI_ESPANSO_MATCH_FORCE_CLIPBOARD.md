@@ -2,14 +2,14 @@
 execution_id: 2026_07_23_03_55_24_WI_ESPANSO_MATCH_FORCE_CLIPBOARD
 prompt_id: PROMPT(WI-ESPANSO-MATCH-FORCE-CLIPBOARD:WI_ESPANSO_MATCH_FORCE_CLIPBOARD)[2026-07-23T03:37:42-04:00]
 work_item: WI-ESPANSO-MATCH-FORCE-CLIPBOARD
-status: in_progress
+status: landed
 rerun_of: 
 pr: https://github.com/xenotaur/Taurcode/pull/49
-commit: 90c5398
+commit: f753cc7187355eeecaade3f2b050bf16f3c43559
 created_at: 2026-07-23T03:55:24-04:00
 agent: claude_app
 instruction_source: project/work_items/proposed/WI-ESPANSO-MATCH-FORCE-CLIPBOARD.md
-session_transcript: pending
+session_transcript: claude-app:a1c6f1d5-79a1-4dbc-a2d3-6183c738a3cc
 ---
 
 # Summary
@@ -98,8 +98,6 @@ back to `imported_raw` (not silently accepted).
 
 # Follow-up
 
-- `session_transcript` above is `pending` — update to
-  `claude-app:<session-id>` after this session ends.
 - Next: address PR review comments via `/lrh-review-response`, then
   `/lrh-confirm-fixes` before merge, then closeout (mark this record
   `landed`, resolve `WI-ESPANSO-MATCH-FORCE-CLIPBOARD`).

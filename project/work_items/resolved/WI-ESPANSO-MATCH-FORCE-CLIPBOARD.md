@@ -1,11 +1,11 @@
 ---
-resolution: null
+resolution: "Implemented and merged in PR #49 (commit f753cc7)."
 blocked_reason: null
 blocked: false
 id: WI-ESPANSO-MATCH-FORCE-CLIPBOARD
 title: Implement per-match force_clipboard opt-in for Espanso export
 type: deliverable
-status: proposed
+status: resolved
 owner: anthony
 contributors:
   - anthony
