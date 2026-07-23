@@ -92,3 +92,14 @@ Espanso semantic mode compares trigger/body values and supported metadata semant
 ## Out of scope
 
 Taurcode does not currently install generated packages into a local Espanso configuration, sync with Espanso, validate network homepages, or support arbitrary advanced Espanso match behavior as canonical prompt semantics.
+
+### Keeping a manually-installed package in sync
+
+Because Taurcode has no install or sync mechanism, a package copied into Espanso's local match directory (for example `~/Library/Application Support/espanso/match/packages/<name>/` on macOS) is a plain, one-time snapshot. Nothing detects or re-generates it automatically when `prompts/taurcode/` or the exporter changes — an installed copy can silently go stale relative to the repository, with no error or warning. After merging any change that affects exported behavior, manually re-export and reinstall before assuming the change is live:
+
+```bash
+taurcode export espanso --prompts prompts/taurcode --output "$HOME/Library/Application Support/espanso/match/packages/taurcode"
+espanso restart
+```
+
+(Adjust the output path for your platform's Espanso match directory.) A dedicated install command that automates this is tracked as follow-up work; until it exists, this step is manual.
