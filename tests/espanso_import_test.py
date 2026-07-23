@@ -1122,9 +1122,7 @@ keyword: ":dupe"
 ---
 
 Body
-""".format(
-                        filename.removesuffix(".md")
-                    ),
+""".format(filename.removesuffix(".md")),
                     encoding="utf-8",
                 )
             source.write_text(
