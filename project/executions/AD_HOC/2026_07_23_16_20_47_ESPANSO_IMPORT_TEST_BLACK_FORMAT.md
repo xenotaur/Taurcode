@@ -2,14 +2,14 @@
 execution_id: 2026_07_23_16_20_47_ESPANSO_IMPORT_TEST_BLACK_FORMAT
 prompt_id: PROMPT(AD_HOC:ESPANSO_IMPORT_TEST_BLACK_FORMAT)[2026-07-23T16:19:05-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 
 pr: https://github.com/xenotaur/Taurcode/pull/51
-commit: a068053
+commit: 033de9936e2b74abe2d14ce70139d9083f434136
 created_at: 2026-07-23T16:20:47-04:00
 agent: claude_app
 instruction_source: ad_hoc conversation — pre-existing Black formatting bug on main, discovered while investigating PR #50's unexpectedly failing lint check
-session_transcript: pending
+session_transcript: claude-app:a1c6f1d5-79a1-4dbc-a2d3-6183c738a3cc
 ---
 
 # Summary
@@ -57,5 +57,3 @@ $ lrh validate
   PR #50 (already merged despite it, since checks aren't required here) —
   once this PR merges, future branches based on `main` will no longer
   inherit the failing `lint` check.
-- `session_transcript` above is `pending` — update to
-  `claude-app:<session-id>` after this session ends.
