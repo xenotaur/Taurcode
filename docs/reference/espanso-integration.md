@@ -95,11 +95,15 @@ Taurcode does not currently install generated packages into a local Espanso conf
 
 ### Keeping a manually-installed package in sync
 
-Because Taurcode has no install or sync mechanism, a package copied into Espanso's local match directory (for example `~/Library/Application Support/espanso/match/packages/<name>/` on macOS) is a plain, one-time snapshot. Nothing detects or re-generates it automatically when `prompts/taurcode/` or the exporter changes — an installed copy can silently go stale relative to the repository, with no error or warning. After merging any change that affects exported behavior, manually re-export and reinstall before assuming the change is live:
+Because Taurcode has no install or sync mechanism, a package copied into Espanso's local match directory (for example `~/Library/Application Support/espanso/match/packages/<name>/` on macOS, where `<name>` is whatever directory name you installed it under) is a plain, one-time snapshot. Nothing detects or re-generates it automatically when `prompts/taurcode/` or the exporter changes — an installed copy can silently go stale relative to the repository, with no error or warning.
+
+If the change is to exporter behavior itself (not just prompt content), first make sure the `taurcode` command on your `PATH` actually reflects the current checkout — a stale or non-editable install will silently keep running the old exporter and reproduce the same drift this section exists to prevent. Run `scripts/develop` (per the "Operability guardrails" in `AGENTS.md`) to install in editable mode, or invoke the exporter directly from the checkout with `python -m taurcode.cli` instead of the bare `taurcode` command.
+
+Taurcode's own exported package is always named `taurcode` (the manifest name matches the output directory name). After merging any change that affects exported behavior, manually re-export and reinstall before assuming the change is live:
 
 ```bash
-taurcode export espanso --prompts prompts/taurcode --output "$HOME/Library/Application Support/espanso/match/packages/taurcode"
+python -m taurcode.cli export espanso --prompts prompts/taurcode --output "$HOME/Library/Application Support/espanso/match/packages/taurcode"
 espanso restart
 ```
 
-(Adjust the output path for your platform's Espanso match directory.) A dedicated install command that automates this is tracked as follow-up work; until it exists, this step is manual.
+(Adjust the output path for your platform's Espanso match directory, and for the actual directory name if you installed Taurcode's package under a different one.) A dedicated install command that automates this is tracked as follow-up work; until it exists, this step is manual.
