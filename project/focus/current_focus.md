@@ -32,7 +32,7 @@ owner: TBD
    separate design/implementation work.
 
 ## Non-Goals
-- Adding new CLI commands in this closeout phase.
+- Adding new CLI commands without a dedicated work item and tests.
 - Expanding Espanso importer/exporter behavior without a dedicated design and tests.
 - Building additional regression automation as part of the closeout itself.
 - Collapsing project/control-plane cleanup into runtime feature work.

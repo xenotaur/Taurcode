@@ -143,7 +143,14 @@ Generated output always includes the basic Espanso package files:
 
 The optional `prompts/<package>/espanso/` directory is reserved for Espanso package metadata. When `_manifest.yml` or `README.md` exists there, export copies it into the generated package instead of treating it as prompt content; otherwise Taurcode generates conservative defaults for Markdown-only packages. Generated README files are normalized to exactly one final newline. When `LICENSE` exists there, export copies it exactly; otherwise no `LICENSE` is generated. Export removes stale supported metadata assets from the generated output when no curated source exists and no default is generated for that asset, so `build/espanso/<package>/` remains a generated view of the canonical prompt package.
 
-Note: installation into a local Espanso configuration is currently manual; Taurcode does not automatically sync packages into a local Espanso configuration.
+## Install into Espanso (macOS)
+On macOS, install the canonical prompts straight into the local Espanso configuration:
+
+```bash
+taurcode install espanso --prompts prompts/taurcode --restart
+```
+
+This re-exports into `~/Library/Application Support/espanso/match/packages/<name>/` and, with `--restart`, runs `espanso restart` so the change takes effect. Without `--restart` it prints the restart command for you to run. The install is staged and swapped atomically, so a failed export leaves any existing installed package untouched. The command is macOS-only; on other platforms it exits non-zero, and you should export and copy the package manually. See [docs/reference/espanso-integration.md](docs/reference/espanso-integration.md) for `--packages-dir` and the name-derivation rules.
 
 ## Espanso roundtrip checks
 Taurcode uses semantic normalization as the comparison model for Espanso roundtrip checks. The goal is to compare prompt meaning instead of raw YAML bytes, because YAML emitters can change field ordering, quoting, scalar style, and list formatting without changing the package Espanso receives.
