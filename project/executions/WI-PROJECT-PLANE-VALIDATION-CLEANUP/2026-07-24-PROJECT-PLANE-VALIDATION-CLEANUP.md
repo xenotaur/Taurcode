@@ -2,7 +2,10 @@
 prompt_id: PROMPT(WI-PROJECT-PLANE-VALIDATION-CLEANUP:APPLY_VALIDATION_FIXES)[2026-07-24T13:33:54-04:00]
 date: 2026-07-24
 scope: WI-PROJECT-PLANE-VALIDATION-CLEANUP
-status: in_progress
+status: landed
+pr: https://github.com/xenotaur/Taurcode/pull/54
+commit: 3801f353c1fed70af9f625c1630eb1e780a04c2c
+session_transcript: claude-app:6389d691-ab62-496c-b953-aada72706c77
 ---
 
 ## Summary

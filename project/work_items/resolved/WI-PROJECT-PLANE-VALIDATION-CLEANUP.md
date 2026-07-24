@@ -2,14 +2,19 @@
 id: WI-PROJECT-PLANE-VALIDATION-CLEANUP
 title: Clean up Taurcode project-plane validation issues
 type: operation
-status: proposed
+status: resolved
 priority: medium
 owner: anthony
 related_focus: []
 related_workstreams: []
 blocked: false
 blocked_reason: ""
-resolution: null
+resolution: >
+  Resolved by PR #54 (commit 3801f35): repaired work-item frontmatter to the
+  current LRH schema, removed a committed duplicate work-item file, aligned the
+  status bucket, and fixed the folded-scalar and owner issues so `lrh validate`
+  reports 0 errors / 0 warnings. scripts/lint and scripts/test (190 tests)
+  pass.
 ---
 
 # Work Item: Clean up Taurcode project-plane validation issues
