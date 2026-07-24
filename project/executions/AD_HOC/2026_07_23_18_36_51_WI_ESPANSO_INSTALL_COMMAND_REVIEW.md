@@ -2,14 +2,14 @@
 execution_id: 2026_07_23_18_36_51_WI_ESPANSO_INSTALL_COMMAND_REVIEW
 prompt_id: PROMPT(AD_HOC:WI_ESPANSO_INSTALL_COMMAND_REVIEW)[2026-07-23T18:23:01-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 2026-07-23-install-espanso-work-item
 pr: https://github.com/xenotaur/Taurcode/pull/52
-commit: 1180227127e0a00711f6e2903691aa331f3a5d9d
+commit: 768e605895fbe815ac99f7547ebf84cf145e2800
 created_at: 2026-07-23T18:36:51-04:00
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/52
-session_transcript: pending
+session_transcript: claude-app:1db010f2-96d0-4343-b909-d503a88b3fca
 ---
 
 # Summary

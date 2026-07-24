@@ -2,7 +2,10 @@
 prompt_id: PROMPT(WI-ESPANSO-INSTALL-COMMAND:IMPLEMENT_INSTALL_ESPANSO)[2026-07-23T17:42:32-04:00]
 date: 2026-07-23
 scope: WI-ESPANSO-INSTALL-COMMAND
-status: in_progress
+status: landed
+pr: https://github.com/xenotaur/Taurcode/pull/52
+commit: 768e605895fbe815ac99f7547ebf84cf145e2800
+session_transcript: claude-app:1db010f2-96d0-4343-b909-d503a88b3fca
 ---
 
 ## Summary
