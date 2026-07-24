@@ -37,6 +37,41 @@ taurcode import espanso --input build/espanso/taurcode --output prompts/taurcode
 
 Merge import matches by existing prompt `keyword` first, then by generated filename stem. Ambiguous matches fail instead of silently choosing a destination.
 
+## Install command
+
+```bash
+taurcode install espanso --prompts prompts/taurcode
+```
+
+macOS only for now. Install re-exports the canonical prompt corpus straight
+into Espanso's local match-packages directory
+(`~/Library/Application Support/espanso/match/packages/<name>/`), so a merged
+exporter or prompt change can be made live in one step instead of the manual
+re-export-and-copy dance below. On any non-macOS platform the command prints an
+unsupported-platform message and exits non-zero rather than guessing a path;
+export the package with `taurcode export espanso` and copy it into place
+manually there.
+
+The installed directory `<name>` is derived from the curated
+`_manifest.yml` `name:` field (defaulting to `taurcode`), so the installed
+directory name and the manifest name always agree. There is no `--name` flag,
+and install never rewrites curated metadata: the installed package is
+byte-identical to what `taurcode export espanso` produces.
+
+Options:
+
+- `--packages-dir <dir>` — install into a non-default macOS match-packages
+  directory (find yours with `espanso path packages`). Overrides are still
+  macOS-only.
+- `--restart` — run `espanso restart` after installing so the change takes
+  effect immediately. Off by default: without it, install is pure file I/O and
+  prints the `espanso restart` command for you to run. With it, a missing
+  `espanso` binary on `PATH` is a clear error, not a crash.
+
+Install exports into a staging directory first and replaces the live package
+only after the export and its build lint both succeed, so a failed export
+leaves an existing installed package byte-identical to its previous state.
+
 ## Supported Espanso match shape
 
 The simple importer converts static match entries that contain only:
@@ -91,19 +126,38 @@ Espanso semantic mode compares trigger/body values and supported metadata semant
 
 ## Out of scope
 
-Taurcode does not currently install generated packages into a local Espanso configuration, sync with Espanso, validate network homepages, or support arbitrary advanced Espanso match behavior as canonical prompt semantics.
+On macOS, Taurcode installs generated packages into the local Espanso
+configuration via `taurcode install espanso` (see "Install command" above).
+Taurcode does not install on non-macOS platforms, continuously sync with
+Espanso, validate network homepages, or support arbitrary advanced Espanso
+match behavior as canonical prompt semantics.
 
-### Keeping a manually-installed package in sync
+### Keeping an installed package in sync
 
-Because Taurcode has no install or sync mechanism, a package copied into Espanso's local match directory (for example `~/Library/Application Support/espanso/match/packages/<name>/` on macOS, where `<name>` is whatever directory name you installed it under) is a plain, one-time snapshot. Nothing detects or re-generates it automatically when `prompts/taurcode/` or the exporter changes — an installed copy can silently go stale relative to the repository, with no error or warning.
+On macOS, `taurcode install espanso --restart` is the preferred way to keep an
+installed package current: it re-exports the canonical corpus into Espanso's
+match-packages directory and restarts Espanso in one step. Run it after merging
+any change to `prompts/taurcode/` or the exporter. Without an install or sync
+step, a package sitting in Espanso's match directory is a plain, one-time
+snapshot — nothing detects or re-generates it when the repository changes, so
+an installed copy can silently go stale with no error or warning.
 
-If the change is to exporter behavior itself (not just prompt content), first make sure the `taurcode` command on your `PATH` actually reflects the current checkout — a stale or non-editable install will silently keep running the old exporter and reproduce the same drift this section exists to prevent. Run `scripts/develop` (per the "Operability guardrails" in `AGENTS.md`) to install in editable mode, or invoke the exporter directly from the checkout with `python -m taurcode.cli` instead of the bare `taurcode` command.
+If the change is to exporter behavior itself (not just prompt content), first
+make sure the `taurcode` command on your `PATH` actually reflects the current
+checkout — a stale or non-editable install will silently keep running the old
+exporter and reproduce the same drift this section exists to prevent. Run
+`scripts/develop` (per the "Operability guardrails" in `AGENTS.md`) to install
+in editable mode, or invoke Taurcode directly from the checkout with
+`python -m taurcode.cli` instead of the bare `taurcode` command.
 
-Taurcode's own exported package is always named `taurcode` (the manifest name matches the output directory name). After merging any change that affects exported behavior, manually re-export and reinstall before assuming the change is live:
+The equivalent manual steps, which `taurcode install espanso` automates, are a
+re-export into the match directory followed by a restart:
 
 ```bash
 python -m taurcode.cli export espanso --prompts prompts/taurcode --output "$HOME/Library/Application Support/espanso/match/packages/taurcode"
 espanso restart
 ```
 
-(Adjust the output path for your platform's Espanso match directory, and for the actual directory name if you installed Taurcode's package under a different one.) A dedicated install command that automates this is tracked as follow-up work; until it exists, this step is manual.
+(Adjust the output path for the actual directory name if you installed
+Taurcode's package under a different one, and for your platform's Espanso match
+directory on non-macOS systems, where the install command does not run.)

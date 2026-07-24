@@ -5,6 +5,7 @@ from typing import List, Optional
 from taurcode import (
     espanso_export,
     espanso_import,
+    espanso_install,
     espanso_lint,
     prompt_format,
     prompt_lint,
@@ -56,6 +57,22 @@ def build_parser() -> argparse.ArgumentParser:
     roundtrip_espanso_parser.add_argument("--input", required=True)
     roundtrip_espanso_parser.add_argument("--prompts", default=CANONICAL_PROMPTS_DIR)
 
+    install_parser = subparsers.add_parser("install")
+    install_subparsers = install_parser.add_subparsers(dest="target", required=True)
+
+    install_espanso_parser = install_subparsers.add_parser("espanso")
+    install_espanso_parser.add_argument("--prompts", default=CANONICAL_PROMPTS_DIR)
+    install_espanso_parser.add_argument(
+        "--packages-dir",
+        default=None,
+        help="Espanso match-packages directory (defaults to the macOS location)",
+    )
+    install_espanso_parser.add_argument(
+        "--restart",
+        action="store_true",
+        help="Run 'espanso restart' after installing (requires espanso on PATH)",
+    )
+
     import_parser = subparsers.add_parser("import")
     import_subparsers = import_parser.add_subparsers(dest="target", required=True)
 
@@ -87,6 +104,22 @@ def main(argv: Optional[List[str]] = None) -> int:
             )
             if result.has_warnings():
                 print(espanso_lint.format_lint_result(result), file=sys.stderr)
+            return 0
+        if args.command == "install" and args.target == "espanso":
+            prompts = prompt_loader.load_prompts(args.prompts)
+            validate.validate_prompts(prompts)
+            packages_dir = espanso_install.resolve_packages_dir(
+                sys.platform, args.packages_dir
+            )
+            installed_path = espanso_install.install_espanso(
+                prompts, packages_dir, source_dir=args.prompts
+            )
+            print(f"Installed Espanso package: {installed_path}")
+            if args.restart:
+                espanso_install.restart_espanso()
+                print("Restarted espanso.")
+            else:
+                print("Run 'espanso restart' to activate the updated package.")
             return 0
         if args.command == "lint" and args.target == "espanso":
             package_path = espanso_lint.resolve_package_yml(args.input)
