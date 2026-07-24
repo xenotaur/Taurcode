@@ -348,21 +348,28 @@ matches:
       
       ### Step 8 — Land the execution record (find-or-backfill)
       
-      Locate this PR's execution record — first any created by an earlier step
-      (`/lrh-implement`, or `/lrh-review-response` / `/lrh-confirm-fixes` on a
-      reviewed PR), searching by the PR's `pr:` URL. Then:
+      Identify the **primary (implementation) execution record for this PR** — the one
+      to move to `landed`. Prefer the specific prompt/execution ID established earlier
+      in this run (minted by `/lrh-implement`, or reported by `/lrh-review-response` /
+      `/lrh-confirm-fixes`). Do **not** select by `pr:` URL alone: a reviewed PR
+      carries several records (implementation plus separate review-response and
+      confirm-fixes records) that share one PR URL, and landing the wrong one leaves
+      the implementation record `in_progress`. Then:
       
-      - **If a record exists:** set its `status` to `landed` and push to `main`.
-      - **If no record exists** (a PR authored outside the skill chain that also drew
-        no review activity): create an honest BACKFILL `AD_HOC` record from available
-        PR data — `pr` (this PR's URL), `commit`, `status`, `agent`, and
-        `instruction_source` describing the PR/session — via `lrh prompt label` +
-        `lrh prompt record-execution`. Mark it in the body as a post-hoc backfill
-        reconstructed at land time, **not** a fabricated instruction-phase record.
-        Surface the reconstructed record to me before pushing — never write it
-        silently — then set `status: landed` and push.
+      - **If the primary record is found:** set its `status` to `landed` and push to
+        `main`. Leave the review-response / confirm-fixes records as they are.
+      - **If a `pr:`-URL search returns several records and none is clearly primary:**
+        STOP and ask rather than guessing.
+      - **If no record exists for this PR at all** (a PR authored outside the skill
+        chain that also drew no review activity): create an honest BACKFILL `AD_HOC`
+        record from available PR data — `pr` (this PR's URL), `commit`, `status`,
+        `agent`, and `instruction_source` describing the PR/session — via
+        `lrh prompt label` + `lrh prompt record-execution`. Mark it in the body as a
+        post-hoc backfill reconstructed at land time, **not** a fabricated
+        instruction-phase record. Surface the reconstructed record to me before
+        pushing — never write it silently — then set `status: landed` and push.
       
-      Update only this PR's record; do not touch unrelated execution records.
+      Update only this PR's primary record; do not touch unrelated execution records.
       
       Before pushing, append one CHAIN-NOTE line to this execution record's body
       (under its Result section), and include the same line in your final report:
@@ -615,21 +622,28 @@ matches:
       
       ### Step 6 — Land the execution record (find-or-backfill)
       
-      Locate this PR's execution record — first any created by an earlier step
-      (`/lrh-implement`, or `/lrh-review-response` / `/lrh-confirm-fixes` on a
-      reviewed PR), searching by the PR's `pr:` URL. Then:
+      Identify the **primary (implementation) execution record for this PR** — the one
+      to move to `landed`. Prefer the specific prompt/execution ID established earlier
+      in this run (minted by `/lrh-implement`, or reported by `/lrh-review-response` /
+      `/lrh-confirm-fixes`). Do **not** select by `pr:` URL alone: a reviewed PR
+      carries several records (implementation plus separate review-response and
+      confirm-fixes records) that share one PR URL, and landing the wrong one leaves
+      the implementation record `in_progress`. Then:
       
-      - **If a record exists:** set its `status` to `landed` and push to `main`.
-      - **If no record exists** (a PR authored outside the skill chain that also drew
-        no review activity): create an honest BACKFILL `AD_HOC` record from available
-        PR data — `pr` (this PR's URL), `commit`, `status`, `agent`, and
-        `instruction_source` describing the PR/session — via `lrh prompt label` +
-        `lrh prompt record-execution`. Mark it in the body as a post-hoc backfill
-        reconstructed at land time, **not** a fabricated instruction-phase record.
-        Surface the reconstructed record to me before pushing — never write it
-        silently — then set `status: landed` and push.
+      - **If the primary record is found:** set its `status` to `landed` and push to
+        `main`. Leave the review-response / confirm-fixes records as they are.
+      - **If a `pr:`-URL search returns several records and none is clearly primary:**
+        STOP and ask rather than guessing.
+      - **If no record exists for this PR at all** (a PR authored outside the skill
+        chain that also drew no review activity): create an honest BACKFILL `AD_HOC`
+        record from available PR data — `pr` (this PR's URL), `commit`, `status`,
+        `agent`, and `instruction_source` describing the PR/session — via
+        `lrh prompt label` + `lrh prompt record-execution`. Mark it in the body as a
+        post-hoc backfill reconstructed at land time, **not** a fabricated
+        instruction-phase record. Surface the reconstructed record to me before
+        pushing — never write it silently — then set `status: landed` and push.
       
-      Update only this PR's record; do not touch unrelated execution records.
+      Update only this PR's primary record; do not touch unrelated execution records.
       
       Before pushing, append one CHAIN-NOTE line to this execution record's body
       (under its Result section), and include the same line in your final report:
