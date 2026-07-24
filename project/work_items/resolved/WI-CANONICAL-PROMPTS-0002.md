@@ -1,14 +1,14 @@
 ---
 id: WI-CANONICAL-PROMPTS-0002
 title: Implement canonical prompt pipeline and Espanso export flow
-type: work_item
+type: deliverable
 status: resolved
 priority: high
 related_focus:
   - FOCUS-BOOTSTRAP
 blocked: false
 blocked_reason: ""
-resolution: >-
+resolution: >
   Resolved by the completed Espanso roundtrip foundation: canonical prompts,
   validation, Espanso import/export, metadata preservation, semantic roundtrip
   checks, operational scripts, tests, migrated corpus, and documentation are in

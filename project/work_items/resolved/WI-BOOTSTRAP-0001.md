@@ -1,10 +1,18 @@
 ---
 id: WI-BOOTSTRAP-0001
 title: Bootstrap LRH project control plane
+type: deliverable
 status: resolved
 priority: high
-owner: TBD
-related_focus: FOCUS-BOOTSTRAP
+owner: anthony
+related_focus:
+  - FOCUS-BOOTSTRAP
+blocked: false
+blocked_reason: ""
+resolution: >
+  Resolved by the completed LRH control-plane bootstrap: the standard project/
+  directory scaffold, baseline Markdown artifacts, initial evidence and status
+  documents, and derived context summaries are all in place.
 ---
 
 # Work Item: Bootstrap LRH project control plane
