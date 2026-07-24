@@ -78,11 +78,23 @@ Run `/lrh-closeout` with the session URL:
 
     <SESSION_URL — paste View > Copy URL>
 
-### Step 8 — Land the execution record
+### Step 8 — Land the execution record (find-or-backfill)
 
-Update the execution record for this prompt to `landed` and push that change to
-`main`. Update only this prompt's record; do not touch unrelated execution
-records.
+Locate this PR's execution record — first any created by an earlier step
+(`/lrh-implement`, or `/lrh-review-response` / `/lrh-confirm-fixes` on a
+reviewed PR), searching by the PR's `pr:` URL. Then:
+
+- **If a record exists:** set its `status` to `landed` and push to `main`.
+- **If no record exists** (a PR authored outside the skill chain that also drew
+  no review activity): create an honest BACKFILL `AD_HOC` record from available
+  PR data — `pr` (this PR's URL), `commit`, `status`, `agent`, and
+  `instruction_source` describing the PR/session — via `lrh prompt label` +
+  `lrh prompt record-execution`. Mark it in the body as a post-hoc backfill
+  reconstructed at land time, **not** a fabricated instruction-phase record.
+  Surface the reconstructed record to me before pushing — never write it
+  silently — then set `status: landed` and push.
+
+Update only this PR's record; do not touch unrelated execution records.
 
 Before pushing, append one CHAIN-NOTE line to this execution record's body
 (under its Result section), and include the same line in your final report:
