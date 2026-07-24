@@ -61,6 +61,18 @@ Update the execution record for this prompt to `landed` and push that change to
 `main`. Update only this prompt's record; do not touch unrelated execution
 records.
 
+Before pushing, append one CHAIN-NOTE line to this execution record's body
+(under its Result section), and include the same line in your final report:
+
+    CHAIN-NOTE: cycles=<N>; stops=<N>; gates=[<gates that fired>]; friction=<one phrase or `none`>; note="<free text, or omit>"
+
+where cycles = number of review-response→confirm-fixes rounds it took
+(1 = converged in a single pass), stops = how many stop-and-report
+conditions fired this run, gates = which human gates actually fired (e.g.
+merge), friction = the one mechanical/boilerplate/noise point or `none`.
+One line only — if it grows past one line, trim it. The value is a greppable
+signal (`lrh search executions "CHAIN-NOTE"`), not a retro.
+
 ### Step 7 — Memories and follow-ups
 
 Review what happened and propose any memories worth saving. Then suggest the
@@ -74,6 +86,7 @@ When you reach the end (or stop early), report:
 
 - what was accomplished and where (PR URL, merge status, execution record path)
 - the prompt/execution ID used
+- the CHAIN-NOTE line for this run
 - anything that stopped you, and what you need from me
 - proposed memories and suggested next steps
 
