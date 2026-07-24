@@ -11,12 +11,14 @@ The PR for this work is already open. Drive it the rest of the way — review,
 merge, closeout — running as autonomously as possible and stopping only when
 something genuinely needs me.
 
-**Two hard human gates. Do not cross either without my explicit in-session go:**
+Run this nearly autonomously. Responding to review is autonomous — you do **not**
+need my approval to apply review fixes. **One hard human gate** and one timing
+rule bound that autonomy:
 
-- **REVIEW GATE** — Wait until review comments have *actually landed* before
-  responding to them (see Step 1).
-- **MERGE GATE** — Never merge without my explicit approval in this session
-  (see Step 4).
+- **MERGE GATE (human approval)** — Never merge without my explicit in-session
+  go (see Step 4). This is the one point that always stops for me.
+- **REVIEW-LANDED rule** — Do not act on review until it has *actually landed*;
+  an empty thread list right after pushing is not a clean review (see Step 1).
 
 Throughout: if a major issue arises, an assumption is violated, a repository
 convention is unclear, review comments cannot be resolved, or validation fails,
@@ -24,13 +26,19 @@ convention is unclear, review comments cannot be resolved, or validation fails,
 
 ---
 
-### Step 1 — Wait for review comments to ACTUALLY land
+### Step 1 — Wait for review to ACTUALLY land
 
-Do **not** proceed on an empty thread list. Automated reviewers post minutes
-after the PR opens or is pushed, so a clean-looking thread list immediately
-after pushing is **not** proof the review is clean. Wait until review activity
-has actually landed — check back until comment threads have appeared and
-settled — before treating the review as ready to address.
+Automated reviewers post minutes after the PR opens or is pushed, so an empty
+thread list immediately after pushing is **not** proof of a clean review — it
+usually just means the review has not run yet. Wait until the review has
+actually completed (its comments and checks have reported back), then:
+
+- completed **with** comments → address them (Step 2);
+- completed **with no findings** → that is a clean review; proceed to the merge
+  gate (Step 4).
+
+If the review has not reported after a reasonable wait, stop and ask me how to
+proceed rather than looping.
 
 ### Step 2 — Respond to review
 

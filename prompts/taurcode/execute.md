@@ -11,12 +11,14 @@ Drive this work item through the full LRH lifecycle — implement, PR, review,
 merge, closeout — running as autonomously as possible and stopping only when
 something genuinely needs me.
 
-**Two hard human gates. Do not cross either without my explicit in-session go:**
+Run this nearly autonomously. Responding to review is autonomous — you do **not**
+need my approval to apply review fixes. **One hard human gate** and one timing
+rule bound that autonomy:
 
-- **REVIEW GATE** — Wait until review comments have *actually landed* before
-  responding to them (see Step 3).
-- **MERGE GATE** — Never merge without my explicit approval in this session
-  (see Step 6).
+- **MERGE GATE (human approval)** — Never merge without my explicit in-session
+  go (see Step 6). This is the one point that always stops for me.
+- **REVIEW-LANDED rule** — Do not act on review until it has *actually landed*;
+  an empty thread list right after pushing is not a clean review (see Step 3).
 
 Throughout: if a major issue arises, an assumption is violated, a repository
 convention is unclear, review comments cannot be resolved, or validation fails,
@@ -30,19 +32,28 @@ Run `/lrh-implement` for this work item. Follow its own plan-confirmation gate;
 do not skip it. Respect `AGENTS.md`, `STYLE.md`, and `PROMPTS.md`, and keep any
 `README.md` in affected directories current.
 
-### Step 2 — Open and push the PR
+### Step 2 — Confirm the PR and execution record
 
-Create the pull request and push the branch. Record the execution as
-`in_progress` with the PR URL as the primary artifact (per `/lrh-implement` /
-`PROMPTS.md`). State the PR URL and the prompt/execution ID prominently.
+`/lrh-implement` already opens the pull request, pushes the branch, and records
+the execution as `in_progress` (see `prompts/taurcode/implement.md`, Steps 7–8).
+Do **not** open a second PR. Verify those outputs exist, then state the PR URL
+and the prompt/execution ID prominently. If `/lrh-implement` stopped before
+opening a PR (for example at its plan gate), stop and report rather than opening
+one here.
 
-### Step 3 — Wait for review comments to ACTUALLY land
+### Step 3 — Wait for review to ACTUALLY land
 
-Do **not** proceed on an empty thread list. Automated reviewers post minutes
-after the PR opens or is pushed, so a clean-looking thread list immediately
-after pushing is **not** proof the review is clean. Wait until review activity
-has actually landed — check back until comment threads have appeared and
-settled — before treating the review as ready to address.
+Automated reviewers post minutes after the PR opens or is pushed, so an empty
+thread list immediately after pushing is **not** proof of a clean review — it
+usually just means the review has not run yet. Wait until the review has
+actually completed (its comments and checks have reported back), then:
+
+- completed **with** comments → address them (Step 4);
+- completed **with no findings** → that is a clean review; proceed to the merge
+  gate (Step 6).
+
+If the review has not reported after a reasonable wait, stop and ask me how to
+proceed rather than looping.
 
 ### Step 4 — Respond to review
 
