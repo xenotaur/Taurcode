@@ -1,15 +1,15 @@
 ---
 id: WI-PROJECT-PLANE-VALIDATION-CLEANUP
 title: Clean up Taurcode project-plane validation issues
-type: work_item
+type: operation
 status: proposed
 priority: medium
-owner: TBD
+owner: anthony
 related_focus: []
 related_workstreams: []
 blocked: false
 blocked_reason: ""
-resolution: ""
+resolution: null
 ---
 
 # Work Item: Clean up Taurcode project-plane validation issues
