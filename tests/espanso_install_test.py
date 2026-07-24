@@ -1,5 +1,6 @@
 import contextlib
 import io
+import os
 import tempfile
 import unittest
 import unittest.mock
@@ -50,7 +51,6 @@ class TestResolvePackagesDir(unittest.TestCase):
 
         self.assertTrue(resolved.is_absolute())
         self.assertNotIn("~", resolved.parts)
-        self.assertFalse(Path("~").exists())
 
     def test_override_is_expanded(self) -> None:
         resolved = espanso_install.resolve_packages_dir("darwin", "~/custom-packages")
@@ -58,6 +58,10 @@ class TestResolvePackagesDir(unittest.TestCase):
         self.assertTrue(resolved.is_absolute())
         self.assertNotIn("~", resolved.parts)
         self.assertEqual(resolved.name, "custom-packages")
+
+    def test_rejects_relative_override(self) -> None:
+        with self.assertRaises(espanso_install.InstallError):
+            espanso_install.resolve_packages_dir("darwin", "packages")
 
 
 class TestResolvePackageName(unittest.TestCase):
@@ -114,26 +118,78 @@ class TestInstallEspanso(unittest.TestCase):
 
             self.assertEqual(installed.name, espanso_install.DEFAULT_PACKAGE_NAME)
 
+    def test_rejects_invalid_and_traversal_package_names(self) -> None:
+        for bad_name in ("Bad Name", "../victim", "/abs"):
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir)
+                source_dir = base / "prompts"
+                _write_manifest(source_dir, bad_name)
+                packages_dir = base / "packages"
+                packages_dir.mkdir(parents=True)
+
+                with self.assertRaises(espanso_install.InstallError):
+                    espanso_install.install_espanso(
+                        [_prompt()], packages_dir, source_dir=str(source_dir)
+                    )
+
+                # Nothing written anywhere: no traversal escape, no staging dir.
+                self.assertEqual(list(packages_dir.iterdir()), [])
+                self.assertFalse((base / "victim").exists())
+
     def test_failed_export_leaves_existing_package_intact(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
-            source_dir = base / "prompts"
-            # An invalid package name fails export's build lint (after files are
-            # written to the staging dir), exercising the corruption scenario.
-            _write_manifest(source_dir, "Bad Name")
             packages_dir = base / "packages"
-            target = packages_dir / "Bad Name"
+            target = packages_dir / "taurcode"
             target.mkdir(parents=True)
             sentinel = target / "package.yml"
             sentinel.write_text("matches: []\n", encoding="utf-8")
 
-            with self.assertRaises(ValueError):
-                espanso_install.install_espanso(
-                    [_prompt()], packages_dir, source_dir=str(source_dir)
-                )
+            def failing_export(*args, **kwargs):
+                raise ValueError("simulated export failure")
 
-            # Pre-existing install untouched, no staging directory left behind.
+            with unittest.mock.patch.object(
+                espanso_install.espanso_export, "export_espanso", failing_export
+            ):
+                with self.assertRaises(ValueError):
+                    espanso_install.install_espanso([_prompt()], packages_dir)
+
+            # Export failed before target was touched: install untouched, and no
+            # staging directory left behind.
             self.assertEqual(sentinel.read_text(encoding="utf-8"), "matches: []\n")
+            self.assertEqual(list(packages_dir.glob(".taurcode-install-*")), [])
+
+    def test_swap_failure_restores_existing_package(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            packages_dir = base / "packages"
+            target = packages_dir / "taurcode"
+            target.mkdir(parents=True)
+            sentinel = target / "package.yml"
+            sentinel.write_text("original\n", encoding="utf-8")
+
+            real_replace = os.replace
+            calls = {"n": 0}
+
+            def flaky_replace(src, dst):
+                # First replace (target -> backup) succeeds; the second (staged
+                # -> target) fails, exercising the rollback path.
+                calls["n"] += 1
+                if calls["n"] == 2:
+                    raise OSError("simulated swap failure")
+                return real_replace(src, dst)
+
+            with unittest.mock.patch.object(
+                espanso_install.os, "replace", flaky_replace
+            ):
+                with self.assertRaises(OSError):
+                    espanso_install.install_espanso(
+                        [_prompt()], packages_dir, source_dir=None
+                    )
+
+            # The previous install was restored, not lost to the cleanup.
+            self.assertTrue(target.exists())
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "original\n")
             self.assertEqual(list(packages_dir.glob(".taurcode-install-*")), [])
 
 
@@ -149,7 +205,18 @@ class TestRestartEspanso(unittest.TestCase):
             runner=fake_runner, which=lambda name: "/usr/local/bin/espanso"
         )
 
-        self.assertEqual(calls, [["espanso", "restart"]])
+        # Invokes the which()-resolved path, not the bare command name.
+        self.assertEqual(calls, [["/usr/local/bin/espanso", "restart"]])
+
+    def test_file_not_found_is_wrapped(self) -> None:
+        def raising_runner(args):
+            raise FileNotFoundError("no such file")
+
+        with self.assertRaises(espanso_install.InstallError):
+            espanso_install.restart_espanso(
+                runner=raising_runner,
+                which=lambda name: "/usr/local/bin/espanso",
+            )
 
     def test_missing_binary_raises(self) -> None:
         with self.assertRaises(espanso_install.InstallError):

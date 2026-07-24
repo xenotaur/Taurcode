@@ -150,7 +150,7 @@ On macOS, install the canonical prompts straight into the local Espanso configur
 taurcode install espanso --prompts prompts/taurcode --restart
 ```
 
-This re-exports into `~/Library/Application Support/espanso/match/packages/<name>/` and, with `--restart`, runs `espanso restart` so the change takes effect. Without `--restart` it prints the restart command for you to run. The install is staged and swapped atomically, so a failed export leaves any existing installed package untouched. The command is macOS-only; on other platforms it exits non-zero, and you should export and copy the package manually. See [docs/reference/espanso-integration.md](docs/reference/espanso-integration.md) for `--packages-dir` and the name-derivation rules.
+This re-exports into `~/Library/Application Support/espanso/match/packages/<name>/` and, with `--restart`, runs `espanso restart` so the change takes effect. Without `--restart` it prints the restart command for you to run. The install is staged and swapped into place only after the export and its build lint succeed, so a failed export leaves any existing installed package untouched. The command is macOS-only; on other platforms it exits non-zero, and you should export and copy the package manually. See [docs/reference/espanso-integration.md](docs/reference/espanso-integration.md) for `--packages-dir` and the name-derivation rules.
 
 ## Espanso roundtrip checks
 Taurcode uses semantic normalization as the comparison model for Espanso roundtrip checks. The goal is to compare prompt meaning instead of raw YAML bytes, because YAML emitters can change field ordering, quoting, scalar style, and list formatting without changing the package Espanso receives.

@@ -9,6 +9,7 @@ what `taurcode export espanso` would produce.
 """
 
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -19,6 +20,12 @@ from taurcode import espanso_export, espanso_metadata, prompt_model
 
 MACOS_PACKAGES_DIR = "~/Library/Application Support/espanso/match/packages"
 DEFAULT_PACKAGE_NAME = "taurcode"
+
+# A valid Espanso package name is a single path-safe basename. This mirrors the
+# rule `espanso_lint` enforces on `output.name`; validating here, before the
+# name is ever joined into a path, keeps a curated manifest from smuggling a
+# traversal (`../victim`) or absolute path through name derivation.
+_PACKAGE_NAME_RE = re.compile(r"^[a-z0-9-]+$")
 
 
 class InstallError(ValueError):
@@ -44,7 +51,17 @@ def resolve_packages_dir(platform: str, override: str | None) -> Path:
             f"platform '{platform}' is not supported yet. Export with "
             f"'taurcode export espanso' and copy the package manually."
         )
-    return Path(override if override is not None else MACOS_PACKAGES_DIR).expanduser()
+    resolved = Path(
+        override if override is not None else MACOS_PACKAGES_DIR
+    ).expanduser()
+    # A relative override would install into <cwd>/... rather than the real
+    # Espanso config location; require an absolute path so the target is
+    # unambiguous.
+    if not resolved.is_absolute():
+        raise InstallError(
+            f"--packages-dir must be an absolute path; got '{override}'."
+        )
+    return resolved
 
 
 def resolve_package_name(source_dir: str | Path | None) -> str:
@@ -88,6 +105,15 @@ def install_espanso(
     """
     packages_dir = Path(packages_dir)
     name = resolve_package_name(source_dir)
+    # Validate before the name is ever joined into a path: export writes files
+    # before its lint runs, so an unvalidated `../victim` or absolute name could
+    # escape the staging directory and clobber another package (or write outside
+    # packages_dir) even on an install that ultimately fails.
+    if not _PACKAGE_NAME_RE.fullmatch(name):
+        raise InstallError(
+            f"Refusing to install package with invalid name '{name}'. "
+            f"Package names must match {_PACKAGE_NAME_RE.pattern}."
+        )
     packages_dir.mkdir(parents=True, exist_ok=True)
     target = packages_dir / name
 
@@ -108,9 +134,20 @@ def install_espanso(
         # Move any existing install aside first: os.replace cannot rename a
         # directory onto a non-empty directory. The backup lands inside
         # staging_parent so the finally clause deletes it either way.
+        backup = None
         if target.exists():
-            os.replace(target, staging_parent / f"{name}.backup")
-        os.replace(staged_package, target)
+            backup = staging_parent / f"{name}.backup"
+            os.replace(target, backup)
+        try:
+            os.replace(staged_package, target)
+        except OSError:
+            # The swap failed after the previous install was moved aside; the
+            # finally clause is about to delete staging_parent (and the backup
+            # with it), so restore the previous install before re-raising to
+            # honor the byte-identical guarantee.
+            if backup is not None and not target.exists():
+                os.replace(backup, target)
+            raise
         return target
     finally:
         shutil.rmtree(staging_parent, ignore_errors=True)
@@ -126,12 +163,21 @@ def restart_espanso(
     `espanso` binary. A missing binary or a nonzero exit is an `InstallError`,
     not a traceback.
     """
-    if which("espanso") is None:
+    binary = which("espanso")
+    if binary is None:
         raise InstallError(
             "espanso binary not found on PATH; cannot restart. "
             "Run 'espanso restart' manually once it is installed."
         )
-    result = runner(["espanso", "restart"])
+    # Invoke the resolved path and translate a FileNotFoundError (e.g. the
+    # binary vanished between the which() lookup and the call) into a clean
+    # InstallError rather than letting it surface as a bare OSError.
+    try:
+        result = runner([binary, "restart"])
+    except FileNotFoundError as error:
+        raise InstallError(
+            f"espanso binary '{binary}' could not be executed: {error}"
+        ) from error
     if result.returncode != 0:
         raise InstallError(
             f"'espanso restart' failed with exit code {result.returncode}."
