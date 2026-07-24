@@ -2,10 +2,10 @@
 execution_id: 2026_07_24_00_45_06_WI_ESPANSO_INSTALL_COMMAND
 prompt_id: PROMPT(WI-ESPANSO-INSTALL-COMMAND:WI_ESPANSO_INSTALL_COMMAND)[2026-07-24T00:19:57-04:00]
 work_item: WI-ESPANSO-INSTALL-COMMAND
-status: in_progress
+status: landed
 rerun_of:
 pr: https://github.com/xenotaur/Taurcode/pull/53
-commit: baca91278fb07bc124ab90a565d614c08e54e13c
+commit: e361d4f16f25c2616d8de12f4cf61a7517fa3c1a
 created_at: 2026-07-24T00:45:06-04:00
 agent: claude_app
 instruction_source: project/work_items/proposed/WI-ESPANSO-INSTALL-COMMAND.md

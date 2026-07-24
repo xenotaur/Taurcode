@@ -1,11 +1,11 @@
 ---
-resolution: null
+resolution: "Implemented and merged in PR #53 (commit e361d4f). macOS-only taurcode install espanso subcommand."
 blocked_reason: null
 blocked: false
 id: WI-ESPANSO-INSTALL-COMMAND
 title: Implement macOS-only taurcode install espanso subcommand
 type: deliverable
-status: proposed
+status: resolved
 owner: anthony
 contributors:
   - anthony

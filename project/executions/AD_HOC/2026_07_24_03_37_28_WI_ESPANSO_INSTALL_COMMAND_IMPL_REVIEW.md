@@ -2,10 +2,10 @@
 execution_id: 2026_07_24_03_37_28_WI_ESPANSO_INSTALL_COMMAND_IMPL_REVIEW
 prompt_id: PROMPT(AD_HOC:WI_ESPANSO_INSTALL_COMMAND_IMPL_REVIEW)[2026-07-24T03:32:24-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 2026_07_24_00_45_06_WI_ESPANSO_INSTALL_COMMAND
 pr: https://github.com/xenotaur/Taurcode/pull/53
-commit: cc76836062d722f5195ea92121452de69fde0a3e
+commit: e361d4f16f25c2616d8de12f4cf61a7517fa3c1a
 created_at: 2026-07-24T03:37:28-04:00
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/53
