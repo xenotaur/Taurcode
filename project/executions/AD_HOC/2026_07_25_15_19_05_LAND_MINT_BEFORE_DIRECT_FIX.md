@@ -46,6 +46,14 @@ body is exported there.
 - `gh pr diff 60 --name-only` confirms only `prompts/taurcode/land.md` and
   `exports/espanso/taurcode/package.yml` changed
 
+Review round: Copilot and Codex each raised one comment on the initial push
+(`1a2d56c`) — Copilot noted the `/lrh-implement` step references were wrong
+(mint is Step 1, not "before Step 6"); Codex flagged that the clause didn't
+specify `--status in_progress`, so the shell-fallback `record-execution`
+script would default a not-yet-validated fix to `landed`. Both fixed in
+`6d3126f`, verified against the live diff, and resolved. CI green on
+`6d3126f` (`lint`, `coverage`, `tests`, `Check workflow files` all SUCCESS).
+
 # Follow-up
 
 None outside this PR.
