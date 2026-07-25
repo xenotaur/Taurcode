@@ -94,5 +94,44 @@ Prompt body.
         self.assertFalse((repo_root / "src" / "frontmatter" / "__init__.py").exists())
 
 
+class TestExtractPromptBody(unittest.TestCase):
+    def test_no_frontmatter_returns_text_unchanged(self) -> None:
+        self.assertEqual(
+            prompt_loader.extract_prompt_body("no frontmatter here"),
+            "no frontmatter here",
+        )
+
+    def test_empty_string_returns_empty_string(self) -> None:
+        self.assertEqual(prompt_loader.extract_prompt_body(""), "")
+
+    def test_bare_delimiter_with_no_body_returns_unchanged(self) -> None:
+        self.assertEqual(prompt_loader.extract_prompt_body("---"), "---")
+
+    def test_unterminated_frontmatter_returns_text_unchanged(self) -> None:
+        text = "---\nfoo: bar\nno closing delimiter"
+        self.assertEqual(prompt_loader.extract_prompt_body(text), text)
+
+    def test_delimiter_only_frontmatter_returns_empty_body(self) -> None:
+        self.assertEqual(prompt_loader.extract_prompt_body("---\n---\n"), "")
+        self.assertEqual(prompt_loader.extract_prompt_body("---\n---"), "")
+
+    def test_frontmatter_with_no_trailing_newline_returns_empty_body(self) -> None:
+        self.assertEqual(prompt_loader.extract_prompt_body("---\nfoo: bar\n---"), "")
+
+    def test_body_leading_blank_line_is_stripped_once(self) -> None:
+        text = "---\nfoo: bar\n---\n\nBody text.\n"
+        self.assertEqual(prompt_loader.extract_prompt_body(text), "Body text.\n")
+
+    def test_body_containing_delimiter_like_text_is_preserved(self) -> None:
+        text = "---\nfoo: bar\n---\nbody\n---\nmore---stuff"
+        self.assertEqual(
+            prompt_loader.extract_prompt_body(text), "body\n---\nmore---stuff"
+        )
+
+    def test_crlf_line_endings_are_normalized(self) -> None:
+        text = "---\r\nfoo: bar\r\n---\r\nbody\r\n"
+        self.assertEqual(prompt_loader.extract_prompt_body(text), "body\n")
+
+
 if __name__ == "__main__":
     unittest.main()
