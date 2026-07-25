@@ -42,6 +42,28 @@ proceed rather than looping.
 
 ### Step 2 — Respond to review
 
+If you are about to apply fixes directly rather than through
+`/lrh-review-response` — for example, following `:assess`'s "specific,
+minimal changes" recommendation — mint a prompt ID and a primary `AD_HOC`
+execution record *first*, before editing anything, the same way
+`/lrh-implement` mints its prompt ID in its own Step 1 and records the
+execution in its own Step 8:
+
+```bash
+lrh prompt label --slug <slug>
+lrh prompt record-execution --prompt-id "<id>" --work-item AD_HOC \
+  --slug <slug> --status in_progress --project-root .
+```
+
+Always pass `--status in_progress` explicitly — `scripts/prompts/record-execution`
+(the shell fallback used when `lrh` is unavailable) defaults `STATUS` to
+`landed`, which would mark the record as done before the fix is even
+validated. Then apply the fixes, regenerate the Espanso export if a
+`prompts/taurcode/*.md` file changed, and push. This keeps a primary record
+in place from the start, so `/lrh-review-response` running afterward
+(finding nothing to do, harmlessly) and `/lrh-closeout` later never need to
+reconstruct one via backfill.
+
 Run `/lrh-review-response`, then `/lrh-confirm-fixes`.
 
 ### Step 3 — Verify every issue is resolved
