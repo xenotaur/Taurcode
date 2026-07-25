@@ -13,18 +13,30 @@ def _is_reserved_prompt_file(prompt_file: Path, directory: Path) -> bool:
     return bool(relative_parts and relative_parts[0] in _RESERVED_PROMPT_DIRS)
 
 
+_FRONTMATTER_DELIMITER = "---"
+_FRONTMATTER_CLOSING = f"\n{_FRONTMATTER_DELIMITER}\n"
+
+
 def extract_prompt_body(text: str) -> str:
+    # Uses find()/slicing instead of split()/join() to avoid allocating an
+    # intermediate list of lines for large prompt files. See .jules/bolt.md
+    # for the perf rationale; kept here brief since benchmarks age quickly.
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
-    lines = normalized.split("\n")
-    if not lines or lines[0] != "---":
+    if not (
+        normalized == _FRONTMATTER_DELIMITER
+        or normalized.startswith(_FRONTMATTER_DELIMITER + "\n")
+    ):
         return normalized
 
-    for index in range(1, len(lines)):
-        if lines[index] == "---":
-            body = "\n".join(lines[index + 1 :])
-            if body.startswith("\n"):
-                body = body[1:]
-            return body
+    end_frontmatter = normalized.find(_FRONTMATTER_CLOSING, len(_FRONTMATTER_DELIMITER))
+    if end_frontmatter != -1:
+        body = normalized[end_frontmatter + len(_FRONTMATTER_CLOSING) :]
+        if body.startswith("\n"):
+            return body[1:]
+        return body
+
+    if normalized.endswith("\n" + _FRONTMATTER_DELIMITER):
+        return ""
 
     return normalized
 
