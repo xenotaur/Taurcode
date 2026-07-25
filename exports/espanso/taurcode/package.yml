@@ -656,6 +656,15 @@ matches:
       
       ### Step 2 — Respond to review
       
+      If you are about to apply fixes directly rather than through
+      `/lrh-review-response` — for example, following `:assess`'s "specific,
+      minimal changes" recommendation — mint a prompt ID and a primary `AD_HOC`
+      execution record *first*, before editing anything, the same way
+      `/lrh-implement` does before its own Step 6. This keeps a primary record in
+      place from the start, so `/lrh-review-response` running afterward (finding
+      nothing to do, harmlessly) and `/lrh-closeout` later never need to
+      reconstruct one via backfill.
+      
       Run `/lrh-review-response`, then `/lrh-confirm-fixes`.
       
       ### Step 3 — Verify every issue is resolved
