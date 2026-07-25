@@ -2,14 +2,14 @@
 execution_id: 2026_07_25_15_19_05_LAND_MINT_BEFORE_DIRECT_FIX
 prompt_id: PROMPT(AD_HOC:LAND_MINT_BEFORE_DIRECT_FIX)[2026-07-25T15:15:53-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 
 pr: https://github.com/xenotaur/Taurcode/pull/60
-commit: 1a2d56c
+commit: bddf22907f4d6417659b7f126ea38c69118f860d
 created_at: 2026-07-25T15:19:05-04:00
 agent: claude_app
 instruction_source: interactive session (chat-driven, no work item); reviewing PR #47 with :assess surfaced the gap this closes
-session_transcript: pending
+session_transcript: claude-app:2a6feef4-aff9-4211-afce-a195f1581cc0
 ---
 
 # Summary
@@ -32,6 +32,20 @@ record first, mirroring `/lrh-implement`'s own mint-before-edit convention.
 Regenerated `exports/espanso/taurcode/package.yml` since `:land`'s prompt
 body is exported there.
 
+Review round: Copilot and Codex each raised one comment on the initial push
+(`1a2d56c`) — Copilot noted the `/lrh-implement` step references were wrong
+(mint is Step 1, not "before Step 6"); Codex flagged that the clause didn't
+specify `--status in_progress`, so the shell-fallback `record-execution`
+script would default a not-yet-validated fix to `landed`. Both fixed in
+`6d3126f`, verified against the live diff, and resolved. CI green on
+`6d3126f` (`lint`, `coverage`, `tests`, `Check workflow files` all SUCCESS).
+
+Unlike PR #47, exactly one execution record matched this PR's `pr:` field at
+closeout time — the primary record itself, minted before any edit — so no
+backfill was needed. This is the fix working as intended.
+
+CHAIN-NOTE: cycles=1; stops=0; gates=[merge]; friction=none; note="/lrh-implement, /lrh-review-response, /lrh-confirm-fixes, and /lrh-closeout are all disable-model-invocation, so their substance was executed manually rather than via Skill tool chaining"
+
 # Validation
 
 - `scripts/version tools` — Python 3.11.8, black 25.11.0 (pre-existing
@@ -45,14 +59,6 @@ body is exported there.
   unrelated legacy execution record), unaffected by this change
 - `gh pr diff 60 --name-only` confirms only `prompts/taurcode/land.md` and
   `exports/espanso/taurcode/package.yml` changed
-
-Review round: Copilot and Codex each raised one comment on the initial push
-(`1a2d56c`) — Copilot noted the `/lrh-implement` step references were wrong
-(mint is Step 1, not "before Step 6"); Codex flagged that the clause didn't
-specify `--status in_progress`, so the shell-fallback `record-execution`
-script would default a not-yet-validated fix to `landed`. Both fixed in
-`6d3126f`, verified against the live diff, and resolved. CI green on
-`6d3126f` (`lint`, `coverage`, `tests`, `Check workflow files` all SUCCESS).
 
 # Follow-up
 
