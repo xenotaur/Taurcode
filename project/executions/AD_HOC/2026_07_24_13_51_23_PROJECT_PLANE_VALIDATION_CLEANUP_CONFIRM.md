@@ -43,7 +43,7 @@ satisfies.
 
 # Follow-up
 
-- `session_transcript: pending` and `commit: pending` to be updated after
-  the session / after this record's own commit.
-- After merge: run closeout to mark the primary record `landed` and resolve
-  `WI-PROJECT-PLANE-VALIDATION-CLEANUP` per the matrix.
+- None. PR #54 merged (commit 3801f35); closeout landed the primary,
+  `_REVIEW`, and this `_CONFIRM` record and resolved
+  `WI-PROJECT-PLANE-VALIDATION-CLEANUP` (`session_transcript` and `commit`
+  populated).

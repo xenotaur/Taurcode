@@ -44,7 +44,5 @@ comments.
 
 # Follow-up
 
-- `session_transcript: pending` should be updated to
-  `claude-app:<session-id>` after the session ends.
-- Run `/lrh-confirm-fixes` before merge; then closeout marks the primary
-  record landed.
+- None. `/lrh-confirm-fixes` ran, PR #54 merged (commit 3801f35), and
+  closeout landed this record (`session_transcript` and `commit` populated).
