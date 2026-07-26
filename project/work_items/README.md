@@ -21,5 +21,16 @@ status: proposed
 ---
 ```
 
+## Required metadata
+
+In addition to `id` and `status`, work items must include:
+
+- `blocked` (`true` or `false`)
+- `blocked_reason` (non-empty when `blocked: true`; `null`/empty otherwise)
+- `resolution` (non-empty when `status` is terminal — `resolved` or `abandoned`;
+  `null`/empty otherwise)
+
+`lrh validate` enforces these fields.
+
 The frontmatter `status` field is authoritative. Bucket directories provide
 human-friendly organization and should match frontmatter status.
