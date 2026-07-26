@@ -427,14 +427,21 @@ matches:
         pushing — never write it silently — then set `status: landed` and push.
       
       Update only this PR's primary record; do not touch unrelated execution
-      records. This includes the record's narrative body (`# Summary`, `# Result`,
-      `# Validation`, `# Follow-up`): it is immutable once written, even when a
-      fact in it has since gone stale (see `project/executions/README.md`). If you
-      notice a stale or wrong fact in an existing record while landing, do **not**
+      records. This includes the primary record's own narrative body (`# Summary`,
+      `# Result`, `# Validation`, `# Follow-up`): once the PR that authored it has
+      merged (i.e. by the time you reach this step, since Step 6's merge gate has
+      already fired), that body is historical and immutable, even when a fact in
+      it has since gone stale (see `project/executions/README.md`). If you notice
+      a stale or wrong fact in an already-merged record while landing, do **not**
       edit it — leave it as-is and annotate the correction in a later, separate
-      follow-up record instead.
+      follow-up record instead. (Editing the same record across pushes *within*
+      the PR that originally authored it, before that PR merges — e.g. during
+      `/lrh-review-response` / `/lrh-confirm-fixes` iteration — is normal authoring,
+      not a rewrite; the immutability rule applies from merge onward.)
       
-      **CHAIN-NOTE.** Report this run's dogfooding signal:
+      **CHAIN-NOTE.** Record this run's dogfooding signal as a durable, greppable
+      artifact (`lrh search executions "CHAIN-NOTE"`) — required by
+      `WS-PROMPT-LIFECYCLE-TOOLKIT`'s exit criteria:
       
           CHAIN-NOTE: cycles=<N>; stops=<N>; gates=[<gates that fired>]; friction=<one phrase or `none`>; note="<free text, or omit>"
       
@@ -442,19 +449,26 @@ matches:
       (1 = converged in a single pass), stops = how many stop-and-report
       conditions fired this run, gates = which human gates actually fired (e.g.
       merge), friction = the one mechanical/boilerplate/noise point or `none`.
-      One line only — if it grows past one line, trim it.
+      One line only — if it grows past one line, trim it. Always include the same
+      line in your final report too.
       
-      Always include this line in your final report. The same immutability rule
-      above governs where else it may go — it must never be appended to a record
-      whose body already exists, even one created earlier in this same run:
+      Where it's written depends on which case above fired — the immutability rule
+      above governs this: never append it to a record whose body is already
+      merged, even one created earlier in this same run:
       
       - **Backfill case (no record existed):** you are authoring that record's
         body for the first time in this step — write the line under its `# Result`
         section as you write the rest of the body.
       - **Found case (an existing primary record's `status` is only being
-        flipped):** its body was already written and committed in an earlier step
-        — do not touch it. The chat report above is the only place this line goes
-        for this case; do not mint a throwaway record just to hold it.
+        flipped):** its body is already merged — do not touch it. Instead mint a
+        small new `AD_HOC` closeout-note record (`lrh prompt label` +
+        `lrh prompt record-execution`, `rerun_of: <primary execution_id>`) whose
+        `# Result` section is written fresh, for the first time, containing only
+        the CHAIN-NOTE line (a one-line `# Summary` pointing back to the primary
+        record's ID is enough — its narrative already lives there). Set this new
+        record's `status` to `landed` immediately, since it documents a completed
+        run with nothing left in progress, and push it alongside the primary
+        record's status flip.
       
       ### Step 9 — Memories and follow-ups
       
@@ -739,14 +753,21 @@ matches:
         pushing — never write it silently — then set `status: landed` and push.
       
       Update only this PR's primary record; do not touch unrelated execution
-      records. This includes the record's narrative body (`# Summary`, `# Result`,
-      `# Validation`, `# Follow-up`): it is immutable once written, even when a
-      fact in it has since gone stale (see `project/executions/README.md`). If you
-      notice a stale or wrong fact in an existing record while landing, do **not**
+      records. This includes the primary record's own narrative body (`# Summary`,
+      `# Result`, `# Validation`, `# Follow-up`): once the PR that authored it has
+      merged (i.e. by the time you reach this step, since Step 4's merge gate has
+      already fired), that body is historical and immutable, even when a fact in
+      it has since gone stale (see `project/executions/README.md`). If you notice
+      a stale or wrong fact in an already-merged record while landing, do **not**
       edit it — leave it as-is and annotate the correction in a later, separate
-      follow-up record instead.
+      follow-up record instead. (Editing the same record across pushes *within*
+      the PR that originally authored it, before that PR merges — e.g. during
+      `/lrh-review-response` / `/lrh-confirm-fixes` iteration — is normal authoring,
+      not a rewrite; the immutability rule applies from merge onward.)
       
-      **CHAIN-NOTE.** Report this run's dogfooding signal:
+      **CHAIN-NOTE.** Record this run's dogfooding signal as a durable, greppable
+      artifact (`lrh search executions "CHAIN-NOTE"`) — required by
+      `WS-PROMPT-LIFECYCLE-TOOLKIT`'s exit criteria:
       
           CHAIN-NOTE: cycles=<N>; stops=<N>; gates=[<gates that fired>]; friction=<one phrase or `none`>; note="<free text, or omit>"
       
@@ -754,19 +775,26 @@ matches:
       (1 = converged in a single pass), stops = how many stop-and-report
       conditions fired this run, gates = which human gates actually fired (e.g.
       merge), friction = the one mechanical/boilerplate/noise point or `none`.
-      One line only — if it grows past one line, trim it.
+      One line only — if it grows past one line, trim it. Always include the same
+      line in your final report too.
       
-      Always include this line in your final report. The same immutability rule
-      above governs where else it may go — it must never be appended to a record
-      whose body already exists, even one created earlier in this same run:
+      Where it's written depends on which case above fired — the immutability rule
+      above governs this: never append it to a record whose body is already
+      merged, even one created earlier in this same run:
       
       - **Backfill case (no record existed):** you are authoring that record's
         body for the first time in this step — write the line under its `# Result`
         section as you write the rest of the body.
       - **Found case (an existing primary record's `status` is only being
-        flipped):** its body was already written and committed in an earlier step
-        — do not touch it. The chat report above is the only place this line goes
-        for this case; do not mint a throwaway record just to hold it.
+        flipped):** its body is already merged — do not touch it. Instead mint a
+        small new `AD_HOC` closeout-note record (`lrh prompt label` +
+        `lrh prompt record-execution`, `rerun_of: <primary execution_id>`) whose
+        `# Result` section is written fresh, for the first time, containing only
+        the CHAIN-NOTE line (a one-line `# Summary` pointing back to the primary
+        record's ID is enough — its narrative already lives there). Set this new
+        record's `status` to `landed` immediately, since it documents a completed
+        run with nothing left in progress, and push it alongside the primary
+        record's status flip.
       
       ### Step 7 — Memories and follow-ups
       
