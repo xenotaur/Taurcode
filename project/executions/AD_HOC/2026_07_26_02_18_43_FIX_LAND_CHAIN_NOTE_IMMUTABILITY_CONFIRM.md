@@ -57,13 +57,16 @@ Problematic. Resolved all 6 threads via `resolveReviewThread`.
   gate merges).
 - `gh pr checks 64` (unfiltered, since no required-check protection exists):
   `lint`, `coverage`, `Check workflow files`, `tests` — all `SUCCESS`.
-- Post-push `HEAD` re-check on `bb57a12` (this record's own commit): `lint`
-  and `coverage` were briefly `IN_PROGRESS`; polled to completion —
-  `lint`, `coverage`, `Check workflow files`, `tests` all `SUCCESS`.
+- Post-push `HEAD` re-check on `bb57a12` (this record's own first commit):
+  briefly `IN_PROGRESS`, polled to completion — all `SUCCESS`. A follow-up
+  edit to this record (filling in that SHA) moved `HEAD` again to `c5d0d1e`,
+  so re-checked CI a second time against that actual final commit: briefly
+  `IN_PROGRESS`, polled to completion — `lint`, `coverage`,
+  `Check workflow files`, `tests` all `SUCCESS`.
 
-**Final verdict: all threads resolved, CI green → ready to merge.**
+**Final verdict: all threads resolved, CI green on `c5d0d1e` → ready to merge.**
 
-    gh pr merge https://github.com/xenotaur/Taurcode/pull/64 --squash --match-head-commit bb57a121c194f11a4a42559b00c1cc4ca7060cb7
+    gh pr merge https://github.com/xenotaur/Taurcode/pull/64 --squash --match-head-commit c5d0d1efa635bb300e2d7afb551451954e3a5750
 
 # Follow-up
 
