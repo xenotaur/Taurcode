@@ -57,11 +57,13 @@ Problematic. Resolved all 6 threads via `resolveReviewThread`.
   gate merges).
 - `gh pr checks 64` (unfiltered, since no required-check protection exists):
   `lint`, `coverage`, `Check workflow files`, `tests` — all `SUCCESS`.
-- Post-push `HEAD` re-check (see commit below): same result, all `SUCCESS`.
+- Post-push `HEAD` re-check on `bb57a12` (this record's own commit): `lint`
+  and `coverage` were briefly `IN_PROGRESS`; polled to completion —
+  `lint`, `coverage`, `Check workflow files`, `tests` all `SUCCESS`.
 
 **Final verdict: all threads resolved, CI green → ready to merge.**
 
-    gh pr merge https://github.com/xenotaur/Taurcode/pull/64 --squash --match-head-commit <post-push-sha>
+    gh pr merge https://github.com/xenotaur/Taurcode/pull/64 --squash --match-head-commit bb57a121c194f11a4a42559b00c1cc4ca7060cb7
 
 # Follow-up
 
