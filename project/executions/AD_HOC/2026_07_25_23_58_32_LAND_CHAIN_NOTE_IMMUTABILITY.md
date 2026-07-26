@@ -2,10 +2,11 @@
 execution_id: 2026_07_25_23_58_32_LAND_CHAIN_NOTE_IMMUTABILITY
 prompt_id: PROMPT(AD_HOC:LAND_CHAIN_NOTE_IMMUTABILITY)[2026-07-25T23:58:16-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 
-pr: 
-commit: 
+pr: https://github.com/xenotaur/Taurcode/pull/64
+commit: 4b9f7a2694028c701365e915ef247c853d857292
+session_transcript: claude-app:919ce4f1-d413-4149-a4f7-28c74883c40d
 created_at: 2026-07-25T23:58:32-04:00
 ---
 
