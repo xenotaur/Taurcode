@@ -101,10 +101,15 @@ the implementation record `in_progress`. Then:
   instruction-phase record. Surface the reconstructed record to me before
   pushing — never write it silently — then set `status: landed` and push.
 
-Update only this PR's primary record; do not touch unrelated execution records.
+Update only this PR's primary record; do not touch unrelated execution
+records. This includes the record's narrative body (`# Summary`, `# Result`,
+`# Validation`, `# Follow-up`): it is immutable once written, even when a
+fact in it has since gone stale (see `project/executions/README.md`). If you
+notice a stale or wrong fact in an existing record while landing, do **not**
+edit it — leave it as-is and annotate the correction in a later, separate
+follow-up record instead.
 
-Before pushing, append one CHAIN-NOTE line to this execution record's body
-(under its Result section), and include the same line in your final report:
+**CHAIN-NOTE.** Report this run's dogfooding signal:
 
     CHAIN-NOTE: cycles=<N>; stops=<N>; gates=[<gates that fired>]; friction=<one phrase or `none`>; note="<free text, or omit>"
 
@@ -112,8 +117,19 @@ where cycles = number of review-response→confirm-fixes rounds it took
 (1 = converged in a single pass), stops = how many stop-and-report
 conditions fired this run, gates = which human gates actually fired (e.g.
 merge), friction = the one mechanical/boilerplate/noise point or `none`.
-One line only — if it grows past one line, trim it. The value is a greppable
-signal (`lrh search executions "CHAIN-NOTE"`), not a retro.
+One line only — if it grows past one line, trim it.
+
+Always include this line in your final report. The same immutability rule
+above governs where else it may go — it must never be appended to a record
+whose body already exists, even one created earlier in this same run:
+
+- **Backfill case (no record existed):** you are authoring that record's
+  body for the first time in this step — write the line under its `# Result`
+  section as you write the rest of the body.
+- **Found case (an existing primary record's `status` is only being
+  flipped):** its body was already written and committed in an earlier step
+  — do not touch it. The chat report above is the only place this line goes
+  for this case; do not mint a throwaway record just to hold it.
 
 ### Step 9 — Memories and follow-ups
 
