@@ -2,10 +2,10 @@
 execution_id: 2026_07_26_00_36_24_FIX_VALIDATION_HARDENING_FRONTMATTER
 prompt_id: PROMPT(AD_HOC:FIX_VALIDATION_HARDENING_FRONTMATTER)[2026-07-26T00:36:16-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 
 pr: https://github.com/xenotaur/Taurcode/pull/63
-commit: 
+commit: c818eb09ff522740cedbce509a92fc9a6ed66ff8
 created_at: 2026-07-26T00:36:24-04:00
 agent: claude_code
 instruction_source: interactive session (chat-driven, no work item); :land driven closeout
