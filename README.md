@@ -14,6 +14,19 @@ Prompt authors and reviewers should use [`docs/how-to/best-practices/prompting-b
 Use the `:prompt-review` prompt (`prompts/taurcode/prompt-review.md`) when you want a reusable assistant-assisted review that applies that guide without duplicating the whole rubric inline.
 Use the `:lrh-template-review` prompt (`prompts/taurcode/lrh-template-review.md`) for guidance-only reviews of Logical Robotics Harness request templates when LRH template files are not being edited directly in an LRH checkout.
 
+### Prompt lifecycle snippets
+
+Use `:execute` (`prompts/taurcode/execute.md`) to drive a work item through the full LRH lifecycle — implement, PR, review, merge, and closeout — nearly autonomously in a single pasted session. Use `:land` (`prompts/taurcode/land.md`) instead when the PR is already open and only the post-PR tail (review through closeout) is needed.
+
+Both snippets bound their autonomy with the same two contracts:
+
+- **Merge gate** — the one point that always stops for a human. The snippet asks for explicit approval before merging, and summarizes what the PR accomplishes and how it changed over the review cycle first.
+- **Review-landed rule** — automated reviewers post minutes after a PR opens or is pushed, so an empty comment-thread list right after pushing is not proof of a clean review. The snippet waits for review to actually complete (with or without findings) before acting on it.
+
+At closeout, both snippets use a find-or-backfill rule for the PR's primary execution record: they update its `status` if one already exists, or honestly reconstruct a backfill record when the PR was authored outside the skill chain and drew no prior record — always surfaced before it is pushed, never written silently. Either way, a one-line `CHAIN-NOTE` evidence signal (`lrh search executions "CHAIN-NOTE"` finds every run) is landed as durable evidence of the run: written directly into a newly authored (backfill) record's `# Result` section, or — since a merged primary record's body is immutable — into a small separate `landed` closeout-note record when the primary record was only found and its status flipped.
+
+Use `:assess` (`prompts/taurcode/assess.md`) to evaluate an existing pull request on its technical merits — not on who authored it — and get a decisive PROCEED AS-IS / PROCEED WITH CHANGES / RECONSIDER recommendation grounded in the diff, review comments, and repository conventions.
+
 ### Manual prompt review workflow
 
 Use the prompt-review system as a lightweight manual review aid rather than as a required automation layer:
