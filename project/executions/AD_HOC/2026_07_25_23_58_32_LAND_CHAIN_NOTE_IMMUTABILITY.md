@@ -58,7 +58,7 @@ Rewrote the "Land the execution record" closing paragraph in both
   PR #64 review — Codex, P1 — correctly flagged that as breaking
   `WS-PROMPT-LIFECYCLE-TOOLKIT`'s exit criterion that a CHAIN-NOTE lands with
   every closeout. Fixed via `/lrh-review-response`; see
-  `2026_07_26_02_12_18_FIX_LAND_CHAIN_NOTE_IMMUTABILITY_REVIEW.md`.)
+  `2026_07_26_02_16_04_FIX_LAND_CHAIN_NOTE_IMMUTABILITY_REVIEW.md`.)
 - Verified issues 2 (find-or-backfill, no-`pr:`-only selection) and 3
   (primary-record ambiguity stop-and-ask) were already correctly handled by
   a prior PR (#58) and needed no change.
