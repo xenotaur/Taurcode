@@ -2,10 +2,10 @@
 execution_id: 2026_07_26_14_37_47_FIX_WORK_ITEMS_README_REQUIRED_METADATA
 prompt_id: PROMPT(AD_HOC:FIX_WORK_ITEMS_README_REQUIRED_METADATA)[2026-07-26T14:37:47-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 
 pr: https://github.com/xenotaur/Taurcode/pull/66
-commit: 
+commit: 3de5beef917ab521febff0d76e425c53c8278ea4
 created_at: 2026-07-26T14:37:47-04:00
 agent: claude_code
 instruction_source: interactive session (chat-driven, no work item); user asked for a `project/*/README.md` drift audit against LogicalRoboticsHarness's canonical copies, modeled on the pattern in PR #64
