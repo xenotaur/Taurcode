@@ -43,8 +43,7 @@ abandoned/  workstreams intentionally stopped, rejected, or superseded
 ```
 
 The runtime loader supports simple single-file workstreams directly inside these bucket
-directories. In either case, bucket placement is a navigational projection, not the ultimate source
-of truth.
+directories. Bucket placement is a navigational projection, not the ultimate source of truth.
 
 ## Minimal frontmatter fields
 

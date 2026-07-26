@@ -54,8 +54,10 @@ closeout with a disciplined human-in-the-loop contract.
 
 ## Status
 
-Deliverables above have landed and closed out across PRs #55–#60, each with an
-execution record. What remains before this workstream resolves is documentation:
+Deliverables above have landed and closed out across PRs #55–#60. Each has a
+dedicated execution record except PR #56 (the manifest-metadata fix), which is
+recorded within the PR #55 record's follow-up rather than in a separate record.
+What remains before this workstream resolves is documentation:
 README and `docs/` still name only `:prompt-review` and `:lrh-template-review`
 and do not mention `:execute`, `:land`, or `:assess`, so the toolkit is
 undiscoverable except by reading the corpus.
