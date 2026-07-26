@@ -2,8 +2,8 @@
 id: WS-PROMPT-LIFECYCLE-TOOLKIT
 kind: planning_node
 title: Prompt Lifecycle Toolkit
-status: active
-stage: reviewing
+status: resolved
+stage: closed
 origin: ad_hoc
 summary: Reusable Espanso prompt snippets that drive an LRH work item through its post-implementation lifecycle (implement, PR, review, merge, closeout) nearly autonomously, plus a PR go/no-go evaluator.
 rationale: Added as a chain of ad-hoc chat-driven PRs with no planning artifact; this workstream captures the stream retroactively so its intent, scope, and remaining work stay visible and future ':remains' checks have exit criteria to grade against.
@@ -52,22 +52,34 @@ closeout with a disciplined human-in-the-loop contract.
 - Supporting export-plane hygiene needed to land the above cleanly (manifest
   metadata sync and the export-directory rename).
 
-## Status
+## Status — resolved
 
-Deliverables above have landed and closed out across PRs #55–#60. Each has a
-dedicated execution record except PR #56 (the manifest-metadata fix), which is
-recorded within the PR #55 record's follow-up rather than in a separate record.
-What remains before this workstream resolves is documentation:
-README and `docs/` still name only `:prompt-review` and `:lrh-template-review`
-and do not mention `:execute`, `:land`, or `:assess`, so the toolkit is
-undiscoverable except by reading the corpus.
+All deliverables above have landed and closed out across PRs #55–#60 and #65.
+Each has a dedicated execution record except PR #56 (the manifest-metadata
+fix), which is recorded within the PR #55 record's follow-up rather than in a
+separate record. `WI-DOCUMENT-LIFECYCLE-SNIPPETS` (PR #65) documented
+`:execute`, `:land`, and `:assess` in `README.md`, satisfying the final exit
+criterion. All exit criteria are met; this workstream is closed.
 
-## Remaining work
+## Closeout note
 
-- Document `:execute`, `:land`, and `:assess` in `README.md` / `docs/` (the open
-  exit-criterion). Capture as a narrowly scoped work item when picked up.
-- Track the eventual removal of the manual `<SESSION_URL — paste View > Copy URL>`
-  step in `:execute` / `:land` once that requirement goes away.
+This workstream was authored directly into `workstreams/active/` rather than
+starting in `proposed/`, since it was created retroactively to capture work
+already substantially underway (see [`project/workstreams/README.md`](../README.md#retroactive-workstreams)
+for this pattern). Because of that, `/lrh-closeout`'s workstream-closeout
+eligibility check — which currently only recognizes `workstreams/proposed/` —
+could not offer closeout automatically. Closure here was confirmed manually: a
+human verified that `WI-DOCUMENT-LIFECYCLE-SNIPPETS` was resolved and that all
+`exit_criteria:` above were met, and explicitly approved closing this
+workstream despite the tooling gap. That gap is tracked for a fix in the LRH
+repository, independent of this workstream's own resolution.
+
+## Follow-up (tracked outside this workstream)
+
+- Removal of the manual `<SESSION_URL — paste View > Copy URL>` step in
+  `:execute` / `:land`, once that requirement goes away upstream. Not an exit
+  criterion for this workstream; capture as a new work item if/when it becomes
+  actionable.
 
 ## Relationship to the roadmap
 

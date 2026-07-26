@@ -126,6 +126,22 @@ Each major transition should leave the `project/` control plane more accurate th
 lifecycle principle for meaningful work, not a requirement that every small edit create a
 workstream.
 
+## Retroactive workstreams
+
+The large-work lifecycle above describes the forward path: a workstream is proposed, then promoted
+to `active/` once execution begins. It is also acceptable to author a workstream directly into
+`active/` (skipping `proposed/`) when it retroactively captures a stream of work that is already
+substantially underway or complete — for example, work executed as a chain of ad hoc prompt-driven
+PRs before anyone paused to record it as a workstream. In that case the workstream's `origin:` field
+should read `ad_hoc`, and its body should say plainly that it was created after the fact.
+
+**Known limitation:** the `/lrh-closeout` skill's workstream-closeout eligibility check currently
+only recognizes workstreams in `workstreams/proposed/`, not `active/` (tracked upstream in the LRH
+repository). Closing a workstream that was seeded directly into `active/` — even when every listed
+work item is resolved and every `exit_criteria:` entry is confirmed met — currently requires a human
+to explicitly confirm and override at the closeout confirm gate, rather than having the skill offer
+it automatically. Re-check whether this limitation still applies before assuming it does.
+
 ## Relationship to work items and execution records
 
 Workstreams aggregate and contextualize meaningful efforts. They can describe why an effort exists,

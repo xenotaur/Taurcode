@@ -2,7 +2,7 @@
 id: WI-DOCUMENT-LIFECYCLE-SNIPPETS
 title: Document the :execute, :land, and :assess prompt snippets
 type: deliverable
-status: proposed
+status: resolved
 priority: medium
 related_focus:
   - FOCUS-BOOTSTRAP
@@ -10,7 +10,7 @@ related_workstreams:
   - WS-PROMPT-LIFECYCLE-TOOLKIT
 blocked: false
 blocked_reason: ""
-resolution: null
+resolution: "Documented :execute, :land, and :assess in README.md, implemented and merged in PR #65 (commit 09cbc6f)."
 ---
 
 # Work Item: Document the :execute, :land, and :assess prompt snippets

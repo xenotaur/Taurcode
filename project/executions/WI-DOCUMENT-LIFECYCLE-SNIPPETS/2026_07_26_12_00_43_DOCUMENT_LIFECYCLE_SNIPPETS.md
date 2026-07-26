@@ -2,14 +2,14 @@
 execution_id: 2026_07_26_12_00_43_DOCUMENT_LIFECYCLE_SNIPPETS
 prompt_id: PROMPT(WI-DOCUMENT-LIFECYCLE-SNIPPETS:DOCUMENT_LIFECYCLE_SNIPPETS)[2026-07-26T11:57:28-04:00]
 work_item: WI-DOCUMENT-LIFECYCLE-SNIPPETS
-status: in_progress
+status: landed
 rerun_of: 
 pr: https://github.com/xenotaur/Taurcode/pull/65
-commit: 
+commit: 09cbc6faf255e8c8408037703169be604c7d9e32
 created_at: 2026-07-26T12:00:43-04:00
 agent: claude_code
 instruction_source: project/work_items/proposed/WI-DOCUMENT-LIFECYCLE-SNIPPETS.md
-session_transcript: https://claude.ai/epitaxy/local_ed7726e5-900b-493d-ae77-ae5b6a7194d0
+session_transcript: claude-app:ed7726e5-900b-493d-ae77-ae5b6a7194d0
 ---
 
 # Summary
