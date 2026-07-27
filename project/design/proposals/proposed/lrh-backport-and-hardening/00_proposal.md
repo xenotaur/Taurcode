@@ -93,9 +93,9 @@ makes install/uninstall the only real opt-in/opt-out unit. A user who wants
 personal `taurcode` triggers but not the `lrh` set (or vice versa) can only
 get that by installing/uninstalling separate packages — folding both into
 one package would make that impossible. Mechanically this costs nothing new:
-`export_espanso()`'s package name is `output.name` (`espanso_export.py:56`),
+`export_espanso()`'s package name is `output.name` (`espanso_export.py:60`),
 and `load_prompts()` already walks whatever directory it's given
-(`prompt_loader.py:52-53`).
+(`prompt_loader.py:57-61`).
 
 ### Decision 3: Manifest curation
 Options considered:
@@ -142,9 +142,18 @@ roundtrip | validate` (`cli.py:24-89`) — none prints a snippet body. This
 serves users who don't run Espanso at all. `--prompts` follows the existing
 convention used by every other subcommand (a directory path,
 e.g. `cli.py:26-33`); unset or `--prompts=all` is new behavior — it requires
-enumerating every top-level `prompts/*/` directory and merging results, since
-`load_prompts()` today only ever walks the one directory it's given
-(`prompt_loader.py:52-53`).
+enumerating prompt corpora and merging results, since `load_prompts()` today
+only ever walks the one directory it's given (`prompt_loader.py:57-61`).
+
+`--prompts=all` must not naively glob every child of `prompts/`: the
+directory already contains `prompts/examples/` (non-canonical), and
+`prompts/imported/` (`IMPORT_STAGING_DIR`, `cli.py:18`) appears after any
+`taurcode import espanso` run. Treating either as a canonical corpus could
+surface duplicate keywords or uncurated staging content. Per `AGENTS.md`'s
+own engineering-style guidance to "avoid hidden magic in repo discovery"
+(`AGENTS.md:47`), `all` must resolve against an explicit, maintained list
+of canonical corpus directories (starting with `prompts/taurcode` and
+`prompts/lrh`), not a directory glob.
 
 ### Decision 6: Sequencing and gate
 Options considered:

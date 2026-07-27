@@ -49,6 +49,7 @@ Adopted design proposal frontmatter may include implementation traceability. Kee
 
 - [Prompting Best Practices and Review Framework](proposed/prompting-best-practices-and-review-framework.md)
 - [Semantic Roundtrip and Regression Suite Design Proposal](proposed/semantic_roundtrip_regression_design.md)
+- [LRH Prompt Backport (Espanso) and Taurcode PyPI Release Hardening](proposed/lrh-backport-and-hardening/00_proposal.md)
 
 ### Adopted
 
