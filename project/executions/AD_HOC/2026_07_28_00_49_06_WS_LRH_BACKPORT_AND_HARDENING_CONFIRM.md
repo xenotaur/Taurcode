@@ -2,14 +2,14 @@
 execution_id: 2026_07_28_00_49_06_WS_LRH_BACKPORT_AND_HARDENING_CONFIRM
 prompt_id: PROMPT(AD_HOC:WS_LRH_BACKPORT_AND_HARDENING_CONFIRM)[2026-07-27T23:49:41-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of:
 pr: https://github.com/xenotaur/Taurcode/pull/69
-commit:
+commit: 1b3cd028151b6a2e99a1868795b91d8655613ab7
 created_at: 2026-07-28T00:49:06-04:00
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/69
-session_transcript: pending
+session_transcript: claude-app:bbea97a2-74d5-4f02-ab32-ab5ff59b2454
 ---
 
 # Summary
