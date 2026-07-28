@@ -92,6 +92,7 @@ The MVP optional field vocabulary is:
 - `rationale`: why the workstream exists or why this grouping is useful.
 - `related_focus`: related current-focus IDs.
 - `related_roadmap`: related roadmap IDs.
+- `related_design`: related design proposal or canonical design doc paths.
 - `work_items`: related work-item IDs when callers need an explicit work-item list separate from
   general `children` relationships.
 - `execution_records`: related prompt execution records or execution-record IDs/paths.
