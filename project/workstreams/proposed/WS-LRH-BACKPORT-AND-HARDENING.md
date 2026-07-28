@@ -5,7 +5,7 @@ title: LRH Prompt Backport (Espanso) and Taurcode PyPI Release Hardening
 status: proposed
 stage: designed
 origin: design_review
-summary: Coordinate the three tracks from the adopted design (prompts/lrh/ Espanso backport, taurcode show CLI, and Taurcode PyPI release hardening on LRH's proven pipeline) through work items to closeout.
+summary: Coordinate the three tracks from the proposed design (prompts/lrh/ Espanso backport, taurcode show CLI, and Taurcode PyPI release hardening on LRH's proven pipeline) through work items to closeout.
 related_focus:
   - FOCUS-BOOTSTRAP
 related_roadmap: []
@@ -35,7 +35,7 @@ This workstream coordinates the implementation of `project/design/proposals/prop
 ## Prior Art Check
 
 ### Duplication search
-- In-repo: No existing implementation found. The only match was the proposal's own listing in `project/design/proposals/README.md`.
+- In-repo: No existing implementation of this workstream's scope found. Related prior art: `prompts/taurcode/implement.md` (existing hand-authored `:implement` backport of `/lrh-implement`) and `prompts/taurcode/lrh-template-review.md` (existing `:lrh-` namespace precedent) — both already identified by the governing proposal as artifacts this work extends/relocates rather than duplicates. Also matched: the proposal's own listing in `project/design/proposals/README.md`.
 - Sibling repos: None identified beyond what the governing proposal already covers (LRH has no Espanso tooling; Taurworks and Prosoc share Taurcode's identical unresolved `scripts/publish` stub, noted as a longer-horizon, undecided angle in the proposal's Open Questions).
 - External libraries: None identified — composes existing tools (Espanso, setuptools-scm, `pypa/gh-action-pypi-publish`) per the proposal.
 - Recommendation: Proceed.
