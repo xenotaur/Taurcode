@@ -15,21 +15,23 @@ Proposal lifecycle state is represented in two places: YAML frontmatter and buck
 
 Taurcode proposal status values are:
 
-- `proposed`: the proposal is open for consideration or has not yet been accepted.
-- `accepted`: the proposal has been adopted as project design direction.
+- `proposed`: the proposal is open for consideration or has not yet been adopted.
+- `adopted`: the proposal has been adopted as project design direction.
 
-Move a proposal to `adopted/` when its frontmatter status changes to `accepted`. When an adopted proposal's decisions become canonical long-term behavior, distill or promote the durable guidance into top-level `project/design/` documentation and leave the proposal as historical rationale.
+Move a proposal to `adopted/` when its frontmatter status changes to `adopted`. When an adopted proposal's decisions become canonical long-term behavior, distill or promote the durable guidance into top-level `project/design/` documentation and leave the proposal as historical rationale.
 
 ## Adding a Proposal
 
 1. Create a Markdown file under `proposed/`.
-2. Start it with YAML frontmatter containing `id`, `type: design_proposal`, `status: proposed`, and `title`.
+2. Start it with YAML frontmatter containing `id` (use `PROP-<SLUG>` for new
+   proposals; existing bare-slug ids predate this convention and should not
+   be renamed), `type: design_proposal`, `status: proposed`, and `title`.
 3. Keep the body focused on the problem, goals, non-goals, proposed direction, validation, and follow-up work.
 4. Link the proposal from this README.
 
 ## Closing or Promoting a Proposal
 
-1. Update frontmatter `status` to `accepted` when the project adopts the proposal.
+1. Update frontmatter `status` to `adopted` when the project adopts the proposal.
 2. Update any body-level status note so it does not contradict the frontmatter.
 3. Move the file from `proposed/` to `adopted/`.
 4. Update links that referenced the old path.
