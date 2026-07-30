@@ -1,0 +1,10 @@
+name: lrh
+title: LRH
+description: Espanso snippets backporting Logical Robotics Harness (LRH) slash-command skills for use outside Claude Code sessions.
+version: 0.1.0
+author: Anthony Francis
+tags:
+  - prompts
+  - lrh
+  - development
+homepage: https://github.com/xenotaur/logical_robotics_harness

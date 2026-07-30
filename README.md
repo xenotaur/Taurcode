@@ -14,6 +14,16 @@ Prompt authors and reviewers should use [`docs/how-to/best-practices/prompting-b
 Use the `:prompt-review` prompt (`prompts/taurcode/prompt-review.md`) when you want a reusable assistant-assisted review that applies that guide without duplicating the whole rubric inline.
 Use the `:lrh-template-review` prompt (`prompts/taurcode/lrh-template-review.md`) for guidance-only reviews of Logical Robotics Harness request templates when LRH template files are not being edited directly in an LRH checkout.
 
+### LRH prompt backport (`lrh` package)
+
+`prompts/lrh/` is a second, independently-installable prompt package that backports proven LRH slash-command skills into short, paste-able `:lrh-`-prefixed Espanso triggers, for sessions that don't have the LRH skills installed or don't support Claude Code slash commands directly. It ships separately from the `taurcode` package (see [the governing design proposal](project/design/proposals/proposed/lrh-backport-and-hardening/00_proposal.md) for why), so users can install one without the other:
+
+```bash
+taurcode install espanso --prompts prompts/lrh --restart
+```
+
+Currently backported: `:lrh-implement` (`prompts/lrh/lrh-implement.md`), `:lrh-review-response` (`prompts/lrh/lrh-review-response.md`), `:lrh-confirm-fixes` (`prompts/lrh/lrh-confirm-fixes.md`), and `:lrh-closeout` (`prompts/lrh/lrh-closeout.md`). The generated package is checked in at `exports/espanso/lrh/`, mirroring `exports/espanso/taurcode/`.
+
 ### Prompt lifecycle snippets
 
 Use `:execute` (`prompts/taurcode/execute.md`) to drive a work item through the full LRH lifecycle — implement, PR, review, merge, and closeout — nearly autonomously in a single pasted session. Use `:land` (`prompts/taurcode/land.md`) instead when the PR is already open and only the post-PR tail (review through closeout) is needed.
