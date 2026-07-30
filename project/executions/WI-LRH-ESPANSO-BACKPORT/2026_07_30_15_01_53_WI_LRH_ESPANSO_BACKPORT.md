@@ -2,14 +2,14 @@
 execution_id: 2026_07_30_15_01_53_WI_LRH_ESPANSO_BACKPORT
 prompt_id: PROMPT(WI-LRH-ESPANSO-BACKPORT:WI_LRH_ESPANSO_BACKPORT)[2026-07-30T14:54:15-04:00]
 work_item: WI-LRH-ESPANSO-BACKPORT
-status: in_progress
+status: landed
 rerun_of:
 pr: https://github.com/xenotaur/Taurcode/pull/72
-commit: e49418c
+commit: 661c9b312e63956aec4fe9caeade40b32666ae93
 created_at: 2026-07-30T15:01:53-04:00
 agent: claude_app
 instruction_source: project/work_items/proposed/WI-LRH-ESPANSO-BACKPORT.md
-session_transcript: pending
+session_transcript: claude-app:bbea97a2-74d5-4f02-ab32-ab5ff59b2454
 ---
 
 # Summary

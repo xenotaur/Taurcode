@@ -2,14 +2,14 @@
 execution_id: 2026_07_30_15_13_56_WI_LRH_ESPANSO_BACKPORT_IMPL_CONFIRM
 prompt_id: PROMPT(AD_HOC:WI_LRH_ESPANSO_BACKPORT_IMPL_CONFIRM)[2026-07-30T15:13:36-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 2026_07_30_15_01_53_WI_LRH_ESPANSO_BACKPORT
 pr: https://github.com/xenotaur/Taurcode/pull/72
-commit: 68d6192
+commit: 661c9b312e63956aec4fe9caeade40b32666ae93
 created_at: 2026-07-30T15:13:56-04:00
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/72
-session_transcript: pending
+session_transcript: claude-app:bbea97a2-74d5-4f02-ab32-ab5ff59b2454
 ---
 
 # Summary

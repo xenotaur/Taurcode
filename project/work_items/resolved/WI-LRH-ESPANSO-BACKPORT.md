@@ -1,11 +1,11 @@
 ---
-resolution: null
+resolution: "Implemented and merged in PR #72 (commit 661c9b3)."
 blocked_reason: null
 blocked: false
 id: WI-LRH-ESPANSO-BACKPORT
 title: Add prompts/lrh/ Espanso backport package
 type: deliverable
-status: proposed
+status: resolved
 owner: anthony
 contributors:
   - anthony
