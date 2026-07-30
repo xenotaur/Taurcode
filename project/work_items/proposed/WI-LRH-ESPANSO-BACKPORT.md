@@ -36,7 +36,7 @@ acceptance:
   - prompts/lrh/implement.md, review-response.md, confirm-fixes.md, and closeout.md exist, each with a :lrh-<name>-prefixed keyword
   - taurcode export espanso --prompts prompts/lrh --output exports/espanso/lrh produces a package named lrh using the curated manifest, not espanso_metadata.generate_default_manifest()'s default
   - exports/espanso/lrh/ is committed, mirroring the existing exports/espanso/taurcode/ checked-in export
-  - taurcode install espanso --prompts prompts/lrh installs a package independent of the existing taurcode package
+  - On macOS, taurcode install espanso --prompts prompts/lrh installs a package independent of the existing taurcode package; on other platforms, resolve_packages_dir rejects the install by design (espanso_install.py:39-53), so the equivalent check is that taurcode export espanso --prompts prompts/lrh produces a package.yml/_manifest.yml pair with lrh as the package name
   - taurcode validate --prompts prompts/lrh and taurcode lint prompts --prompts prompts/lrh pass with 0 errors
   - lrh validate passes with 0 errors
 required_evidence:
@@ -92,8 +92,8 @@ Add a `prompts/lrh/` corpus of `:lrh-`-prefixed Espanso snippets backporting pro
 3. Create `prompts/lrh/review-response.md` (`:lrh-review-response`), `prompts/lrh/confirm-fixes.md` (`:lrh-confirm-fixes`), and `prompts/lrh/closeout.md` (`:lrh-closeout`), each backporting the corresponding LRH slash-command skill.
 4. Run `taurcode validate --prompts prompts/lrh` and `taurcode lint prompts --prompts prompts/lrh` to confirm the new corpus is well-formed.
 5. Run `taurcode export espanso --prompts prompts/lrh --output exports/espanso/lrh` and commit the generated `exports/espanso/lrh/` output.
-6. Run `taurcode install espanso --prompts prompts/lrh` to confirm the package installs correctly as `lrh`, independent of `taurcode`.
-7. Add `WI-LRH-ESPANSO-BACKPORT` to `WS-LRH-BACKPORT-AND-HARDENING`'s `work_items:` list (offered separately at Step 11).
+6. On macOS, run `taurcode install espanso --prompts prompts/lrh` to confirm the package installs correctly as `lrh`, independent of `taurcode`. `taurcode install espanso` is macOS-only by design (`resolve_packages_dir` rejects every other platform, `src/taurcode/espanso_install.py:39-53`); on other platforms, rely on the export-based check in step 5 instead.
+7. `WI-LRH-ESPANSO-BACKPORT` is already listed in `WS-LRH-BACKPORT-AND-HARDENING`'s `work_items:` — done as part of creating this work item, not deferred to implementation.
 
 ## Non-Goals
 
@@ -109,11 +109,12 @@ See frontmatter `acceptance:` above.
 
 ## Validation
 
+- `scripts/develop`
 - `scripts/version tools`
 - `taurcode validate --prompts prompts/lrh`
 - `taurcode lint prompts --prompts prompts/lrh`
 - `taurcode export espanso --prompts prompts/lrh --output exports/espanso/lrh`
-- `taurcode install espanso --prompts prompts/lrh`
+- `taurcode install espanso --prompts prompts/lrh` (macOS only; on other platforms, inspect the `exports/espanso/lrh/package.yml` and `_manifest.yml` produced by the export step above instead)
 - `lrh validate`
 
 ## Open Questions
