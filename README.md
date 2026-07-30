@@ -16,10 +16,16 @@ Use the `:lrh-template-review` prompt (`prompts/taurcode/lrh-template-review.md`
 
 ### LRH prompt backport (`lrh` package)
 
-`prompts/lrh/` is a second, independently-installable prompt package that backports proven LRH slash-command skills into short, paste-able `:lrh-`-prefixed Espanso triggers, for sessions that don't have the LRH skills installed or don't support Claude Code slash commands directly. It ships separately from the `taurcode` package (see [the governing design proposal](project/design/proposals/proposed/lrh-backport-and-hardening/00_proposal.md) for why), so users can install one without the other:
+`prompts/lrh/` is a second, independently-installable prompt package that backports proven LRH slash-command skills into short, paste-able `:lrh-`-prefixed Espanso triggers, for sessions that don't have the LRH skills installed or don't support Claude Code slash commands directly. It ships separately from the `taurcode` package (see [the governing design proposal](project/design/proposals/proposed/lrh-backport-and-hardening/00_proposal.md) for why), so users can install one without the other. On macOS:
 
 ```bash
 taurcode install espanso --prompts prompts/lrh --restart
+```
+
+On other platforms, `taurcode install espanso` is unsupported (see "Install into Espanso (macOS)" below); export and copy the package manually instead:
+
+```bash
+taurcode export espanso --prompts prompts/lrh --output exports/espanso/lrh
 ```
 
 Currently backported: `:lrh-implement` (`prompts/lrh/lrh-implement.md`), `:lrh-review-response` (`prompts/lrh/lrh-review-response.md`), `:lrh-confirm-fixes` (`prompts/lrh/lrh-confirm-fixes.md`), and `:lrh-closeout` (`prompts/lrh/lrh-closeout.md`). The generated package is checked in at `exports/espanso/lrh/`, mirroring `exports/espanso/taurcode/`.

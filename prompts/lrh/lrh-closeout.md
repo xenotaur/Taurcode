@@ -18,6 +18,10 @@ This step requires LRH. If `lrh` is not on PATH, install it once, globally:
 
     pipx install lrh
 
+LRH is not yet published to PyPI (tracked by `PROP-TAG-PUSH-PYPI-PUBLISHING`
+in the LRH repo); until it is, `pipx install <path-to-local-lrh-checkout>`
+or a locally built wheel installs the same `lrh` console script.
+
 ---
 
 ### Step 1 — Verify PR state

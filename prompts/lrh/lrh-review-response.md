@@ -16,6 +16,10 @@ independent of the target repository:
 
     pipx install lrh
 
+LRH is not yet published to PyPI (tracked by `PROP-TAG-PUSH-PYPI-PUBLISHING`
+in the LRH repo); until it is, `pipx install <path-to-local-lrh-checkout>`
+or a locally built wheel installs the same `lrh` console script.
+
 ---
 
 ### Step 1 — Detect PR and verify identity
@@ -106,9 +110,11 @@ existing open PR branch — do not open a new PR.
       --status in_progress \
       --project-root .
 
-Populate `agent`, `instruction_source` (the PR URL), and
-`session_transcript: pending`. Find the primary execution record for this
-branch (upper-underscore slug, excluding files ending `_REVIEW.md` or
+Populate `pr:` (the PR URL — required for `:lrh-closeout` to discover this
+record later; it greps `^pr: <pr-url>` across `project/executions/`),
+`agent`, `instruction_source` (the PR URL), and `session_transcript:
+pending`. Find the primary execution record for this branch
+(upper-underscore slug, excluding files ending `_REVIEW.md` or
 `_CONFIRM.md`) and set `rerun_of:` if found. Run `lrh validate`, then commit
 and push the record as an additional commit to the open PR.
 
