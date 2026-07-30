@@ -11,7 +11,8 @@ related_focus:
 related_roadmap: []
 related_design:
   - project/design/proposals/proposed/lrh-backport-and-hardening/00_proposal.md
-work_items: []
+work_items:
+  - WI-LRH-ESPANSO-BACKPORT
 exit_criteria:
   - "The lrh Espanso package builds from prompts/lrh/ with a curated manifest (not the tool's generated default) and installs independently of the taurcode package."
   - "taurcode show resolves --prompts all against an explicit, maintained corpus list, not a directory glob of prompts/*/."
@@ -48,7 +49,9 @@ This workstream coordinates the implementation of `project/design/proposals/prop
 
 ## Work Items
 
-None created yet. To be added as each of the three tracks (Espanso backport, `taurcode show`, release hardening) is scoped into its own work item — the tracks have no dependency on each other and can be created and landed independently.
+- **WI-LRH-ESPANSO-BACKPORT** — Add the `prompts/lrh/` Espanso backport package.
+
+The other two tracks (`taurcode show`, release hardening) have no dependency on this one or each other, and will be added as their own work items as each is scoped.
 
 ## Exit Criteria
 
