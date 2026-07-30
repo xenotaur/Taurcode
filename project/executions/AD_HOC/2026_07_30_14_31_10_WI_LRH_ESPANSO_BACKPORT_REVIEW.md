@@ -2,10 +2,10 @@
 execution_id: 2026_07_30_14_31_10_WI_LRH_ESPANSO_BACKPORT_REVIEW
 prompt_id: PROMPT(AD_HOC:WI_LRH_ESPANSO_BACKPORT_REVIEW)[2026-07-30T14:28:06-04:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 2026_07_30_13_57_58_WI_LRH_ESPANSO_BACKPORT
 pr: https://github.com/xenotaur/Taurcode/pull/71
-commit: 20822a9
+commit: e4879e46b4a3e8894b9173fb3ce1184db7c86d08
 created_at: 2026-07-30T14:31:10-04:00
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/71
