@@ -2,10 +2,10 @@
 execution_id: 2026_07_31_08_31_21_WI_TAURCODE_SHOW_COMMAND_IMPL_REVIEW
 prompt_id: PROMPT(AD_HOC:WI_TAURCODE_SHOW_COMMAND_IMPL_REVIEW)[2026-07-31T08:25:02+00:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 2026_07_31_07_45_44_WI_TAURCODE_SHOW_COMMAND
 pr: https://github.com/xenotaur/Taurcode/pull/75
-commit: 238526b
+commit: 6a30e6d5f98170829b8a44282c53d7e25024668f
 created_at: 2026-07-31T08:31:21+00:00
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/75

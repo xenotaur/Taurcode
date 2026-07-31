@@ -2,14 +2,14 @@
 execution_id: 2026_07_31_07_45_44_WI_TAURCODE_SHOW_COMMAND
 prompt_id: PROMPT(WI-TAURCODE-SHOW-COMMAND:WI_TAURCODE_SHOW_COMMAND)[2026-07-31T04:57:32+00:00]
 work_item: WI-TAURCODE-SHOW-COMMAND
-status: in_progress
+status: landed
 rerun_of:
 pr: https://github.com/xenotaur/Taurcode/pull/75
-commit: 1256b85
+commit: 6a30e6d5f98170829b8a44282c53d7e25024668f
 created_at: 2026-07-31T07:45:44+00:00
 agent: claude_app
 instruction_source: project/work_items/proposed/WI-TAURCODE-SHOW-COMMAND.md
-session_transcript: pending
+session_transcript: claude-app:bbea97a2-74d5-4f02-ab32-ab5ff59b2454
 ---
 
 # Summary

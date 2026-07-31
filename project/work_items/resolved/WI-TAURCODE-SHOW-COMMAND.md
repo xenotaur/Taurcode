@@ -1,11 +1,11 @@
 ---
-resolution: null
+resolution: "Implemented and merged in PR #75 (commit 6a30e6d)."
 blocked_reason: null
 blocked: false
 id: WI-TAURCODE-SHOW-COMMAND
 title: Implement taurcode show CLI command
 type: deliverable
-status: proposed
+status: resolved
 owner: anthony
 contributors:
   - anthony
