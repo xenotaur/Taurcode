@@ -29,7 +29,7 @@ forbidden_actions:
   - force_push
   - delete_branch
   - merge_pr
-  - publish_package
+  - publish_to_production_pypi
   - implement_espanso_backport_content
   - implement_taurcode_show
   - register_pypi_trusted_publisher
@@ -37,7 +37,7 @@ forbidden_actions:
   - tag_or_publish_real_release
 acceptance:
   - pyproject.toml uses dynamic = ["version"] via setuptools-scm instead of a static version string, and scripts/version (with no argument) still resolves the correct version through importlib.metadata
-  - scripts/version verify <tag> exists and validates a vMAJOR.MINOR.PATCH tag against repo state, mirroring LRH's scripts/version verify
+  - scripts/version verify <tag> exists and verifies the tag matches vMAJOR.MINOR.PATCH format and repo state, mirroring LRH's scripts/version verify
   - scripts/release-smoke <tag> --strict-isolation exists, builds sdist/wheel in an isolated venv, installs the wheel, and runs real installed-CLI invocations (not source-tree invocations), checking for editable-install/.pth leakage — limited to the generically-useful isolation-check core, not LRH's package-data template-loading checks (Taurcode ships no runtime package-data resources)
   - .github/workflows/release.yml exists, tag-triggered on v*.*.*, running tag-format validation, scripts/version verify, scripts/release-smoke --strict-isolation, then a publish-pypi job using PyPI Trusted Publishing (id-token: write, pypa/gh-action-pypi-publish@release/v1) — the actual Trusted Publisher and GitHub Environment configuration is a separate, human-performed step not included in this item's scope
   - .github/workflows/testpypi-rehearsal.yml exists (workflow_dispatch), running the same build-check-smoke steps and publishing to TestPyPI
@@ -93,7 +93,7 @@ The governing design (`project/design/proposals/proposed/lrh-backport-and-harden
 - `scripts/version verify <tag>`.
 - A trimmed `scripts/release-smoke` (isolated build/install/invoke/leak-check core only).
 - `release.yml` (tag-triggered) and `testpypi-rehearsal.yml` (`workflow_dispatch`) using PyPI Trusted Publishing.
-- A TestPyPI rehearsal against a `v0.1.0` tag, once the human-performed Trusted Publisher setup is done.
+- A TestPyPI rehearsal against a `v0.1.0` tag, once the human-performed Trusted Publisher setup is done. Uploading to **TestPyPI** as part of this rehearsal is explicitly in scope and permitted; `forbidden_actions: publish_to_production_pypi` only prohibits publishing to the real, production PyPI index.
 
 ## Required Changes
 
@@ -104,7 +104,7 @@ The governing design (`project/design/proposals/proposed/lrh-backport-and-harden
 5. Add `.github/workflows/testpypi-rehearsal.yml`: `workflow_dispatch`, same build-check-smoke steps, publishing to TestPyPI (`environment: testpypi`).
 6. Update `constraints-dev.txt` if `setuptools-scm` or other new dev-tooling pins are needed.
 7. Document the release process in `README.md` (or a new `docs/how-to/` page) — what a maintainer runs, what's automated, what's still manual (Trusted Publisher setup, environment configuration).
-8. Add `WI-TAURCODE-RELEASE-HARDENING` to `WS-LRH-BACKPORT-AND-HARDENING`'s `work_items:` list (offered separately at Step 9).
+8. `WI-TAURCODE-RELEASE-HARDENING` is already listed in `WS-LRH-BACKPORT-AND-HARDENING`'s `work_items:` — done as part of creating this work item, not deferred to implementation.
 
 ## Non-Goals
 
@@ -134,6 +134,7 @@ See frontmatter `acceptance:` above.
 
 - The TestPyPI rehearsal acceptance criterion depends on a human completing the Trusted Publisher setup on pypi.org/GitHub first — this item's file changes are independently completable and validatable without that setup, but the rehearsal itself can't run until it's done. Tracked as a Follow-up, not a blocker on landing the code.
 - `scripts/release-smoke`'s isolated-venv build/install pattern is the most novel piece for this repo (nothing like it exists in Taurcode today) — budget extra validation time here relative to the other Required Changes items.
+- **Tag-collision safety gap:** `release.yml` triggers its production `publish-pypi` job on any push matching `v*.*.*` — the same pattern the TestPyPI rehearsal's tag (`v0.1.0`) must use. Configuring the `pypi` GitHub Environment's required-reviewer gate is explicitly out of this item's scope (see Non-Goals), so if that gate is not configured *before* the `v0.1.0` tag is ever pushed, `release.yml` could attempt an unguarded production-publish the moment PyPI Trusted Publishing is set up — even though the rehearsal only intends to exercise TestPyPI. **The human must configure the `pypi` environment's approval gate before pushing any `v*.*.*`-pattern tag, including for rehearsal purposes** — this ordering constraint is a precondition for safely completing the TestPyPI rehearsal acceptance criterion, not something this item's code changes can enforce on their own.
 
 ## Open Questions
 
