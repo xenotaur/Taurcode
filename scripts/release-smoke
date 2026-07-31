@@ -30,11 +30,18 @@ cd "$REPO_ROOT"
 
 scripts/build
 
-WHEEL_PATH="$(ls dist/*.whl | head -n1)"
-if [[ -z "$WHEEL_PATH" ]]; then
+shopt -s nullglob
+WHEELS=(dist/*.whl)
+shopt -u nullglob
+if [[ "${#WHEELS[@]}" -eq 0 ]]; then
   echo "ERROR: no wheel found in dist/ after scripts/build" >&2
   exit 1
 fi
+if [[ "${#WHEELS[@]}" -gt 1 ]]; then
+  echo "ERROR: expected exactly one wheel in dist/ after scripts/build, found ${#WHEELS[@]}: ${WHEELS[*]}" >&2
+  exit 1
+fi
+WHEEL_PATH="${WHEELS[0]}"
 echo "Using wheel: $WHEEL_PATH"
 
 VENV_ROOT="$(mktemp -d -t taurcode-release-smoke)"

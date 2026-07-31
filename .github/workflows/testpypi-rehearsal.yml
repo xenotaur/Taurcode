@@ -16,6 +16,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Validate TestPyPI rehearsal tag
         run: |
@@ -42,6 +44,9 @@ jobs:
 
       - name: "Diagnostics: toolchain versions"
         run: scripts/version tools
+
+      - name: Verify release tag semantics and repository checks
+        run: scripts/version verify "$TAG_UNDER_TEST"
 
       - name: Build artifacts and smoke-test installed wheel
         run: scripts/release-smoke "$TAG_UNDER_TEST" --strict-isolation
