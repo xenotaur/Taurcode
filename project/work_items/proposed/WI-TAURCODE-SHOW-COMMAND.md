@@ -34,6 +34,7 @@ forbidden_actions:
   - move_prompts_to_lrh_repo
 acceptance:
   - taurcode show <keyword> with no --prompts prints the matching snippet body from the explicit canonical-corpus list (prompts/taurcode, prompts/lrh) to stdout, exit 0
+  - taurcode show <keyword> --prompts all resolves the same explicit canonical-corpus list as the omitted-option default, not a literal directory named "all"
   - taurcode show <keyword> --prompts <dir> searches only that directory, not the canonical list
   - A keyword not found (in the given corpus, or in any canonical corpus by default) prints an error to stderr and exits non-zero
   - A keyword matching more than one canonical corpus prints an error listing which corpora matched and exits non-zero, rather than silently picking one
@@ -82,10 +83,10 @@ The governing design (`project/design/proposals/proposed/lrh-backport-and-harden
 ## Required Changes
 
 1. Add a `CANONICAL_PROMPT_DIRS` (or equivalently named) constant listing the canonical corpora explicitly, next to `CANONICAL_PROMPTS_DIR`/`IMPORT_STAGING_DIR` in `cli.py:17-18`.
-2. Add the `show` subparser: positional `keyword`, optional `--prompts <dir>` (unset = search the canonical list).
-3. Implement lookup logic: load prompts from either the explicit `--prompts` directory or every canonical corpus, match on `keyword`, print the body to stdout on a unique match.
+2. Add the `show` subparser: positional `keyword`, optional `--prompts <dir>` (unset or the literal value `all` both mean "search the canonical list" — `all` must not be treated as a literal directory path).
+3. Implement lookup logic: load prompts from either the explicit `--prompts` directory or every canonical corpus (when `--prompts` is unset or `all`), match on `keyword`, print the body to stdout on a unique match.
 4. Implement error handling: no match → stderr + non-zero exit; match in more than one canonical corpus → stderr listing the matching corpora + non-zero exit.
-5. Add tests covering: single-corpus lookup, default multi-corpus lookup, not-found, and ambiguous-match cases.
+5. Add tests covering: single-corpus lookup, default multi-corpus lookup, explicit `--prompts all`, not-found, and ambiguous-match cases.
 6. Document `taurcode show` in `README.md` alongside the other subcommands.
 
 ## Non-Goals
@@ -105,5 +106,6 @@ See frontmatter `acceptance:` above.
 - `scripts/lint`
 - `scripts/test`
 - `taurcode show :lrh-implement` (default, multi-corpus)
+- `taurcode show :lrh-implement --prompts all` (explicit multi-corpus)
 - `taurcode show :lrh-implement --prompts prompts/lrh` (single-corpus)
 - `lrh validate`
