@@ -2,10 +2,10 @@
 execution_id: 2026_07_31_19_29_09_WI_TAURCODE_RELEASE_HARDENING
 prompt_id: PROMPT(WI-TAURCODE-RELEASE-HARDENING:WI_TAURCODE_RELEASE_HARDENING)[2026-07-31T18:54:14+00:00]
 work_item: WI-TAURCODE-RELEASE-HARDENING
-status: in_progress
+status: landed
 rerun_of: 
 pr: https://github.com/xenotaur/Taurcode/pull/76
-commit: 
+commit: 82c5731ba3192e6307f468e5cf781616bc3992cf
 created_at: 2026-07-31T19:29:09+00:00
 agent: claude_app
 instruction_source: project/work_items/proposed/WI-TAURCODE-RELEASE-HARDENING.md

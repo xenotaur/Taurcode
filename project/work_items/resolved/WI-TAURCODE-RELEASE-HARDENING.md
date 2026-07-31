@@ -1,11 +1,11 @@
 ---
-resolution: null
+resolution: "Implemented and merged in PR #76 (commit 82c5731)."
 blocked_reason: null
 blocked: false
 id: WI-TAURCODE-RELEASE-HARDENING
 title: Harden Taurcode release pipeline for PyPI (setuptools-scm, release-smoke, CI)
 type: deliverable
-status: proposed
+status: resolved
 owner: anthony
 contributors:
   - anthony
