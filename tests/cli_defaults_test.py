@@ -43,6 +43,11 @@ class TestCliDefaults(unittest.TestCase):
 
         self.assertEqual(args.output, cli.IMPORT_STAGING_DIR)
 
+    def test_show_prompts_defaults_to_none_meaning_all_canonical_corpora(self) -> None:
+        args = cli.build_parser().parse_args(["show", ":some-keyword"])
+
+        self.assertIsNone(args.prompts)
+
 
 if __name__ == "__main__":
     unittest.main()

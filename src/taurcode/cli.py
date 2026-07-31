@@ -17,6 +17,7 @@ from taurcode import (
 CANONICAL_PROMPTS_DIR = "prompts/taurcode"
 IMPORT_STAGING_DIR = "prompts/imported"
 ESPANSO_OUTPUT_DIR = "build/espanso/taurcode"
+CANONICAL_PROMPT_DIRS = (CANONICAL_PROMPTS_DIR, "prompts/lrh")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -87,6 +88,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("--prompts", default=CANONICAL_PROMPTS_DIR)
+
+    show_parser = subparsers.add_parser("show")
+    show_parser.add_argument("keyword")
+    show_parser.add_argument(
+        "--prompts",
+        default=None,
+        help=(
+            "Directory to search, or 'all' to search every canonical corpus. "
+            "Defaults to searching every canonical corpus."
+        ),
+    )
 
     return parser
 
@@ -169,6 +181,35 @@ def main(argv: Optional[List[str]] = None) -> int:
             prompts = prompt_loader.load_prompts(args.prompts)
             validate.validate_prompts(prompts)
             print(f"Validation passed: {len(prompts)} prompt(s) in {args.prompts}")
+            return 0
+        if args.command == "show":
+            if args.prompts is None or args.prompts == "all":
+                search_dirs = list(CANONICAL_PROMPT_DIRS)
+            else:
+                search_dirs = [args.prompts]
+            matches = []
+            for prompts_dir in search_dirs:
+                for prompt in prompt_loader.load_prompts(prompts_dir):
+                    if prompt.keyword == args.keyword:
+                        matches.append((prompts_dir, prompt))
+            if not matches:
+                searched = ", ".join(search_dirs)
+                print(
+                    f"Error: no prompt found with keyword {args.keyword!r} "
+                    f"in {searched}",
+                    file=sys.stderr,
+                )
+                return 1
+            if len(matches) > 1:
+                matched_dirs = ", ".join(prompts_dir for prompts_dir, _ in matches)
+                print(
+                    f"Error: keyword {args.keyword!r} matched more than one "
+                    f"canonical corpus: {matched_dirs}",
+                    file=sys.stderr,
+                )
+                return 1
+            _, prompt = matches[0]
+            sys.stdout.write(prompt.body)
             return 0
     except (OSError, ValueError) as error:
         print(f"Error: {error}", file=sys.stderr)
