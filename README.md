@@ -345,3 +345,27 @@ Testing conventions:
 - Test framework: `unittest`
 - Discovery pattern: `*_test.py`
 - `scripts/test` fails if zero tests are discovered.
+
+## Release process
+
+Taurcode's version is derived from git tags via `setuptools-scm` (`pyproject.toml` declares `dynamic = ["version"]`); there is no version string to bump by hand. `scripts/version` (no arguments) prints the currently resolved version.
+
+Release tags follow `vMAJOR.MINOR.PATCH` (for example, `v0.1.0`). `setuptools-scm` only resolves a real release version once the tag exists, so create the tag locally *before* running verification — do not push it until both checks pass:
+
+```bash
+git tag vMAJOR.MINOR.PATCH
+scripts/version verify vMAJOR.MINOR.PATCH
+scripts/release-smoke vMAJOR.MINOR.PATCH --strict-isolation
+```
+
+- `scripts/version verify <tag>` checks the tag format, requires a clean working tree, and re-runs `scripts/lint`, `scripts/format --check`, and `scripts/test`.
+- `scripts/release-smoke <tag> --strict-isolation` builds the sdist/wheel (`scripts/build`), installs the wheel into an isolated venv, and runs real invocations of the *installed* `taurcode` CLI — catching editable-install/`.pth` leakage and confirming the installed version matches the tag. Without a tag argument, it skips the version check (useful for a quick local isolation check on an untagged commit).
+
+Publishing is handled by two tag/dispatch-triggered GitHub Actions workflows, both using [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC — no stored API tokens):
+
+- `.github/workflows/release.yml` — triggered by pushing a `v*.*.*` tag; builds, verifies, and smoke-tests the tagged checkout, then publishes to PyPI via the `pypi` GitHub Environment.
+- `.github/workflows/testpypi-rehearsal.yml` — manually triggered (`workflow_dispatch`) against an existing tag; runs the same build/verify/smoke steps and publishes to TestPyPI via the `testpypi` GitHub Environment, for rehearsing a release without touching production PyPI.
+
+**Tag-collision safety:** pushing *any* `vMAJOR.MINOR.PATCH` tag — including one only meant to drive a TestPyPI rehearsal — also fires `release.yml`'s production PyPI trigger, since both workflows match the same tag pattern. A required-reviewer approval gate on the `pypi` GitHub Environment is a **mandatory precondition**, not an optional hardening step, before pushing any release tag for the first time: it is the only thing standing between a rehearsal tag push and an unintended production publish. Configure that gate (along with the `testpypi` environment and both Trusted Publishers) before pushing a real tag at all.
+
+Both the PyPI and TestPyPI Trusted Publishers, and the corresponding GitHub Environments (ideally with a required-reviewer approval gate), must be configured by a repository admin **before** either workflow is used — this is a one-time, human-performed setup step and is not automated by these workflows.

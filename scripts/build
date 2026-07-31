@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "Building taurcode sdist and wheel..."
+rm -rf dist
+
+set -x
+python -m build
