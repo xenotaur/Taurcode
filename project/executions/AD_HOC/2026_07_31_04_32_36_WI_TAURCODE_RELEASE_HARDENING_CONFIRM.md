@@ -2,10 +2,10 @@
 execution_id: 2026_07_31_04_32_36_WI_TAURCODE_RELEASE_HARDENING_CONFIRM
 prompt_id: PROMPT(AD_HOC:WI_TAURCODE_RELEASE_HARDENING_CONFIRM)[2026-07-31T04:32:17+00:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of:
 pr: https://github.com/xenotaur/Taurcode/pull/74
-commit: 4feee56
+commit: 1baae1221263e31885ef1f2ba03fe1fc62434138
 created_at: 2026-07-31T04:32:36+00:00
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/74
