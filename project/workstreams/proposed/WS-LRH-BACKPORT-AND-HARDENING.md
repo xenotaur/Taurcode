@@ -14,6 +14,7 @@ related_design:
 work_items:
   - WI-LRH-ESPANSO-BACKPORT
   - WI-TAURCODE-SHOW-COMMAND
+  - WI-TAURCODE-RELEASE-HARDENING
 exit_criteria:
   - "The lrh Espanso package builds from prompts/lrh/ with a curated manifest (not the tool's generated default) and installs independently of the taurcode package."
   - "taurcode show resolves --prompts all against an explicit, maintained corpus list, not a directory glob of prompts/*/."
@@ -52,8 +53,9 @@ This workstream coordinates the implementation of `project/design/proposals/prop
 
 - **WI-LRH-ESPANSO-BACKPORT** — Add the `prompts/lrh/` Espanso backport package.
 - **WI-TAURCODE-SHOW-COMMAND** — Implement the `taurcode show` CLI command.
+- **WI-TAURCODE-RELEASE-HARDENING** — Harden Taurcode's release pipeline for PyPI.
 
-The remaining track (release hardening) has no dependency on either of the above, and will be added as its own work item once scoped.
+All three tracks now have work items; none are implemented yet.
 
 ## Exit Criteria
 
