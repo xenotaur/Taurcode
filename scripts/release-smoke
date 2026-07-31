@@ -1,0 +1,95 @@
+#!/bin/bash
+set -euo pipefail
+
+# Build taurcode, install the built wheel into an isolated venv, and run real
+# invocations of the installed CLI. This exercises the actual installed
+# package a release would ship -- not the source checkout -- and checks for
+# editable-install/.pth leakage. Ported from LRH's src/lrh/dev/release_smoke.py,
+# trimmed to the generically-useful isolation-check core: Taurcode ships no
+# runtime package-data resources, so LRH's package-data template-loading
+# checks do not apply here.
+
+TAG="${1:-}"
+STRICT_ISOLATION=0
+
+for arg in "$@"; do
+  case "$arg" in
+    --strict-isolation)
+      STRICT_ISOLATION=1
+      ;;
+  esac
+done
+
+EXPECTED_VERSION=""
+if [[ -n "$TAG" && "$TAG" != --* ]]; then
+  EXPECTED_VERSION="${TAG#v}"
+fi
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO_ROOT"
+
+scripts/build
+
+WHEEL_PATH="$(ls dist/*.whl | head -n1)"
+if [[ -z "$WHEEL_PATH" ]]; then
+  echo "ERROR: no wheel found in dist/ after scripts/build" >&2
+  exit 1
+fi
+echo "Using wheel: $WHEEL_PATH"
+
+VENV_ROOT="$(mktemp -d -t taurcode-release-smoke)"
+cleanup() {
+  rm -rf "$VENV_ROOT"
+}
+trap cleanup EXIT
+
+VENV_PATH="$VENV_ROOT/venv"
+python -m venv "$VENV_PATH"
+VENV_PYTHON="$VENV_PATH/bin/python"
+VENV_TAURCODE="$VENV_PATH/bin/taurcode"
+
+"$VENV_PYTHON" -m pip --version >/dev/null
+
+# Pre-install visibility check: taurcode must not already be importable in
+# this fresh venv. If it is, something leaked in (e.g. an editable install
+# on a shared site-packages), and the smoke test below would silently prove
+# nothing about the wheel we just built.
+if "$VENV_PYTHON" -c "import taurcode" >/dev/null 2>&1; then
+  MESSAGE="taurcode is importable in the smoke venv before installing the wheel under test"
+  if [[ "$STRICT_ISOLATION" -eq 1 ]]; then
+    echo "ERROR: $MESSAGE" >&2
+    exit 1
+  fi
+  echo "WARNING: $MESSAGE" >&2
+fi
+
+"$VENV_PYTHON" -m pip install --force-reinstall "$WHEEL_PATH" >/dev/null
+
+if [[ ! -x "$VENV_TAURCODE" ]]; then
+  echo "ERROR: installed console script is missing: $VENV_TAURCODE" >&2
+  exit 1
+fi
+
+"$VENV_TAURCODE" --help >/dev/null
+
+# Real functional invocation against this repo's actual canonical prompt
+# corpus, proving the installed CLI works end-to-end -- not just --help.
+"$VENV_TAURCODE" show :implement --prompts "$REPO_ROOT/prompts/taurcode" >/dev/null
+
+# Editable-install/.pth leakage check: a normal wheel install should never
+# leave a .pth file pointing back at this checkout's src/ directory.
+SITE_PACKAGES="$("$VENV_PYTHON" -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
+if find "$SITE_PACKAGES" -maxdepth 1 -name '*.pth' -exec grep -l "$REPO_ROOT/src" {} + 2>/dev/null | grep -q .; then
+  echo "ERROR: found a .pth file in the smoke venv pointing back at $REPO_ROOT/src -- editable-install leakage" >&2
+  exit 1
+fi
+
+if [[ -n "$EXPECTED_VERSION" ]]; then
+  INSTALLED_VERSION="$("$VENV_PYTHON" -c 'from importlib.metadata import version; print(version("taurcode"))')"
+  if [[ "$INSTALLED_VERSION" != "$EXPECTED_VERSION" ]]; then
+    echo "ERROR: installed CLI version mismatch: expected '$EXPECTED_VERSION', got '$INSTALLED_VERSION'" >&2
+    exit 1
+  fi
+fi
+
+echo "release smoke passed"

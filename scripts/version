@@ -18,6 +18,28 @@ show_tool_versions() {
   python -m coverage --version
 }
 
+verify_release() {
+  local tag="${1:?Usage: scripts/version verify <tag>}"
+
+  if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "ERROR: unsupported release tag format: $tag" >&2
+    echo "Expected: vMAJOR.MINOR.PATCH (for example, v0.1.0)." >&2
+    exit 1
+  fi
+
+  if [[ -n "$(git status --porcelain)" ]]; then
+    echo "ERROR: working tree must be clean before release verification" >&2
+    exit 1
+  fi
+
+  echo "Running: scripts/lint"
+  scripts/lint
+  echo "Running: scripts/format --check"
+  scripts/format --check
+  echo "Running: scripts/test"
+  scripts/test
+}
+
 case "${1:-}" in
   "")
     show_package_version
@@ -25,8 +47,11 @@ case "${1:-}" in
   tools)
     show_tool_versions
     ;;
+  verify)
+    verify_release "${2:-}"
+    ;;
   *)
-    echo "Usage: scripts/version [tools]" >&2
+    echo "Usage: scripts/version [tools|verify <tag>]" >&2
     exit 2
     ;;
 esac
