@@ -77,6 +77,24 @@ class TestCliShow(unittest.TestCase):
             self.assertIn(str(first_dir), stderr)
             self.assertIn(str(second_dir), stderr)
 
+    def test_show_ambiguous_match_within_single_dir_lists_sources_not_corpus(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prompts_dir = Path(tmpdir) / "prompts"
+            _write_prompt(prompts_dir, "dup-one", ":dup", "First body.\n")
+            _write_prompt(prompts_dir, "dup-two", ":dup", "Second body.\n")
+
+            rc, stdout, stderr = _run_cli(
+                ["show", ":dup", "--prompts", str(prompts_dir)]
+            )
+
+            self.assertEqual(rc, 1)
+            self.assertEqual(stdout, "")
+            self.assertNotIn("canonical corpus", stderr)
+            self.assertIn("dup-one.md", stderr)
+            self.assertIn("dup-two.md", stderr)
+
     def test_show_all_does_not_treat_all_as_a_literal_directory(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)

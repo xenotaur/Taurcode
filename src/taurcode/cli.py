@@ -201,12 +201,22 @@ def main(argv: Optional[List[str]] = None) -> int:
                 )
                 return 1
             if len(matches) > 1:
-                matched_dirs = ", ".join(prompts_dir for prompts_dir, _ in matches)
-                print(
-                    f"Error: keyword {args.keyword!r} matched more than one "
-                    f"canonical corpus: {matched_dirs}",
-                    file=sys.stderr,
-                )
+                if len(search_dirs) == 1:
+                    matched_sources = ", ".join(prompt.source for _, prompt in matches)
+                    print(
+                        f"Error: keyword {args.keyword!r} matched more than "
+                        f"one prompt in {search_dirs[0]}: {matched_sources}",
+                        file=sys.stderr,
+                    )
+                else:
+                    matched_dirs = ", ".join(
+                        dict.fromkeys(prompts_dir for prompts_dir, _ in matches)
+                    )
+                    print(
+                        f"Error: keyword {args.keyword!r} matched more than "
+                        f"one canonical corpus: {matched_dirs}",
+                        file=sys.stderr,
+                    )
                 return 1
             _, prompt = matches[0]
             sys.stdout.write(prompt.body)
