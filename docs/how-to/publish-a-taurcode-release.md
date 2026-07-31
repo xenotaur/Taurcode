@@ -61,11 +61,15 @@ and does not need to be repeated for future releases.
 5. **Create and push a rehearsal tag.**
    ```bash
    git checkout main && git pull
+   git tag v0.1.0
    scripts/version verify v0.1.0
    scripts/release-smoke v0.1.0 --strict-isolation
-   git tag v0.1.0
    git push origin v0.1.0
    ```
+   The tag must exist locally *before* running `scripts/version verify`/
+   `scripts/release-smoke` against it — `setuptools-scm` resolves an
+   untagged development version otherwise, and the smoke test will fail
+   its version-match check.
    Pushing the tag will also queue `release.yml` — do **not** approve its
    `pypi` environment gate yet. Leave it pending while you run the
    rehearsal below; you'll either approve it in step 7 (promoting this
