@@ -1,8 +1,10 @@
 # Publish a Taurcode Release
 
 Human-only runbook for the two remaining exit criteria on
-[`WS-LRH-BACKPORT-AND-HARDENING`](../../project/workstreams/proposed/WS-LRH-BACKPORT-AND-HARDENING.md):
-a successful TestPyPI rehearsal, and a real tagged PyPI release. Every step
+`WS-LRH-BACKPORT-AND-HARDENING` (search `project/workstreams/` for that ID —
+not linked directly here, since Phase B step 8 moves the file from
+`proposed/` to `resolved/` and a path-based link would go stale): a
+successful TestPyPI rehearsal, and a real tagged PyPI release. Every step
 here is a `forbidden_actions` entry on
 [`WI-TAURCODE-RELEASE-HARDENING`](../../project/work_items/resolved/WI-TAURCODE-RELEASE-HARDENING.md)
 (`register_pypi_trusted_publisher`, `configure_github_environment`,
@@ -33,20 +35,26 @@ push and an unintended production publish.
      recommended but not load-bearing the way `pypi`'s is.
 3. **Register the PyPI Trusted Publisher** (OIDC — no API tokens stored
    anywhere).
-   - On [pypi.org](https://pypi.org/manage/account/publishing/), add a
-     new **pending publisher** (the project `taurcode` doesn't exist on
-     PyPI yet, so use the pending-publisher flow, not the per-project
-     one):
+   - If this is the first time `taurcode` is being published (the project
+     doesn't exist on PyPI yet), use the **pending publisher** flow on
+     [pypi.org](https://pypi.org/manage/account/publishing/) instead of
+     the per-project publisher settings — the pending-publisher form is
+     the only one available before a project exists:
      - PyPI project name: `taurcode`
      - Owner: `xenotaur`
      - Repository name: `Taurcode`
      - Workflow name: `release.yml`
      - Environment name: `pypi`
+   - If `taurcode` already exists on PyPI (a prior release already
+     published it), register the Trusted Publisher instead from that
+     existing project's own "Publishing" settings page — the fields are
+     the same, just reached from a different starting point.
 4. **Register the TestPyPI Trusted Publisher.**
    - You'll need a separate [test.pypi.org](https://test.pypi.org)
      account if you don't already have one — it is not the same login as
      pypi.org.
-   - Same pending-publisher flow:
+   - Same pending-publisher-vs-existing-project distinction as step 3,
+     on TestPyPI:
      - PyPI project name: `taurcode`
      - Owner: `xenotaur`
      - Repository name: `Taurcode`
@@ -57,6 +65,10 @@ Once both environments and both trusted publishers exist, Phase A is done
 and does not need to be repeated for future releases.
 
 ## Phase B — Rehearsal, real release, workstream closeout
+
+> `v0.1.0` below is a placeholder for the intended next release version —
+> replace every occurrence with the actual `vMAJOR.MINOR.PATCH` you're
+> releasing before copy/pasting these commands.
 
 5. **Create and push a rehearsal tag.**
    ```bash
