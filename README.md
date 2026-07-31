@@ -28,6 +28,18 @@ On other platforms, `taurcode install espanso` is unsupported (see "Install into
 taurcode export espanso --prompts prompts/lrh --output exports/espanso/lrh
 ```
 
+### Printing a snippet without Espanso
+
+Use `taurcode show <keyword>` to print a snippet's body to stdout for sessions that don't run Espanso at all:
+
+```bash
+taurcode show :lrh-implement                      # searches every canonical corpus (prompts/taurcode, prompts/lrh)
+taurcode show :lrh-implement --prompts all         # same as the default above, explicitly
+taurcode show :lrh-implement --prompts prompts/lrh # searches only that one directory
+```
+
+`--prompts` defaults to searching an explicit, maintained list of canonical corpora — never a glob of `prompts/*/`, so uncurated directories like `prompts/examples/` or the `taurcode import` staging directory are never treated as canonical. A keyword matching no corpus, or matching more than one, prints an error to stderr and exits non-zero rather than guessing.
+
 Currently backported: `:lrh-implement` (`prompts/lrh/lrh-implement.md`), `:lrh-review-response` (`prompts/lrh/lrh-review-response.md`), `:lrh-confirm-fixes` (`prompts/lrh/lrh-confirm-fixes.md`), and `:lrh-closeout` (`prompts/lrh/lrh-closeout.md`). The generated package is checked in at `exports/espanso/lrh/`, mirroring `exports/espanso/taurcode/`.
 
 ### Prompt lifecycle snippets
