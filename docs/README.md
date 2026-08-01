@@ -16,6 +16,7 @@ Taurcode documentation is organized with a lightweight Diátaxis-inspired struct
 - [Import an Espanso package](how-to/import-an-espanso-package.md) — stage or merge an Espanso package into Taurcode prompt sources.
 - [Check Espanso roundtrip fidelity](how-to/check-espanso-roundtrip-fidelity.md) — verify exported Espanso output against canonical prompt semantics.
 - [Debug Espanso import errors](how-to/debug-espanso-import-errors.md) — use preflight linting and source fixes before importing.
+- [Publish a Taurcode release](how-to/publish-a-taurcode-release.md) — one-time PyPI/TestPyPI Trusted Publisher setup, then the rehearsal and real-release sequence.
 
 ### Best practices
 
