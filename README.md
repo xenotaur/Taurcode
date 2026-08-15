@@ -40,7 +40,7 @@ taurcode show :lrh-implement --prompts prompts/lrh # searches only that one dire
 
 `--prompts` defaults to searching an explicit, maintained list of canonical corpora — never a glob of `prompts/*/`, so uncurated directories like `prompts/examples/` or the `taurcode import` staging directory are never treated as canonical. A keyword matching no corpus, or matching more than one, prints an error to stderr and exits non-zero rather than guessing.
 
-Currently backported: `:lrh-implement` (`prompts/lrh/lrh-implement.md`), `:lrh-review-response` (`prompts/lrh/lrh-review-response.md`), `:lrh-confirm-fixes` (`prompts/lrh/lrh-confirm-fixes.md`), and `:lrh-closeout` (`prompts/lrh/lrh-closeout.md`). The generated package is checked in at `exports/espanso/lrh/`, mirroring `exports/espanso/taurcode/`.
+Currently backported: `:lrh-implement` (`prompts/lrh/lrh-implement.md`), `:lrh-review-response` (`prompts/lrh/lrh-review-response.md`), `:lrh-confirm-fixes` (`prompts/lrh/lrh-confirm-fixes.md`), `:lrh-closeout` (`prompts/lrh/lrh-closeout.md`), and `:lrh-remains` (`prompts/lrh/lrh-remains.md`). The generated package is checked in at `exports/espanso/lrh/`, mirroring `exports/espanso/taurcode/`.
 
 ### Prompt lifecycle snippets
 

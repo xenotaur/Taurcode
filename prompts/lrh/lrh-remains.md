@@ -9,21 +9,18 @@ keyword: ":lrh-remains"
 
 Answer "what work remains?" for the current session, grounded in actual
 tracked repo state (git, `gh pr`, `lrh snapshot current_focus`) rather than
-conversational recall. This is strictly read-only: never create, edit, or
-move any file, never run `lrh prompt` or any git mutation command. There is
-no offer-and-write step — this ends at the report, unlike this prompt set's
+conversational recall. This is strictly read-only with respect to the
+target repository and its git state: never create, edit, or move any file
+in it, never run `lrh prompt` or any git mutation command. There is no
+offer-and-write step — this ends at the report, unlike this prompt set's
 action-oriented siblings (`:lrh-closeout`, `:lrh-review-response`).
 
-This step benefits from LRH being installed. If `lrh` is not on PATH,
-install it once, globally:
-
-    pipx install lrh
-
-LRH is not yet published to PyPI (tracked by `PROP-TAG-PUSH-PYPI-PUBLISHING`
-in the LRH repo); until it is, `pipx install <path-to-local-lrh-checkout>`
-or a locally built wheel installs the same `lrh` console script. Several
-categories below fall back to direct file reads when `lrh` isn't available —
-note that explicitly rather than skipping the category.
+This step benefits from LRH being installed, but do not install it as part
+of running this prompt — installing a package is itself a write, and this
+prompt's read-only guarantee should hold without exception. If `lrh` is not
+on PATH, report it as unavailable and rely on the direct file-read
+fallbacks each category below documents, rather than attempting
+`pipx install lrh`.
 
 No argument is required.
 
@@ -84,10 +81,13 @@ available signal listed for that category where one exists (e.g. direct
    excludes any commit reachable from a remote-tracking ref, so a pushed
    branch's commits are excluded from that diff even though they're not
    merged. **Do not hard-code `main`** — the target repo's default branch
-   may be `master`, `develop`, or something else; resolve it first:
-   `git symbolic-ref refs/remotes/origin/HEAD` (or
-   `gh repo view --json defaultBranchRef --jq .defaultBranchRef.name` as a
-   fallback), then use that value in
+   may be `master`, `develop`, or something else; resolve it first, without
+   hard-coding the remote name `origin` either:
+   `gh repo view --json defaultBranchRef --jq .defaultBranchRef.name` (or,
+   if `gh` is unavailable, resolve the remote name with `git remote` first —
+   there is normally exactly one — then run
+   `git symbolic-ref refs/remotes/<remote>/HEAD` against that name rather
+   than assuming `origin`), then use that value in
    `git branch --no-merged <default-branch>` to find local branches not
    merged into it, regardless of push state. For each such branch, **don't
    just check whether a remote copy exists, and don't hard-code the remote
@@ -106,10 +106,20 @@ available signal listed for that category where one exists (e.g. direct
 6. **Unaddressed comments on PRs** — for the authoritative live count, pull
    the raw review-thread state for the PR (e.g. via the GitHub API or `gh`)
    and filter to unresolved threads.
-7. **Incomplete closeouts of PRs** — `grep -rl '^status: in_progress'
-   project/executions/ --include='*.md'`, then cross-check each record's
-   `pr:` field against `gh pr view <pr-url> --json state,mergeCommit` — a
-   `MERGED` PR with an `in_progress` record is an incomplete closeout.
+7. **Incomplete closeouts of PRs** — start from `grep -rl '^status:
+   in_progress' project/executions/ --include='*.md'` as a first pass, but
+   **do not stop there** — that grep only sees what's checked out locally,
+   and a record already `landed` in the local checkout can be `in_progress`
+   on the remote default branch (or vice versa), or a record can exist
+   remotely with no local copy at all. Enumerate the candidate set from the
+   remote default branch too:
+   `gh api repos/<owner>/<repo>/git/trees/<default-branch>?recursive=true --jq '.tree[] | select(.path | test("^project/executions/.*\\.md$")) | .path'`
+   (resolve `<default-branch>` the same way category 4 does), and treat the
+   union of the local grep's matches and this remote listing as the
+   candidate set — not just the local grep's output. Then cross-check each
+   candidate's `pr:` field against `gh pr view <pr-url> --json
+   state,mergeCommit` — a `MERGED` PR with an `in_progress` record is an
+   incomplete closeout.
    **Read this against fresh remote state, not a stale local checkout or a
    prior session's own closeout report** — a record correctly landed by an
    earlier PR can be silently reverted back to `in_progress` by a later,
