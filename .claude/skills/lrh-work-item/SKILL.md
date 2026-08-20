@@ -65,11 +65,16 @@ Load these before running any step:
    (research) and record the verdict in the `## Problem / Context` body
    section to confirm the work item does not duplicate existing work.
 
+5. **`references/execution-record.md`** — `lrh prompt label` and
+   `lrh prompt check-execution` command syntax, execution record field
+   descriptions (`agent`, `instruction_source`, `session_transcript`). Read
+   before Step 4 (instruction phase) and Step 10 (execution record).
+
 ---
 
 ## Execution Steps
 
-Work through these steps in order. Do not skip the confirmation gate (Step 4).
+Work through these steps in order. Do not skip the confirmation gate (Step 5).
 
 ### 1. Check for existing work item
 
@@ -137,7 +142,7 @@ Then run the prior art check (see `references/prior-art-check.md`):
   work item.
 - **Demand search** — is there an existing work item, proposal, or backlog
   entry requesting this? Record the verdict. If a match is found, offer to
-  close/link it at Step 9; do not auto-close.
+  close/link it at Step 11; do not auto-close.
 
 Record both verdicts in the `## Problem / Context` body section of the
 proposed work item before presenting it to the user.
@@ -145,7 +150,67 @@ proposed work item before presenting it to the user.
 Then propose the complete work item: frontmatter (all fields) and body
 (all required sections with content). Show it to the user before writing.
 
-### 4. User confirms
+### 4. Instruction phase (mint prompt ID + idempotence check)
+
+Derive `<slug>` from the work item ID (lower-kebab): `WI-SKILLS-LRH-SETUP` →
+`wi-skills-lrh-setup`.
+
+**Before minting, search for an existing record on this branch by stable
+slug.** `lrh prompt label` always mints a fresh timestamped prompt ID, so
+`check-execution` alone cannot detect a rerun — the ID it receives is brand
+new every time it's called. Derive `<SLUG_UPPER_UNDERSCORE>` from `<slug>`
+by replacing `-` with `_` and uppercasing (e.g. `wi-skills-lrh-setup` →
+`WI_SKILLS_LRH_SETUP`), then match the complete trailing filename segment —
+not a bare substring, which would also match an unrelated longer slug that
+happens to contain this one (e.g. `..._WI_SKILLS_LRH_SETUP_REVIEW.md`):
+
+```bash
+find project/executions/AD_HOC/ -name "*_<SLUG_UPPER_UNDERSCORE>.md" 2>/dev/null
+```
+
+`AD_HOC/` may not exist yet in a freshly bootstrapped project — no record has
+been written there yet — so suppress the not-found error rather than
+treating it as a failure.
+
+The glob can return more than one match — a prior rerun mints a new
+timestamped file with the same trailing slug. Read the `status:`
+frontmatter field of **every** match before deciding — per `PROMPTS.md`'s
+status-handling rule, a matched filename is discovery, not by itself a
+block:
+- Any match is `in_progress` or `landed`: **stop and report** — do not
+  continue unless the user explicitly asks for a rerun. If more than one
+  match is `in_progress`/`landed`, name all of them and ask the user which
+  one this is a rerun of — do not guess. Once the user does confirm a
+  rerun, **keep the confirmed match's `execution_id`** (the most recent
+  one, if the user doesn't distinguish) to pass as `--rerun-of` in Step 10
+  — a rerun links to the prior attempt regardless of which status
+  triggered it (`PROMPTS.md:136`).
+- All matches are `failed`, `reverted`, or `superseded`: not a blocking
+  prior run — summarize the most recent one and continue, but **keep its
+  `execution_id`** to pass as `--rerun-of` in Step 10 (per `PROMPTS.md:136`,
+  a rerun must link back to the prior attempt it supersedes).
+- Matches disagree (e.g. one `failed`, one unknown) or any status is
+  unrecognized: **stop and report** the ambiguity.
+
+Then mint the prompt ID and run the secondary check (see
+`references/execution-record.md` for full syntax):
+
+```bash
+lrh prompt label --slug <slug>
+lrh prompt check-execution --prompt-id "<id>" --project-root .
+```
+
+Do not pass `--work-item <ID>` here. This record documents the *creation* of
+the work item, not its implementation, so it stays in the `AD_HOC` bucket
+(the `lrh prompt label` default). Bucketing it under the new WI's own ID
+would make `/lrh-closeout`'s decision matrix treat the freshly created,
+not-yet-implemented item as resolved the moment this planning PR merges —
+see `references/execution-record.md`.
+
+If `check-execution` reports a `landed` or `in_progress` record, **stop and
+report** — do not continue unless the user explicitly asks for a rerun.
+
+### 5. User confirms
 
 Show the user the complete proposed work item — frontmatter and full body —
 in a readable block.
@@ -156,7 +221,7 @@ If the user redirects or declines, adjust the proposal and show it again.
 Do not skip this gate — it prevents incorrectly-scoped work items from
 being committed to the control plane.
 
-### 5. Create branch from main
+### 6. Create branch from main
 
 ```bash
 git checkout main && git pull
@@ -183,7 +248,7 @@ Map the work item `type` (known from Step 2) to `<type>`:
 
 Example: `xenotaur/feat/wi-skills-lrh-setup`
 
-### 6. Write file
+### 7. Write file
 
 Re-check that the work item does not already exist on the freshly pulled
 main — the Step 1 check may be stale if main advanced since the session
@@ -207,7 +272,7 @@ parser only extracts bullets; a code block produces an empty list and the
 item will fail `lrh work-items readiness` with "missing Validation commands"
 even though the section exists.
 
-### 7. Validate
+### 8. Validate
 
 Run:
 
@@ -219,7 +284,7 @@ Fix any errors before proceeding. Common failures: required frontmatter field
 missing, `status` value does not match directory bucket, filename stem does
 not match `id` field.
 
-### 8. Commit and open PR
+### 9. Commit and open PR
 
 Stage and commit the work item file:
 
@@ -230,10 +295,50 @@ git push -u origin <branch-name>
 gh pr create --title "Add work item <ID>: <title>" --body "..."
 ```
 
-Include in the PR body: the work item summary, type, related workstream, and
-acceptance criteria.
+Include in the PR body: the work item summary, type, related workstream,
+acceptance criteria, and the prompt ID minted in Step 4 — it is the
+traceability link between the PR and the execution record.
 
-### 9. Offer workstream update and report
+### 10. Create execution record
+
+```bash
+lrh prompt record-execution \
+  --prompt-id "<id>" \
+  --work-item AD_HOC \
+  --slug <slug> \
+  --status in_progress \
+  --project-root .
+```
+
+If Step 4 found a prior matching record — whether summarized
+(`failed`/`reverted`/`superseded`) or explicitly overridden by the user
+(`in_progress`/`landed`) — add `--rerun-of <its-execution_id>` to the
+command above so the new record links back to it, per `PROMPTS.md:136`.
+
+Use `AD_HOC`, not `<ID>` — see the note in Step 4. This creates the record
+under `project/executions/AD_HOC/`, not `project/executions/<ID>/`.
+
+Immediately edit the generated file to populate the three optional fields
+(see `references/execution-record.md`):
+
+```yaml
+agent: claude_app
+instruction_source: project/work_items/proposed/<ID>.md
+session_transcript: pending
+```
+
+Then replace the generated `TODO` placeholders in `# Summary`, `# Result`,
+`# Validation`, and `# Follow-up` with real content grounded in what this
+run actually did (per `AGENTS.md`'s evidence policy) — e.g. Summary states
+the work item created, Result names the file and PR, Validation reports the
+Step 8 `lrh validate` outcome, Follow-up notes any offers from Step 11 that
+are still open. `/lrh-closeout` later only touches frontmatter, so an
+unedited TODO body would ship as `landed` with no narrative evidence.
+
+Commit the execution record and push it as an additional commit to the
+already-open PR.
+
+### 11. Offer workstream update and report
 
 **Workstream update (offer, not automatic):**
 
@@ -257,8 +362,11 @@ git push
 - The file created and its path.
 - The `lrh validate` outcome.
 - The PR URL.
+- The minted prompt ID and execution record path.
 - Which fields were inferred vs. directly from user answers — be explicit
   so the user can correct mismatches.
+- A reminder that `session_transcript: pending` in the execution record
+  should be updated to `claude-app:<host-uuid-stem>` after the session ends.
 - Suggested next steps per `references/lrh-work-item-workflow.md`.
 
 ---
@@ -267,6 +375,8 @@ git push
 
 Before reporting completion, verify:
 
+- [ ] Prompt ID minted (Step 4) before the confirm gate (Step 5)
+- [ ] Idempotence check passed (no prior landed/in_progress record)
 - [ ] Branch created from a fresh `git pull` of main
 - [ ] `project/work_items/proposed/<ID>.md` exists
 - [ ] Filename stem exactly matches the `id` frontmatter field
@@ -277,8 +387,13 @@ Before reporting completion, verify:
 - [ ] Body contains all required sections: Summary, Problem/Context, Scope,
       Required Changes, Non-Goals, Acceptance Criteria, Validation
 - [ ] `lrh validate` reports 0 errors
-- [ ] The confirm-before-write gate (Step 4) was honoured
+- [ ] The confirm-before-write gate (Step 5) was honoured
 - [ ] PR opened and URL reported to the user
+- [ ] Execution record exists under `project/executions/AD_HOC/` (not
+      `<ID>/` — see Step 4) with `agent`, `instruction_source`,
+      `session_transcript` populated, and `# Summary`/`# Result`/
+      `# Validation`/`# Follow-up` filled in with real content, not TODOs
+- [ ] Execution record was pushed to the open PR
 
 ---
 
@@ -289,9 +404,11 @@ Before reporting completion, verify:
 - Does not promote work items to `active` or `resolved` — status changes
   are human decisions.
 - Does not implement the work item — it creates the planning artifact only.
-- Does not automatically update workstreams — Step 9 offers; the user
+- Does not automatically update workstreams — Step 11 offers; the user
   decides.
-- Does not create execution records — those are produced during
-  implementation.
+- Does not land the execution record it creates for this PR, or mark it
+  `landed` — that happens at `/lrh-closeout` after the PR merges. Separately,
+  it does not create the *implementation's* execution record — that is
+  produced by `/lrh-implement` when the work item is later executed.
 - Does not run `lrh request prompt-from-work-item` — that is a separate
   step after the item has been refined to readiness.
