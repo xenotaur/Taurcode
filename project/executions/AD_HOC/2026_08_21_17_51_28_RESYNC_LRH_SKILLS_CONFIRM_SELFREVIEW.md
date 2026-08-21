@@ -2,13 +2,13 @@
 execution_id: 2026_08_21_17_51_28_RESYNC_LRH_SKILLS_CONFIRM_SELFREVIEW
 prompt_id: PROMPT(AD_HOC:RESYNC_LRH_SKILLS_CONFIRM_SELFREVIEW)[2026-08-21T17:51:19+00:00]
 work_item: AD_HOC
-status: in_progress
+status: landed
 rerun_of: 
 pr: https://github.com/xenotaur/Taurcode/pull/82
-commit: a7172f5ee3ebab5e36891f02b9fbe6e106e13a11
+commit: 673fdbf1e7e1406624bd2a58e3bf1a06415f8555
 agent: claude_app
 instruction_source: https://github.com/xenotaur/Taurcode/pull/82
-session_transcript: pending
+session_transcript: claude-app:c02da21d-4a23-4315-857f-0829e0483667
 created_at: 2026-08-21T17:51:28+00:00
 ---
 
