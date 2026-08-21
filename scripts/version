@@ -16,6 +16,55 @@ show_tool_versions() {
   python -m black --version
   python -m ruff --version
   python -m coverage --version
+  check_tool_versions
+}
+
+check_tool_versions() {
+  python - <<'PY'
+from importlib import metadata
+from pathlib import Path
+import sys
+
+REQUIRED_TOOLS = ("black", "ruff")
+
+
+def read_constraints(path: Path) -> dict[str, str]:
+    constraints: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "==" not in line:
+            continue
+        name, version = line.split("==", 1)
+        constraints[name.strip().lower()] = version.strip()
+    return constraints
+
+
+constraints = read_constraints(Path("constraints-dev.txt"))
+errors: list[str] = []
+
+for tool in REQUIRED_TOOLS:
+    expected = constraints.get(tool)
+    if expected is None:
+        errors.append(f"{tool}: missing from constraints-dev.txt")
+        continue
+    try:
+        actual = metadata.version(tool)
+    except metadata.PackageNotFoundError:
+        errors.append(f"{tool}: not installed; expected {expected}")
+        continue
+    if actual != expected:
+        errors.append(f"{tool}: expected {expected}, found {actual}")
+
+if errors:
+    print("ERROR: development toolchain mismatch:", file=sys.stderr)
+    for error in errors:
+        print(f"- {error}", file=sys.stderr)
+    print(
+        'Run: python -m pip install -e ".[dev]" -c constraints-dev.txt',
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+PY
 }
 
 verify_release() {
@@ -47,11 +96,14 @@ case "${1:-}" in
   tools)
     show_tool_versions
     ;;
+  check-tools)
+    check_tool_versions
+    ;;
   verify)
     verify_release "${2:-}"
     ;;
   *)
-    echo "Usage: scripts/version [tools|verify <tag>]" >&2
+    echo "Usage: scripts/version [tools|check-tools|verify <tag>]" >&2
     exit 2
     ;;
 esac
