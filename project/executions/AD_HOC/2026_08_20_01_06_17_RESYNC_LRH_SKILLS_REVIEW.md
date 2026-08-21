@@ -98,3 +98,27 @@ applies unchanged. No new validation run in this round.
   in any downstream consumer's synced copy.
 - `session_transcript` resolved directly (Claude host session, no `pending`
   needed).
+
+**Update (2026-08-21): all three fixed and merged upstream in the LRH
+project** (`xenotaur/logical_robotics_harness`), each as a
+work-item-creation PR plus a paired implementation PR, both landed and
+closed out:
+
+- **Comment 1** (`lrh-closeout` session-alias scope) —
+  [WI-CLOSEOUT-SESSION-ALIAS-BACKEND-SCOPE](https://github.com/xenotaur/logical_robotics_harness/pull/572)
+  /
+  [implementation](https://github.com/xenotaur/logical_robotics_harness/pull/573)
+- **Comment 2** (`lrh-self-review` untracked-file diff) —
+  [WI-SELF-REVIEW-UNTRACKED-FILE-DIFF](https://github.com/xenotaur/logical_robotics_harness/pull/575)
+  /
+  [implementation](https://github.com/xenotaur/logical_robotics_harness/pull/576)
+- **Comment 3** (`lrh-land` tmp-branch cleanup) —
+  [WI-LAND-TMP-BRANCH-CLEANUP-CHECKOUT](https://github.com/xenotaur/logical_robotics_harness/pull/580)
+  /
+  [implementation](https://github.com/xenotaur/logical_robotics_harness/pull/581)
+
+All three fixes also cover the `.agents/skills/` (Codex) and
+`.gemini/plugins/lrh/skills/` (Antigravity) render targets, not just
+`.claude/skills/` — a gap surfaced during that project's own review, not
+by this record's original triage. The next `lrh skills install --local
+--force` resync in this project will pull in the corrected skill content.
