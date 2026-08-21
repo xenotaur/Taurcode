@@ -339,6 +339,7 @@ Formatting and linting:
 
 - `scripts/format` runs Black over `src/` and `tests/`; use `scripts/format --check --diff` for CI-style checks.
 - `scripts/lint` runs Ruff checks and a Black formatting gate.
+- `scripts/version tools`, `scripts/format`, and `scripts/lint` verify Black/Ruff against `constraints-dev.txt`; run `python -m pip install -e ".[dev]" -c constraints-dev.txt` if they report a toolchain mismatch.
 
 Testing conventions:
 

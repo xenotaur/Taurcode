@@ -38,6 +38,8 @@ if [[ ${#PATHS[@]} -eq 0 ]]; then
   PATHS=(src tests)
 fi
 
+scripts/version check-tools
+
 CMD=(python -m black)
 if [[ "$CHECK" -eq 1 ]]; then
   CMD+=(--check)
