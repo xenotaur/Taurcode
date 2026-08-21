@@ -32,7 +32,8 @@ PR review (Codex, Copilot, human)   ← reviewers post comments
     │  Creates AD_HOC _CONFIRM execution record with rerun_of link
     │
     ▼
-Merge PR (human) + closeout          ← update records to landed, resolve WI
+Merge PR (human, or agent given         ← update records to landed, resolve WI
+  unambiguous authorization) + closeout
 ```
 
 `/lrh-confirm-fixes` is the pre-merge complement `/lrh-review-response` cannot
@@ -323,6 +324,123 @@ is actually being told to merge. Step 8 re-fetches CI against the post-push
 `HEAD` SHA before emitting the final verdict, so the report never claims
 "ready to merge" against a commit whose checks haven't actually run yet.
 
+### Bounded background-poll wait
+
+Step 8's post-push CI read can hit real pending state, not just the
+`--required`-empty ambiguity above — genuinely unfinished checks that
+have posted but not completed. Waiting in the foreground (repeated
+manual re-checks, or a blocking `sleep` loop in the session itself) is
+explicitly discouraged by this harness's own tool guidance against long
+or chained foreground sleeps. The supported mechanism instead is a
+single backgrounded shell command running a bounded poll loop, relying
+on the invoking agent harness's own background-task-completion
+notification as the wake signal rather than the session polling for it
+directly. This is a property of the harness currently driving these
+sessions, not something this LRH repository itself can verify or
+guarantee — an implementer on a different harness/backend should confirm
+the equivalent notify-on-completion behavior exists there before relying
+on it; absent that, fall back to a bounded foreground poll instead of an
+unbounded one.
+
+`STALE_AGE_SECONDS=900` (15 minutes) below is this mechanism's own
+constant — the retired bot-retrigger mechanism (`round-cap-gate.md`'s
+historical risk notes) used the same name and value for its own stalled-
+session threshold, but that file no longer defines it; nothing currently
+in this repository still exports a shared constant of this name, so this
+is a fresh definition matching the prior value by precedent, not an
+import.
+
+**The poll predicate must reuse the branch-rules distinguishing check
+above, not bypass it.** A predicate that maps `gh pr checks --required`'s
+raw exit codes straight to pending (`8`) / success (`0`) / failure (`1`)
+is wrong: exit `1` is ambiguous — it also fires when no
+`required_status_checks` rule exists at all, the case the distinguishing
+check above exists to rule out. Treating exit `1` as a terminal failure
+signal would misfire on exactly the post-push race this section already
+documents. `check_ci_predicate` below is a real, runnable implementation
+of that logic — not illustrative shorthand — using a three-way return
+code (`0` success, `1` terminal failure, `2` still pending) so the outer
+loop can distinguish all three states explicitly, rather than inferring
+"pending" from the absence of the other two:
+
+```bash
+check_ci_predicate() {
+  local pr_url="$1"
+  local ci_json owner_repo base_branch required_count fail_count nonpass_count
+
+  ci_json=$(gh pr checks "$pr_url" --required --json name,state,bucket 2>/dev/null)
+  if [ -z "$ci_json" ]; then
+    # --required errored -- disambiguate per the branch-rules check above
+    owner_repo=$(echo "$pr_url" | sed -E 's#https://github.com/([^/]+/[^/]+)/pull/.*#\1#')
+    base_branch=$(gh pr view "$pr_url" --json baseRefName --jq '.baseRefName')
+    required_count=$(gh api "repos/${owner_repo}/rules/branches/${base_branch}" \
+      --jq '[.[] | select(.type=="required_status_checks")] | length' 2>/dev/null)
+    if [ -z "$required_count" ]; then
+      return 2   # rules lookup itself failed -- inconclusive, treat as pending
+    elif [ "$required_count" -eq 0 ]; then
+      ci_json=$(gh pr checks "$pr_url" --json name,state,bucket 2>/dev/null)
+    else
+      return 2   # required checks exist but haven't posted yet -- pending
+    fi
+  fi
+
+  fail_count=$(echo "$ci_json" | jq '[.[] | select(.bucket=="fail" or .bucket=="cancel")] | length')
+  nonpass_count=$(echo "$ci_json" | jq '[.[] | select(.bucket!="pass")] | length')
+
+  if [ "$fail_count" -gt 0 ]; then
+    return 1
+  elif [ "$nonpass_count" -gt 0 ]; then
+    return 2
+  else
+    return 0
+  fi
+}
+
+STALE_AGE_SECONDS=900
+POLL_INTERVAL_SECONDS=30
+START=$(date +%s)
+while true; do
+  check_ci_predicate "<pr-url>"
+  STATUS=$?
+  if [ "$STATUS" -eq 0 ]; then
+    echo "CI green"
+    exit 0
+  elif [ "$STATUS" -eq 1 ]; then
+    echo "CI failing" >&2
+    exit 1
+  fi
+  if [ $(( $(date +%s) - START )) -ge "$STALE_AGE_SECONDS" ]; then
+    echo "CI still pending after ${STALE_AGE_SECONDS}s" >&2
+    exit 1
+  fi
+  sleep "$POLL_INTERVAL_SECONDS"
+done
+```
+
+**Exit the backgrounded command itself with a distinguishing status, not
+a bare `break`.** The loop's own `break` paths (terminal failure, and
+timeout) would otherwise typically leave the command's exit status at
+whatever the last-run statement inside the loop returned (an `echo`,
+`sleep`, or the `[ ]` test itself) — usually `0` regardless of which
+path was taken, which defeats the point of backgrounding this for a
+caller that checks the process's own exit code afterward. `exit 0` on
+success and `exit 1` on both terminal failure and timeout (report is via
+the printed message, not the exit code, for that one) make the outcome
+checkable from outside the loop.
+
+Run this as a single backgrounded shell command at Step 8's CI re-check;
+do not spread it across multiple foreground tool calls with the session
+itself sleeping between them.
+
+This predicate is CI-specific. A bot-response wait (waiting for the
+automatic first-push reviewer's own reply, as opposed to a CI check)
+needs a different predicate entirely — matching a review, issue comment,
+or inline thread citing the current SHA, not a check-run state — and is
+out of scope here. `round-cap-gate.md`'s own "reasonable wait" language
+(`SKILL.md` Step 8) still leaves that predicate unspecified — this is a
+known, deliberate gap this WI does not close, deferred to Stage 4 per
+`PROP-INVOCATION-AND-GATE-RESET`'s own Non-Goals.
+
 ---
 
 ## `_CONFIRM` execution-record convention
@@ -341,23 +459,36 @@ work item, with side records linked via `rerun_of`.
 xenotaur/feat/wi-skills-lrh-confirm-fixes → wi-skills-lrh-confirm-fixes-confirm
 ```
 
-**`rerun_of` population:** search for the primary record, excluding *both*
-review-response and confirm-fixes side records:
+**`rerun_of` population:** convert the branch slug to upper-underscore
+form (`UPPER_SLUG`), then verify whether a genuine primary record with
+exactly that slug exists — not a bare filename-suffix exclusion, which
+would misclassify a primary record whose own topic slug ends in "review,"
+"confirm," etc., and not a uniform substring/trailing-exact glob applied
+to every candidate alike (both were tried in this project's own history
+and both broke). See `/lrh-land/references/land-workflow.md` § A separate,
+narrower algorithm for the two slug-based `rerun_of` searches for the full
+algorithm (shared with `/lrh-review-response`'s own `rerun_of` search) and
+why the two simpler attempts each failed:
 
 ```bash
 UPPER_SLUG=$(echo "<branch-slug>" | tr '-' '_' | tr '[:lower:]' '[:upper:]')
-find project/executions/ -name "*${UPPER_SLUG}*.md" | grep -vE "_(REVIEW|CONFIRM)\.md$"
 ```
 
-If found, set `rerun_of: <execution_id-from-the-primary-record>`. If not
-found (the PR was created outside `/lrh-implement`, as in a planning-only PR
-with no primary record), leave `rerun_of:` empty and note it in the body.
+Run the target-verification algorithm from that section against
+`UPPER_SLUG` to get `$primary` and `$ambiguous`. If `$primary` is found, set
+`rerun_of: <execution_id-from-the-primary-record>`. If both are empty (the
+PR was created outside `/lrh-implement`, as in a planning-only PR with no
+primary record), leave `rerun_of:` empty and note it in the body. If
+`$ambiguous` is non-empty, also leave `rerun_of:` empty but note the
+ambiguity explicitly rather than guessing — see `land-workflow.md`'s
+provenance-check section for why this case can't be resolved from naming
+alone.
 
-**Cross-skill consequence:** `/lrh-review-response`'s own `rerun_of` search
-must also exclude `_CONFIRM.md` files (in addition to its existing
-`_REVIEW.md` exclusion) — otherwise a confirm-fixes side record could be
-mismatched as the primary record for a later review-response run on the same
-branch. This exclusion-glob update is applied to both
+**Cross-skill consistency:** because the provenance check identifies side
+records by their actual naming convention rather than a hand-maintained
+exclusion-glob, `/lrh-review-response`'s own `rerun_of` search uses the same
+algorithm — there is no separate glob to keep in sync between the two
+skills. This shared algorithm is applied to both
 `src/lrh/skills/lrh-review-response/SKILL.md` and
 `references/review-response-workflow.md` (and mirrored to `.claude/skills/`)
 as part of this skill's implementation, not as a follow-up.
@@ -384,11 +515,14 @@ for the normal "verify again after another review round" flow.
 
 ### All threads already resolved, CI green
 
-A re-run in this state is a clean no-op: Step 2's thread list is empty, Step
-6's thread-resolution verdict is green with nothing to do, and Step 8 reports
-"already ready to merge" with the current `HEAD` SHA. No execution record
+A re-run in this state is a clean no-op after the empty-thread gate: Step 2's
+thread list is empty, Step 6's thread-resolution verdict is green with nothing
+to do, Step 7 writes the `_CONFIRM` execution record, and Step 8 reports
+"already ready to merge" with the post-record `HEAD` SHA. No execution record
 content changes meaningfully, but the record is still created for audit
 continuity (each run's `_CONFIRM` record documents what was checked and when).
+Do not skip the empty-thread gate just because there are no threads; that gate
+is the human checkpoint that replaced the old ungated fast path.
 
 ### Partial resolution across rounds
 
@@ -403,8 +537,9 @@ error condition.
 Treat `lrh github threads --mode raw --state all`, filtered to
 `isResolved == false`, as authoritative — not `lrh request review_response`'s
 `Nothing to resolve:` report, which uses a narrower filter that excludes
-outdated threads (see the Thread listing section above). Skip straight to
-the CI-only verdict path (Step 8) only when the `isResolved == false` list
-itself is empty. A `Nothing to resolve:` report with a non-empty
+outdated threads (see the Thread listing section above). Proceed to the
+empty-thread gate, Step 6's empty-thread verdict, Step 7's `_CONFIRM` record,
+and then the CI-only verdict path (Step 8) only when the `isResolved == false`
+list itself is empty. A `Nothing to resolve:` report with a non-empty
 `isResolved == false` list means outdated-but-unresolved threads exist —
 proceed to verify them normally; do not skip.

@@ -7,7 +7,14 @@ description: >
   a branch, implements the changes, runs canonical validation, opens a PR,
   and creates a populated execution record. Use when the user wants to execute
   a defined work item (WI-*) or an ad-hoc task in a structured, traceable way.
-disable-model-invocation: true
+when_to_use: >
+  Invoke when the user wants to execute a defined LRH work item or ad-hoc
+  task through the full instruction-and-execution session (branch,
+  implement, validate, PR, execution record), or as a link in a
+  human-initiated /lrh-execute chain. Do not invoke for exploratory
+  discussion of a work item with no request to implement it. The Step 4
+  confirm-plan gate is the write-protection regardless of invocation
+  route.
 argument-hint: "[WI-ID or task description]"
 ---
 
@@ -149,6 +156,37 @@ Before touching any files or creating any branches, show the user:
 **Wait for explicit confirmation.** If the user redirects, adjust and re-show.
 Do not proceed past this gate without approval.
 
+**When inlined by `/lrh-execute` with an approved run plan:** do not ask the
+same question again merely because this step was reached. Compare the live
+Step 4 plan against the approved run plan that `/lrh-execute` presented at
+its Step 2 chain gate.
+
+Material fields:
+
+- task summary meaning;
+- prompt ID;
+- branch name;
+- expected file changes;
+- validation commands;
+- readiness warnings;
+- prior-art warnings;
+- forbidden actions;
+- related workstream.
+
+If every material field matches, record that `/lrh-execute`'s approved run
+plan satisfies this Step 4 gate and continue to Step 5 without a second live
+reply. If any material field differs, present a structured diff and wait for
+explicit confirmation before continuing. This is a divergence-only gate, not
+an agent-judged exemption: changed validation commands, added or removed
+expected files, a different branch, a different prompt ID, or a newly surfaced
+readiness/prior-art warning must fire the gate. Pure formatting or wording
+tightening that does not change the meaning of a material field does not.
+
+This special path applies only when `/lrh-execute` invoked this skill with an
+approved run plan derived from a static `WI-*` file. Direct `/lrh-implement`
+invocation, including free-form ad-hoc descriptions, still uses the normal live
+confirmation gate above.
+
 ### Step 5 — Create branch from main
 
 ```bash
@@ -184,9 +222,9 @@ in the work item's `Required Changes` section. Respect `forbidden_actions`.
 Follow `STYLE.md` and `AGENTS.md`. Load only files needed for this specific
 task.
 
-This step is intentionally open-ended: the skill sets up the frame; Claude
-performs the implementation. The work item's acceptance criteria are the
-specification.
+This step is intentionally open-ended: the skill sets up the frame; the
+executing agent performs the implementation. The work item's acceptance
+criteria are the specification.
 
 ### Step 7 — Validate
 
@@ -207,6 +245,25 @@ for skills items, or `python -c "import lrh.skills"` for package checks).
 If format or lint fails, repair and re-run before continuing. If tests fail,
 fix the underlying issue. **Do not create a PR with failing validation.**
 Record tool versions and test results for the execution record.
+
+### Step 7.5 — Proactive self-review
+
+Invoke `/lrh-self-review` in diff-mode (no `--pr` argument — no PR exists
+yet) on the current branch diff. This is the one proactive trigger point
+`PROP-LRH-SELF-REVIEW` Decision 1 defines: a single independent-subagent
+pass before the diff is ever pushed, since opening a PR in this repo
+auto-triggers bot review within about a minute with no explicit
+retrigger — there is no "PR open, bot hasn't looked yet" window, so
+independent pre-push review is only possible here, before Step 8's
+`gh pr create` runs.
+
+Review any findings the pass surfaces. Because `/lrh-self-review` diff-mode is
+report-only by default, apply fixes in this workflow only after independently
+verifying that the finding is real and in scope. **Proceed to Step 8 regardless
+of what this pass found** — a clean result and a result with verified fixes
+applied both continue identically; this step never skips or replaces the PR's
+first real bot round (Decision 4). If fixes were applied, re-run Step 7's
+validation sequence before continuing.
 
 ### Step 8 — Commit and PR
 
@@ -235,13 +292,37 @@ Immediately edit the generated file to populate the three optional fields
 (see `references/execution-session-reference.md` for field descriptions):
 
 ```yaml
-agent: claude_app
+agent: <agent-backend>
 instruction_source: <work-item path or ad-hoc description>
 session_transcript: pending
 ```
 
 Commit the execution record and push it as an additional commit to the
 already-open PR.
+
+**For Claude.app sessions, capture the child session-id alias when available.**
+This step runs live in the current window, so — unlike `/lrh-closeout`, which
+can run in a different session entirely after merge — there is no cross-session
+ambiguity here for Claude.app: `$CLAUDE_CODE_HOST_SESSION_ID` and
+`$CLAUDE_CODE_SESSION_ID` both name the session doing this work right now. If
+both are set, record the pairing (see
+`references/execution-session-reference.md`'s "Session identity capture"
+section for full detail):
+
+```bash
+lrh prompt record-session-alias \
+  --host-id "$(echo "$CLAUDE_CODE_HOST_SESSION_ID" | sed 's/^local_//')" \
+  --child-id "$CLAUDE_CODE_SESSION_ID" \
+  --pr <pr-url-from-step-8> \
+  --branch <branch-name-from-step-5> \
+  --project-root .
+```
+
+This writes to `project/sessions/index.jsonl`, not the execution record —
+`session_transcript` stays `pending` here exactly as before; this capture is
+independent of it. Commit this file alongside the execution record in the same
+commit. If `$CLAUDE_CODE_HOST_SESSION_ID` is unset, skip this Claude-only alias
+capture entirely and use the selected backend's transcript convention instead.
 
 ### Step 10 — Report and offer closeout
 
@@ -256,8 +337,8 @@ Offer (do not automatically do):
 
 - Adding the work item ID to the parent workstream's `work_items:` list if not
   already present
-- A reminder that `session_transcript: pending` should be updated to
-  `claude-app:<session-id>` after the session ends
+- A reminder to update `session_transcript: pending` to the durable session
+  pointer for the selected backend when one is available
 - Next steps: wait for reviewer comments and run
   `/lrh-review-response <pr-url>` to address them (repeat as needed), then
   `/lrh-confirm-fixes <pr-url>` to verify the fixes against the current diff
@@ -275,6 +356,7 @@ Before reporting completion, verify:
 - [ ] Idempotence check passed (no prior landed/in_progress record)
 - [ ] User confirmed the plan at Step 4 before any files were touched
 - [ ] Branch created from a fresh `git pull` of `main`
+- [ ] Step 7.5 (`/lrh-self-review` diff-mode) ran before Step 8's `gh pr create` — not skipped, not deferred to after the push
 - [ ] All validation commands passed before PR was opened
 - [ ] Execution record exists with `agent`, `instruction_source`,
       `session_transcript` fields populated
