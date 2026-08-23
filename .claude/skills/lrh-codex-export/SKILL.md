@@ -4,9 +4,15 @@ description: >
   Export the current or specified Codex task through LRH's Codex app-server
   conversation exporter. Use when the user wants a Claude-/export-like
   durable private capture of a Codex session. Wraps
-  `lrh conversation export-codex-thread`, then verifies the artifact with
+  `lrh conversation archive-codex-thread`, then verifies the artifact with
   `lrh conversation inspect-export` and reports metadata only.
-disable-model-invocation: true
+when_to_use: >
+  Invoke only when the user explicitly asks to export, capture, or archive a
+  Codex conversation/thread for later private review. Do not invoke
+  proactively or infer the intent from a passing mention of Codex — by
+  default this skill writes a durable, permanent copy into the user's local
+  session archive (not a self-cleaning temp file), so invocation should
+  always trace to a direct request, not an agent's own judgment call.
 argument-hint: "[THREAD_ID]"
 ---
 
@@ -34,6 +40,11 @@ If no argument is supplied, default to `CODEX_THREAD_ID` when it is set. If
 neither an argument nor `CODEX_THREAD_ID` is available, ask the user for the
 Codex thread id before proceeding.
 
+Thread-id resolution uses the same shared resolver contract as
+`lrh conversation current-codex-thread-id` and `/lrh-codex-session`. The id is a
+Codex task/thread pointer, not an export attempt id, archive directory,
+`attempt.json` path, raw JSON path, transcript Markdown path, or timestamp.
+
 ---
 
 ## Reference Knowledge
@@ -41,15 +52,25 @@ Codex thread id before proceeding.
 Use the repository CLI documentation as the command contract:
 
 - `docs/reference/cli/conversation.md` for
-  `lrh conversation export-codex-thread` and
+  `lrh conversation current-codex-thread-id`,
+  `lrh conversation archive-codex-thread`,
+  `lrh conversation export-codex-thread`, and
   `lrh conversation inspect-export`.
 
 The relevant CLI guarantees are:
 
+- `archive-codex-thread` writes routine captures into LRH's durable private
+  session archive under a Codex date-bucketed subtree.
+- `current-codex-thread-id` exposes the shared metadata-only resolver used by
+  this skill when deciding which Codex task/thread to export.
+- `archive-codex-thread --scratch` is the explicit ephemeral dogfood path.
+- every archive export attempt writes `attempt.json` before app-server access
+  and updates it with success or failure metadata.
 - `export-codex-thread` reads through the Codex app-server `thread/read` API.
 - `--thread-id` defaults to `CODEX_THREAD_ID`.
-- `--raw-out` is required, must be absolute, and must be outside the current
-  Git worktree.
+- low-level `export-codex-thread` requires caller-supplied `--out` and
+  `--raw-out` paths; `--raw-out` must be absolute and outside the current Git
+  worktree.
 - the raw JSON capture is private and written with restrictive file mode where
   supported.
 - terminal output is metadata-only.
@@ -86,61 +107,84 @@ Work through these steps in order.
 
 ### Step 1 -- Resolve the thread id
 
-If the user supplied an argument, use it as `THREAD_ID`.
-
-If no argument was supplied, check:
+Use the shared metadata-only resolver:
 
 ```bash
-printf '%s\n' "$CODEX_THREAD_ID"
+lrh conversation current-codex-thread-id --field thread-id
 ```
 
-If `CODEX_THREAD_ID` is non-empty, use that value as `THREAD_ID`.
+If the user supplied an argument, pass it as `--thread-id`:
+
+```bash
+lrh conversation current-codex-thread-id \
+  --thread-id "$USER_SUPPLIED_THREAD_ID" \
+  --field thread-id
+```
 
 If no thread id is available, stop and ask the user for the Codex thread id.
 
-### Step 2 -- Choose private output paths
+### Step 2 -- Choose archive mode
 
-Create a private absolute output directory outside the current Git worktree.
-For routine dogfood or ad hoc capture, prefer the platform temporary directory
-from `TMPDIR`, falling back to `/tmp`. On macOS, `TMPDIR` or `/tmp` may resolve
-under `/private`, but the skill should not hard-code `/private/tmp`:
+Default to LRH's durable private session archive. The archive root resolves as:
+
+1. `--archive-root` when supplied by the user;
+2. `LRH_SESSION_ARCHIVE_ROOT`;
+3. `~/.local/share/lrh/session-archive`.
+
+Codex exports live below that root under `codex/exports/YYYY/MM/`. Do not choose
+`${TMPDIR:-/tmp}` for routine capture.
+
+Use scratch mode only when the user explicitly asks for an ephemeral dogfood or
+debug capture. Scratch mode is intentionally not the default:
 
 ```bash
-EXPORT_ID="$(date -u +%Y%m%dT%H%M%SZ)"
-TMP_ROOT="${TMPDIR:-/tmp}"
-TMP_ROOT="${TMP_ROOT%/}"
-EXPORT_DIR="$(mktemp -d "$TMP_ROOT/lrh-codex-export-$EXPORT_ID.XXXXXX")"
-chmod 700 "$EXPORT_DIR"
-EXPORT_PATH="$EXPORT_DIR/export.md"
-RAW_PATH="$EXPORT_DIR/raw.json"
+SCRATCH_FLAG="--scratch"
 ```
 
-If the user wants a durable private archive instead of an ephemeral dogfood
-capture, choose an absolute path under the user's private archive location,
-such as `$HOME/.lrh/private/codex/<safe-thread-or-run-id>/`, but still keep it
-outside the project Git worktree unless the user has explicitly designed and
-approved a sanitized committed artifact.
+### Step 3 -- Confirm before writing
 
-### Step 3 -- Run the export
+**Mandatory confirm-before-write gate, regardless of invocation route** (see
+`lrh-create-skill/references/frontmatter-guide.md`'s `disable-model-invocation`
+guidance: `when_to_use` narrows the auto-trigger surface, but the actual
+write-protection is an explicit confirm gate inside the skill). This step
+exists because the archive is durable and permanent by default (Step 2) --
+capture is not a reversible, self-cleaning action the way an ephemeral
+`/tmp` write would be.
 
-Run the CLI exporter with a restrictive umask so the Markdown transcript is
-created user-only as well as the raw capture:
+State the resolved `THREAD_ID` and the destination (durable archive path, or
+explicitly "ephemeral scratch capture" if scratch mode applies) and wait for
+explicit confirmation before proceeding to Step 4. Skip asking only when the
+user's own message in this turn already explicitly requested this export by
+name or thread id -- do not skip based on `CODEX_THREAD_ID` being set alone,
+since an inferred or ambient thread id is exactly the auto-invocation case
+this gate exists to catch.
+
+### Step 4 -- Run the export
+
+Run the durable archive wrapper with a restrictive umask so generated files are
+created user-only:
 
 ```bash
 (
   umask 077
-  lrh conversation export-codex-thread \
+  lrh conversation archive-codex-thread \
     --thread-id "$THREAD_ID" \
-    --out "$EXPORT_PATH" \
-    --raw-out "$RAW_PATH" \
     --timeout-seconds 20
 )
-chmod 600 "$EXPORT_PATH" "$RAW_PATH"
 ```
 
-If the output files already exist and the user wants to replace them, rerun with
-`--force`. Do not use `--force` for source/output path collisions or for
-repository-local raw captures.
+If the user explicitly requested scratch mode, include `--scratch` and report
+the output as ephemeral:
+
+```bash
+(
+  umask 077
+  lrh conversation archive-codex-thread \
+    --thread-id "$THREAD_ID" \
+    --scratch \
+    --timeout-seconds 20
+)
+```
 
 In restricted or sandboxed environments, app-server access may require approval
 because Codex local state can live under `~/.codex`. If the command fails due
@@ -148,9 +192,10 @@ to sandbox, permission, or local-state access restrictions, report the failure
 and rerun only through the environment's approval mechanism. Do not fall back to
 scraping local storage files directly.
 
-### Step 4 -- Inspect the export
+### Step 5 -- Inspect the export
 
-Immediately inspect the Markdown artifact against the raw source capture:
+Immediately inspect the Markdown artifact against the raw source capture. Use
+the paths printed by `archive-codex-thread`:
 
 ```bash
 lrh conversation inspect-export \
@@ -162,7 +207,7 @@ lrh conversation inspect-export \
 Treat a nonzero inspector exit as a failed export verification. Report the
 failure and keep the files private for debugging.
 
-### Step 5 -- Report metadata only
+### Step 6 -- Report metadata only
 
 Summarize the export using only command output and inspector metadata:
 
@@ -178,10 +223,10 @@ Do not paste transcript body text into chat. Do not run line-based previews to
 "spot check" the Markdown; the frontmatter can be followed immediately by
 private transcript content.
 
-### Step 6 -- Close out
+### Step 7 -- Close out
 
 Tell the user whether the export is verified and where the private files live.
-If the files are ephemeral under `/private/tmp`, say so. If the user wants a
+If scratch mode was used, say the files are ephemeral. If the user wants a
 committed LRH artifact, explain that raw exports are non-authoritative private
 context and must be reviewed and promoted into a separate sanitized project
 artifact before commit.
