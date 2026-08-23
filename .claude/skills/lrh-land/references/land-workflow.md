@@ -510,7 +510,7 @@ the end of the run, ask "Update the stored default to match?" — never
 silently persist a one-off override. Only rewrite the file on explicit yes,
 and re-stamp `confirmed_commit`/`confirmed_at`.
 
-## `skip_if_opted_in` — the five requirements (`DEC-CHAIN-INIT-SKIP-CONSENT`)
+## `skip_if_opted_in` — the five requirements (`DEC-CHAIN-INIT-SKIP-CONSENT`) plus the Stage 3.5 compensating control (`DEC-GATE-POLICY-CASCADE`)
 
 1. **Initiation act preserved** — no special handling needed: the human's own
    `/lrh-land <pr>` / `/lrh-execute <target>` invocation is what starts this
@@ -551,8 +551,33 @@ and re-stamp `confirmed_commit`/`confirmed_at`.
 
    Any hit forces the full `always_confirm` path for this run, regardless of
    stored `chain_init_confirmation` or valid consent.
+6. **`human_initiated_invocation_evidence` (`DEC-GATE-POLICY-CASCADE` Decision
+   4) — additional to requirements 1–5 above, not a replacement for any of
+   them; all must hold together for skip mode to apply.** Before
+   `skip_if_opted_in` may be used for a run, verify and record all of:
+   - the run began from a live user message that explicitly invoked this
+     chain skill and named the target PR, WI, or WS being run;
+   - the resolved run target (from Step 1's resolution) matches that named
+     target exactly;
+   - no model-initiated `Skill()` call or sibling skill handoff is being
+     treated as the human-initiation act for this run;
+   - local skip consent exists and is bound to the exact current
+     `project/config/chain-defaults.yaml` blob hash (requirement 4 above);
+   - no special condition from requirement 5 above fired.
 
-## Decision 5 — staleness fallback
+   Missing UI transcript access to confirm the live user message, an
+   ambiguous target, a model-initiated handoff, a missing or mismatched
+   consent hash, or any special-condition hit means this evidence is
+   unavailable for this run. **This does not block the run — it falls back
+   to the `always_confirm` path for this run only**, exactly as an
+   invalid/missing consent already does under requirement 4. This
+   requirement activates the mechanism `skip_if_opted_in` describes above;
+   before it was wired in here, a user who had validly completed the
+   two-step consent (requirements 1–5) would still have had no live check
+   that this specific run was genuinely human-initiated rather than a
+   model-initiated invocation riding stored consent.
+
+## Decision 5 — gate-definition staleness fallback
 
 **Only applies once `confirmed_commit` is non-null** — the
 propose-and-confirm flow above already routes a null/absent
@@ -568,20 +593,35 @@ if [ "$CONFIRMED_COMMIT" = "null" ] || [ -z "$CONFIRMED_COMMIT" ]; then
   echo "No prior confirmation on record — staleness check does not apply; use the first-encounter path above." >&2
 else
   # Before trusting any stored value (always_confirm pre-fill or
-  # skip_if_opted_in skip), check whether the gate's own skill logic has
-  # changed materially since the profile was last confirmed:
+  # skip_if_opted_in skip), check whether any gate-definition surface has
+  # changed since the profile was last confirmed:
   git diff --quiet "$CONFIRMED_COMMIT" HEAD -- \
+    src/lrh/skills/_shared/chain-defaults.md \
     src/lrh/skills/lrh-land/SKILL.md \
     src/lrh/skills/lrh-land/references/land-workflow.md \
     src/lrh/skills/lrh-execute/SKILL.md \
-    src/lrh/skills/_shared/chain-defaults.md
+    src/lrh/skills/lrh-implement/SKILL.md \
+    src/lrh/skills/lrh-review-response/SKILL.md \
+    src/lrh/skills/lrh-confirm-fixes/SKILL.md \
+    src/lrh/skills/lrh-confirm-fixes/references/confirm-fixes-workflow.md \
+    src/lrh/skills/lrh-confirm-fixes/references/round-cap-gate.md \
+    src/lrh/skills/lrh-self-review/SKILL.md \
+    src/lrh/skills/lrh-closeout/SKILL.md \
+    src/lrh/skills/lrh-closeout/references/closeout-workflow.md
 fi
 ```
 
-A non-zero exit (files changed) means the stored confirmation predates a
-skill-logic change it was never evaluated against — treat this run as if
-`chain_init_confirmation` were `always_confirm` regardless of the stored
-value, and note this in the gate's presentation ("defaults pre-filled, but
-re-confirming since the skill logic changed since you last confirmed").
-Do not silently rewrite the stored value based on this fallback alone — it
-only affects this run's liveness, not the persisted setting.
+Exit status `1` means a gate-definition surface changed since the stored
+confirmation. Per `DEC-GATE-POLICY-CASCADE`, inspect the diff for changes to
+gate-definition statements: when a gate is reached, what payload is presented,
+what reply or stored consent satisfies it, what special condition forces a live
+gate, what downstream step may rely on it, or what action is forbidden without
+it. If any such statement changed, treat this run as if
+`chain_init_confirmation` were `always_confirm` regardless of the stored value,
+and note this in the gate's presentation ("defaults pre-filled, but
+re-confirming since gate policy changed since you last confirmed"). If the diff
+is only non-semantic churn, document that inspection and continue. Exit status
+greater than `1` means the diff command itself failed; surface the error and do
+not classify it as a semantic gate-definition change. Do not silently rewrite
+the stored value based on this fallback alone — it only affects this run's
+liveness, not the persisted setting.
