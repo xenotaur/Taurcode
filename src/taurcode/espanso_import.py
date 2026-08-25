@@ -255,27 +255,33 @@ def _fresh_prompt_content(
 def _read_prompt_file(prompt_file: Path) -> ExistingPrompt:
     text = prompt_file.read_text(encoding="utf-8")
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
-    lines = normalized.split("\n")
-    if not lines or lines[0] != "---":
+
+    # Uses find()/slicing instead of split()/join() to avoid allocating an
+    # intermediate list of lines for large prompt files. See .jules/bolt.md
+    if not (normalized == "---" or normalized.startswith("---\n")):
         return ExistingPrompt(
             path=prompt_file, metadata={}, body=normalized, frontmatter_text=None
         )
 
-    closing_index = None
-    for index in range(1, len(lines)):
-        if lines[index] == "---":
-            closing_index = index
+    metadata_text = None
+    body = None
+    end_idx = normalized.find("\n---", 3)
+    while end_idx != -1:
+        if end_idx + 4 == len(normalized) or normalized[end_idx + 4] == "\n":
+            metadata_text = normalized[4:end_idx]
+            body = normalized[end_idx + 5 :] if end_idx + 4 < len(normalized) else ""
             break
-    if closing_index is None:
+        end_idx = normalized.find("\n---", end_idx + 1)
+
+    if metadata_text is None or body is None:
         raise ValueError(f"Invalid frontmatter block in {prompt_file}")
 
-    metadata_text = "\n".join(lines[1:closing_index])
     metadata = yaml.safe_load(metadata_text) if metadata_text.strip() else {}
     if metadata is None:
         metadata = {}
     if not isinstance(metadata, dict):
         raise ValueError(f"Invalid frontmatter mapping in {prompt_file}")
-    body = "\n".join(lines[closing_index + 1 :])
+
     if body.startswith("\n"):
         body = body[1:]
     return ExistingPrompt(
