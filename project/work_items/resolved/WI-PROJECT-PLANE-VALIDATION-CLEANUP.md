@@ -8,7 +8,7 @@ owner: anthony
 related_focus: []
 related_workstreams: []
 blocked: false
-blocked_reason: ""
+blocked_reason: null
 resolution: >
   Resolved by PR #54 (commit 3801f35): repaired work-item frontmatter to the
   current LRH schema, removed a committed duplicate work-item file, aligned the

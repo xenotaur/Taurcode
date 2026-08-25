@@ -29,11 +29,18 @@ forbidden_actions:
   - implement_force_mode_keys
 acceptance:
   - taurcode validate rejects non-mapping targets/targets.espanso and non-boolean force_clipboard; accepts absent or false
-  - taurcode export espanso emits force_clipboard: true only for prompts that set targets.espanso.force_clipboard: true; all other prompts' package.yml output is byte-identical to before
-  - taurcode import espanso --merge round-trips force_clipboard: true back into targets.espanso.force_clipboard: true on both fresh and merge import, without imported_raw fallback or an orphan warning
+  - >-
+    taurcode export espanso emits force_clipboard: true only for prompts that
+    set targets.espanso.force_clipboard: true; all other prompts' package.yml
+    output is byte-identical to before
+  - >-
+    taurcode import espanso --merge round-trips force_clipboard: true back into
+    targets.espanso.force_clipboard: true on both fresh and merge import,
+    without imported_raw fallback or an orphan warning
   - taurcode roundtrip espanso fails on a regression fixture where the exporter drops or corrupts force_clipboard
   - taurcode lint prompts warns (non-blocking) on a prompt body under 100 characters missing force_clipboard
-  - prompts/taurcode/dashes.md sets targets.espanso.force_clipboard: true
+  - >-
+    prompts/taurcode/dashes.md sets targets.espanso.force_clipboard: true
   - scripts/test and lrh validate pass with 0 new failures
 required_evidence:
   - lrh_validate
