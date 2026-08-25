@@ -39,7 +39,13 @@ acceptance:
   - pyproject.toml uses dynamic = ["version"] via setuptools-scm instead of a static version string, and scripts/version (with no argument) still resolves the correct version through importlib.metadata
   - scripts/version verify <tag> exists and verifies the tag matches vMAJOR.MINOR.PATCH format and repo state, mirroring LRH's scripts/version verify
   - scripts/release-smoke <tag> --strict-isolation exists, builds sdist/wheel in an isolated venv, installs the wheel, and runs real installed-CLI invocations (not source-tree invocations), checking for editable-install/.pth leakage — limited to the generically-useful isolation-check core, not LRH's package-data template-loading checks (Taurcode ships no runtime package-data resources)
-  - .github/workflows/release.yml exists, tag-triggered on v*.*.*, running tag-format validation, scripts/version verify, scripts/release-smoke --strict-isolation, then a publish-pypi job using PyPI Trusted Publishing (id-token: write, pypa/gh-action-pypi-publish@release/v1) — the actual Trusted Publisher and GitHub Environment configuration is a separate, human-performed step not included in this item's scope
+  - >-
+    .github/workflows/release.yml exists, tag-triggered on v*.*.*, running
+    tag-format validation, scripts/version verify, scripts/release-smoke
+    --strict-isolation, then a publish-pypi job using PyPI Trusted Publishing
+    (id-token: write, pypa/gh-action-pypi-publish@release/v1) — the actual
+    Trusted Publisher and GitHub Environment configuration is a separate,
+    human-performed step not included in this item's scope
   - .github/workflows/testpypi-rehearsal.yml exists (workflow_dispatch), running the same build-check-smoke steps and publishing to TestPyPI
   - A TestPyPI rehearsal against a v0.1.0-tagged checkout succeeds end to end (requires the human-performed TestPyPI Trusted Publisher setup first — tracked as a Follow-up, not blocking file changes)
   - scripts/format --check --diff, scripts/lint, scripts/test, and lrh validate pass with 0 new failures
