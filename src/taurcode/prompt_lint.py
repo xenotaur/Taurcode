@@ -197,14 +197,16 @@ def _lint_prompt_file(
 
 
 def _split_frontmatter(text: str) -> tuple[str, str] | None:
-    lines = text.split("\n")
-    if not lines or lines[0] != "---":
+    # Uses find()/slicing instead of split()/join() to avoid allocating an
+    # intermediate list of lines for large prompt files.
+    if not (text == "---" or text.startswith("---\n")):
         return None
-    for index in range(1, len(lines)):
-        if lines[index] == "---":
-            frontmatter_text = "\n".join(lines[1:index])
-            body = "\n".join(lines[index + 1 :])
-            return frontmatter_text, body
+
+    end_pos = text.find("\n---\n", 3)
+    if end_pos != -1:
+        return text[4:end_pos], text[end_pos + 5 :]
+    if text.endswith("\n---"):
+        return text[4 : len(text) - 4], ""
     return None
 
 
