@@ -66,25 +66,32 @@ def _is_reserved_prompt_file(prompt_file: Path, directory: Path) -> bool:
 
 
 def _quote_keyword(text: str) -> str:
-    lines = text.splitlines(keepends=True)
-    if not lines or _line_content(lines[0]) != "---":
+    # Uses find()/slicing instead of splitlines() on the entire file to avoid
+    # allocating an intermediate list of lines for large prompt bodies.
+    if not text.startswith("---"):
         return text
 
-    closing_index = _frontmatter_closing_index(lines)
-    if closing_index is None:
+    first_newline = text.find("\n")
+    if first_newline == -1:
+        if text.rstrip("\r") == "---":
+            return text
         return text
 
-    formatted_lines = list(lines)
-    for index in range(1, closing_index):
-        formatted_lines[index] = _format_keyword_line(formatted_lines[index])
-    return "".join(formatted_lines)
+    if text[:first_newline].rstrip("\r") != "---":
+        return text
 
+    match = re.search(r"\r?\n---\r?\n|\r?\n---$", text)
+    if not match:
+        return text
 
-def _frontmatter_closing_index(lines: list[str]) -> int | None:
-    for index in range(1, len(lines)):
-        if _line_content(lines[index]) == "---":
-            return index
-    return None
+    end_idx = match.start()
+    frontmatter = text[:end_idx]
+
+    lines = frontmatter.splitlines(keepends=True)
+    for i in range(1, len(lines)):
+        lines[i] = _format_keyword_line(lines[i])
+
+    return "".join(lines) + text[end_idx:]
 
 
 def _line_content(line: str) -> str:
