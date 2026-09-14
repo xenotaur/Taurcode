@@ -12,12 +12,16 @@ def _yaml_quote(value: str) -> str:
 
 
 def _as_block(value: str, indent: str = "      ") -> str:
-    lines = value.split("\n")
-    if lines and lines[-1] == "":
-        lines = lines[:-1]
-    if not lines:
+    # Uses replace() instead of split()/join() to avoid allocating an
+    # intermediate list of lines for large prompt files.
+    if not value:
         return f"{indent}\n"
-    return "\n".join(f"{indent}{line}" for line in lines) + "\n"
+
+    val = value[:-1] if value.endswith("\n") else value
+    if not val:
+        return f"{indent}\n"
+
+    return indent + val.replace("\n", f"\n{indent}") + "\n"
 
 
 def export_espanso_metadata_assets(
