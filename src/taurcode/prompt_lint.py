@@ -197,15 +197,28 @@ def _lint_prompt_file(
 
 
 def _split_frontmatter(text: str) -> tuple[str, str] | None:
-    lines = text.split("\n")
-    if not lines or lines[0] != "---":
+    if not text.startswith("---"):
         return None
-    for index in range(1, len(lines)):
-        if lines[index] == "---":
-            frontmatter_text = "\n".join(lines[1:index])
-            body = "\n".join(lines[index + 1 :])
+    # We must ensure line 0 is EXACTLY "---"
+    if len(text) > 3 and text[3] != "\n":
+        return None
+
+    # Find the next line that is EXACTLY "---"
+    search_start = 3
+    while True:
+        idx = text.find("\n---", search_start)
+        if idx == -1:
+            return None
+        # Check if the "---" is the entire line
+        if idx + 4 == len(text) or text[idx + 4] == "\n":
+            # Found it!
+            # Frontmatter starts after the first "---" (plus \n if present)
+            frontmatter_start = 4 if len(text) > 3 else 3
+            frontmatter_text = text[frontmatter_start:idx]
+            body_start = idx + 5
+            body = text[body_start:] if body_start < len(text) else ""
             return frontmatter_text, body
-    return None
+        search_start = idx + 1
 
 
 def _schema_errors(
