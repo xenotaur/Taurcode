@@ -3,7 +3,7 @@ execution_id: 2026_08_25_18_19_51_REPAIR_WORK_ITEM_VALIDATION
 prompt_id: PROMPT(AD_HOC:REPAIR_WORK_ITEM_VALIDATION)[2026-08-25T18:13:32+00:00]
 work_item: AD_HOC
 status: in_progress
-rerun_of: 
+rerun_of:
 pr: https://github.com/xenotaur/Taurcode/pull/86
 commit: 2d1f0a4296c980a71cec128d5acb88508197b473
 created_at: 2026-08-25T18:19:51+00:00
