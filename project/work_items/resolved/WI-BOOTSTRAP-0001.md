@@ -8,7 +8,7 @@ owner: anthony
 related_focus:
   - FOCUS-BOOTSTRAP
 blocked: false
-blocked_reason: ""
+blocked_reason: null
 resolution: >
   Resolved by the completed LRH control-plane bootstrap: the standard project/
   directory scaffold, baseline Markdown artifacts, initial evidence and status

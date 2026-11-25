@@ -7,7 +7,7 @@ priority: high
 related_focus:
   - FOCUS-BOOTSTRAP
 blocked: false
-blocked_reason: ""
+blocked_reason: null
 resolution: >
   Resolved by the completed Espanso roundtrip foundation: canonical prompts,
   validation, Espanso import/export, metadata preservation, semantic roundtrip
