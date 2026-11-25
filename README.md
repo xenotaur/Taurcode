@@ -5,6 +5,8 @@ Taurcode is a set of prompts for AI-generated coding with tools to format them f
 
 Start with the [Taurcode documentation index](docs/README.md) for tutorials, how-to guides, reference pages, and explanations. The docs include the canonical prompt workflow, Espanso import/export integration, semantic roundtrip checks, and prompt-authoring best practices.
 
+See the [Taurcode CLI reference](docs/reference/taurcode-cli.md) for command syntax, options, and defaults.
+
 ## Canonical prompts
 The checked-in Taurcode prompt corpus lives under `prompts/taurcode/`. This directory is the authoritative source of truth for the Taurcode prompt package.
 
@@ -33,12 +35,10 @@ taurcode export espanso --prompts prompts/lrh --output exports/espanso/lrh
 Use `taurcode show <keyword>` to print a snippet's body to stdout for sessions that don't run Espanso at all:
 
 ```bash
-taurcode show :lrh-implement                      # searches every canonical corpus (prompts/taurcode, prompts/lrh)
-taurcode show :lrh-implement --prompts all         # same as the default above, explicitly
-taurcode show :lrh-implement --prompts prompts/lrh # searches only that one directory
+taurcode show :lrh-implement
 ```
 
-`--prompts` defaults to searching an explicit, maintained list of canonical corpora — never a glob of `prompts/*/`, so uncurated directories like `prompts/examples/` or the `taurcode import` staging directory are never treated as canonical. A keyword matching no corpus, or matching more than one, prints an error to stderr and exits non-zero rather than guessing.
+See the [`taurcode show` reference](docs/reference/taurcode-cli.md#show) for search scope and match behavior.
 
 Currently backported: `:lrh-implement` (`prompts/lrh/lrh-implement.md`), `:lrh-review-response` (`prompts/lrh/lrh-review-response.md`), `:lrh-confirm-fixes` (`prompts/lrh/lrh-confirm-fixes.md`), `:lrh-closeout` (`prompts/lrh/lrh-closeout.md`), and `:lrh-remains` (`prompts/lrh/lrh-remains.md`). The generated package is checked in at `exports/espanso/lrh/`, mirroring `exports/espanso/taurcode/`.
 
@@ -140,7 +140,9 @@ In this workflow, `prompts/imported/` is only a temporary staging area that reco
 
 ### Espanso metadata ownership
 
-Taurcode uses `prompts/<package>/espanso/` as the curated source of truth for Espanso package metadata assets. Import copies `_manifest.yml`, `README.md`, and `LICENSE` into that directory as a starting point, and users may then edit or curate those files in source control. Export prefers curated files from `prompts/<package>/espanso/` and copies them to `build/espanso/<package>/` before generating any fallback metadata. Taurcode does not attempt a three-way merge for metadata assets in the MVP. Importing into an output directory is an explicit write to that destination, so existing supported metadata files there may be replaced by the imported package copies; review staged metadata before treating it as canonical. Local Espanso install or sync remains out of scope.
+Taurcode uses `prompts/<package>/espanso/` as the curated source of truth for Espanso package metadata assets. Import copies `_manifest.yml`, `README.md`, and `LICENSE` into that directory as a starting point, and users may then edit or curate those files in source control. Export prefers curated files from `prompts/<package>/espanso/` and copies them to `build/espanso/<package>/` before generating any fallback metadata. Taurcode does not attempt a three-way merge for metadata assets in the MVP. Importing into an output directory is an explicit write to that destination, so existing supported metadata files there may be replaced by the imported package copies; review staged metadata before treating it as canonical.
+
+`taurcode install espanso` supports local installation on macOS. See [Install into Espanso (macOS)](#install-into-espanso-macos). Continuous sync is out of scope.
 
 ### Espanso preflight diagnostics
 

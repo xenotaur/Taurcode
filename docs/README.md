@@ -25,8 +25,10 @@ Taurcode documentation is organized with a lightweight Diátaxis-inspired struct
 
 ## Reference
 
+- [Taurcode CLI](reference/taurcode-cli.md) covers command syntax, options, and defaults, including [`taurcode show`](reference/taurcode-cli.md#show) for printing a prompt without Espanso.
 - [Canonical prompt format](reference/canonical-prompt-format.md) — required frontmatter, optional fields, prompt discovery, validation, and formatting expectations.
 - [Espanso integration](reference/espanso-integration.md) — import, export, metadata assets, supported Espanso features, and roundtrip comparison behavior.
+- [Docs audit artifact convention](reference/docs-audit-artifact-convention.md) defines the v1 format used by the LRH documentation audit and organization skills.
 
 ## Explanations
 
